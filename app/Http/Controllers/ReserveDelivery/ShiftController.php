@@ -22,9 +22,11 @@ class ShiftController extends Controller
             ], 403);
         }
 
+        $businessDate = \App\Models\Setting::businessDayRange()[0]->toDateString();
+
         // Ensure no active shift today
         $existingShift = Shift::where('delivery_id', $delivery->id)
-            ->whereDate('date', Carbon::today())
+            ->where('date', $businessDate)
             ->where('is_active', true)
             ->first();
 
@@ -35,7 +37,7 @@ class ShiftController extends Controller
 
         Shift::create([
             'delivery_id' => $delivery->id,
-            'date'        => Carbon::today(),
+            'date'        => $businessDate,
             'started_at'  => Carbon::now(),
             'is_active'   => true,
         ]);
@@ -47,8 +49,10 @@ class ShiftController extends Controller
     {
         $delivery = auth()->user();
         
+        $businessDate = \App\Models\Setting::businessDayRange()[0]->toDateString();
+
         $shift = Shift::where('delivery_id', $delivery->id)
-            ->whereDate('date', Carbon::today())
+            ->where('date', $businessDate)
             ->where('is_active', true)
             ->first();
 
@@ -66,8 +70,10 @@ class ShiftController extends Controller
     public function status(Request $request)
     {
         $delivery = auth()->user();
+        $businessDate = \App\Models\Setting::businessDayRange()[0]->toDateString();
+
         $shift = Shift::where('delivery_id', $delivery->id)
-            ->whereDate('date', Carbon::today())
+            ->where('date', $businessDate)
             ->where('is_active', true)
             ->first();
 

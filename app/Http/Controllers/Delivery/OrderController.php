@@ -32,7 +32,7 @@ class OrderController extends Controller
     public function newData()
     {
         $delivery = auth()->user();
-        $today = Carbon::today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
         $orders = Order::with(['items.shop', 'client'])
             ->where('status', 'pending')
@@ -41,9 +41,9 @@ class OrderController extends Controller
                   ->orWhere('delivery_id', $delivery->id);
             })
             ->where('sent_to_delivery_at', '<=', Carbon::now())
-            ->where(function($q) use ($today) {
-                $q->whereDate('sent_to_delivery_at', $today)
-                  ->orWhereDate('created_at', $today);
+            ->where(function($q) use ($startOfToday, $endOfToday) {
+                $q->whereBetween('sent_to_delivery_at', [$startOfToday, $endOfToday])
+                  ->orWhereBetween('created_at', [$startOfToday, $endOfToday]);
             })
             ->get();
 
@@ -53,15 +53,11 @@ class OrderController extends Controller
     public function accept($id)
     {
 
-        $maxUnsettled = (float) Setting::get('max_unsettled_limit', 500);
-        if (auth()->user()->unsettled_value >= $maxUnsettled) {
-            return response()->json(['success' => false, 'message' => "تم تجاوز الحد الأقصى للعهدة ({$maxUnsettled} جنيه) — برجاء التواصل مع الإدارة وتسوية العهدة للتمكن من استلام طلبات جديدة"]);
-        }
-
         $maxActive = (int) Setting::get('max_active_orders', 3);
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
         $activeCount = Order::where('delivery_id', auth()->id())
             ->where('status', 'received')
-            ->whereDate('accepted_at', Carbon::today())
+            ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
             ->count();
 
         if ($activeCount >= $maxActive) {
@@ -131,12 +127,12 @@ class OrderController extends Controller
     public function receivedData()
     {
         $delivery = auth()->user();
-        $today = Carbon::today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
         $orders = Order::with(['items.shop', 'client'])
             ->where('delivery_id', $delivery->id)
             ->where('status', 'received')
-            ->whereDate('accepted_at', $today)
+            ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
             ->get();
 
         return response()->json(['orders' => $orders]);
@@ -162,8 +158,19 @@ class OrderController extends Controller
                     'delivered_at' => Carbon::now()
                 ]);
 
-                $delivery->increment('unsettled_value', $order->total);
-                $delivery->increment('unsettled_fees', $order->delivery_fee);
+                // تسجيل رسوم التوصيل في خزينة المندوب
+                if ($order->delivery_fee > 0) {
+                    $wallet = $delivery->getOrCreateWallet();
+                    app(\App\Services\WalletService::class)->credit(
+                        wallet: $wallet,
+                        amount: (float) $order->delivery_fee,
+                        type: 'delivery_fee_received',
+                        description: 'رسوم توصيل — طلب ' . $order->order_number,
+                        createdBy: $delivery->id,
+                        orderId: $order->id,
+                        date: now()->toDateString()
+                    );
+                }
 
                 OrderLog::create([
                     'order_id' => $order->id,
@@ -212,6 +219,14 @@ class OrderController extends Controller
                     'status' => 'cancelled'
                 ]);
 
+                $notif = \App\Models\AdminNotification::create([
+                    'type'         => 'cancelled',
+                    'order_id'     => $order->id,
+                    'order_number' => $order->order_number,
+                    'message'      => "تم إلغاء الطلب #{$order->order_number}",
+                ]);
+                event(new \App\Events\AdminNotificationCreated($notif));
+
                 OrderLog::create([
                     'order_id' => $order->id,
                     'user_id' => $delivery->id,
@@ -252,12 +267,12 @@ class OrderController extends Controller
     public function deliveredData()
     {
         $delivery = auth()->user();
-        $today = Carbon::today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
         $orders = Order::with(['items.shop', 'client'])
             ->where('delivery_id', $delivery->id)
             ->where('status', 'delivered')
-            ->whereDate('delivered_at', $today)
+            ->whereBetween('delivered_at', [$startOfToday, $endOfToday])
             ->get();
 
         return response()->json(['orders' => $orders]);

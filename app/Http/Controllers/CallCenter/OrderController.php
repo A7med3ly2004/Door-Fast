@@ -136,6 +136,31 @@ class OrderController extends Controller
             'sent_to_delivery_at' => Carbon::now()->addMinutes($holdMinutes),
         ]);
 
+        // Handle send-to customer creation
+        if ($request->filled('send_to_phone') && !$request->filled('send_to_client_id')) {
+            $sendToClient = \App\Models\Client::firstOrCreate(
+                ['phone' => $request->send_to_phone],
+                [
+                    'name'  => $request->send_to_name ?: 'Unnamed',
+                    'code'  => $request->send_to_code ?: \App\Models\Client::generateCode(),
+                    'phone2'=> null,
+                ]
+            );
+            if ($sendToClient->wasRecentlyCreated) {
+                $sendToClient->addresses()->create([
+                    'address'    => $request->send_to_address ?? '',
+                    'is_default' => true,
+                ]);
+                \App\Models\ActivityLog::log(
+                    event: 'client.created_sendto',
+                    description: 'تم إضافة عميل الإرسال إليه تلقائياً — ' . $sendToClient->name,
+                    subjectType: 'client', subjectId: $sendToClient->id,
+                    subjectLabel: $sendToClient->name,
+                    properties: ['phone' => $sendToClient->phone, 'code' => $sendToClient->code]
+                );
+            }
+        }
+
         // 5. Create items
         foreach ($items as $item) {
             if (empty($item['item_name']))

@@ -556,28 +556,9 @@
             overflow: hidden;
         }
 
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--yellow);
-            border-radius: 0 12px 12px 0;
-        }
-
-        .kpi-card.red::before {
-            background: var(--red);
-        }
-
-        .kpi-card.green::before {
-            background: var(--success);
-        }
-
-        .kpi-card.blue::before {
-            background: var(--info);
-        }
+        .kpi-card.red { }
+        .kpi-card.green { }
+        .kpi-card.blue { }
 
         .kpi-label {
             font-size: 11px;
@@ -741,9 +722,8 @@
     </div>
 
     <aside class="sidebar">
-        <div class="sidebar-logo">
-            <span class="logo-text">Door Fast</span>
-            <span class="logo-sub">Call Center</span>
+        <div class="sidebar-logo" style="display: flex; justify-content: center; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border);">
+            <img src="{{ asset('DF_logo_for_sb.png') }}" alt="Door Fast Logo" style="max-width: 100%; height: auto;">
         </div>
         <nav class="sidebar-nav">
             <a href="{{ route('callcenter.orders.create') }}" class="nav-link" data-spa="true">
@@ -766,6 +746,9 @@
             </a>
             <a href="{{ route('callcenter.stats.index') }}" class="nav-link" data-spa="true">
                 <span class="icon">📊</span> إحصائياتي
+            </a>
+            <a href="{{ route('callcenter.wallet.index') }}" class="nav-link" data-spa="true">
+                <span class="icon">💰</span> كشف حسابي
             </a>
         </nav>
         <div class="sidebar-footer">

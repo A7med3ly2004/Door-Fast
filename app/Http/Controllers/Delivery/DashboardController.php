@@ -25,10 +25,11 @@ class DashboardController extends Controller
     public function data()
     {
         $delivery = auth()->user();
-        $today = Carbon::today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        $businessDate = $startOfToday->toDateString();
 
         $shift = Shift::where('delivery_id', $delivery->id)
-            ->whereDate('date', $today)
+            ->where('date', $businessDate)
             ->where('is_active', true)
             ->first();
 
@@ -36,10 +37,10 @@ class DashboardController extends Controller
         $started_timestamp = $shift ? Carbon::parse($shift->started_at)->timestamp : null;
 
         $orders = Order::where('delivery_id', $delivery->id)
-            ->where(function($query) use ($today) {
-                $query->whereDate('accepted_at', $today)
-                      ->orWhereDate('delivered_at', $today)
-                      ->orWhereDate('created_at', $today);
+            ->where(function($query) use ($startOfToday, $endOfToday) {
+                $query->whereBetween('accepted_at', [$startOfToday, $endOfToday])
+                      ->orWhereBetween('delivered_at', [$startOfToday, $endOfToday])
+                      ->orWhereBetween('created_at', [$startOfToday, $endOfToday]);
             })
             ->get();
 

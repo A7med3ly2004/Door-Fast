@@ -36,8 +36,8 @@ class ReportController extends Controller
 
     public function data(Request $request)
     {
-        $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
-        $to   = $request->filled('to')   ? Carbon::parse($request->to)->endOfDay()     : Carbon::now()->endOfDay();
+        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
+        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
 
         $query = Order::with(['client', 'callcenter', 'delivery'])
             ->whereBetween('created_at', [$from, $to]);
@@ -60,10 +60,11 @@ class ReportController extends Controller
         $days   = (int) $from->diffInDays($to) + 1;
         $chart  = [];
         for ($i = 0; $i < min($days, 60); $i++) {
-            $day    = $from->clone()->addDays($i);
-            $dayOrders = $orders->filter(fn($o) => $o->created_at->isSameDay($day));
+            $calDay = Carbon::parse($request->filled('from') ? $request->from : today()->subDays(30))->addDays($i);
+            list($dStart, $dEnd) = \App\Models\Setting::businessDayRange($calDay);
+            $dayOrders = $orders->filter(fn($o) => $o->created_at->between($dStart, $dEnd));
             $chart[] = [
-                'label'     => $day->format('m/d'),
+                'label'     => $calDay->format('m/d'),
                 'count'     => $dayOrders->count(),
                 'revenue'   => $dayOrders->where('status', 'delivered')->sum('total'),
             ];
@@ -133,8 +134,8 @@ class ReportController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
-        $to   = $request->filled('to')   ? Carbon::parse($request->to)->endOfDay()     : Carbon::now()->endOfDay();
+        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
+        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
 
         $query = Order::with(['client', 'callcenter', 'delivery'])
             ->whereBetween('created_at', [$from, $to]);

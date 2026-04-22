@@ -29,8 +29,8 @@ class ReportHopsController extends Controller
 
     public function data(Request $request)
     {
-        $from   = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
-        $to     = $request->filled('to')   ? Carbon::parse($request->to)->endOfDay()     : Carbon::now()->endOfDay();
+        $from   = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
+        $to     = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
         $shopId = $request->shop_id;
 
         // Global KPIs
@@ -79,9 +79,10 @@ class ReportHopsController extends Controller
             $days  = (int) $from->diffInDays($to) + 1;
             $chart = [];
             for ($i = 0; $i < min($days, 60); $i++) {
-                $day = $from->clone()->addDays($i);
-                $dayCount = $shopOrders->filter(fn($o) => $o->created_at->isSameDay($day))->count();
-                $chart[]  = ['label' => $day->format('m/d'), 'count' => $dayCount];
+                $calDay = Carbon::parse($request->filled('from') ? $request->from : today()->subDays(30))->addDays($i);
+                list($dStart, $dEnd) = \App\Models\Setting::businessDayRange($calDay);
+                $dayCount = $shopOrders->filter(fn($o) => $o->created_at->between($dStart, $dEnd))->count();
+                $chart[]  = ['label' => $calDay->format('m/d'), 'count' => $dayCount];
             }
 
             // Top clients
@@ -146,8 +147,8 @@ class ReportHopsController extends Controller
     {
         $shop = Shop::findOrFail($shopId);
 
-        $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
-        $to   = $request->filled('to')   ? Carbon::parse($request->to)->endOfDay()     : Carbon::now()->endOfDay();
+        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
+        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
 
         $orders = Order::whereHas('items', fn($q) => $q->where('shop_id', $shopId))
             ->with(['client', 'items' => fn($q) => $q->where('shop_id', $shopId)])

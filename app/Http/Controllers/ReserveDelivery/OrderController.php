@@ -32,12 +32,13 @@ class OrderController extends Controller
     {
         $reserveDelay = (int) Setting::get('reserve_delay_minutes', 5);
         $visibleFrom = now()->subMinutes($reserveDelay);
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
         $orders = Order::with(['items.shop', 'client'])
             ->where('status', 'pending')
             ->whereNull('delivery_id')
             ->where('sent_to_delivery_at', '<=', $visibleFrom)
-            ->whereDate('created_at', today())
+            ->whereBetween('created_at', [$startOfToday, $endOfToday])
             ->orderBy('sent_to_delivery_at')
             ->get();
 
@@ -96,12 +97,12 @@ class OrderController extends Controller
     public function receivedData()
     {
         $delivery = auth()->user();
-        $today = Carbon::today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
         $orders = Order::with(['items.shop', 'client'])
             ->where('delivery_id', $delivery->id)
             ->where('status', 'received')
-            ->whereDate('accepted_at', $today)
+            ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
             ->get();
 
         return response()->json(['orders' => $orders]);
@@ -126,6 +127,20 @@ class OrderController extends Controller
                     'status' => 'delivered',
                     'delivered_at' => Carbon::now()
                 ]);
+
+                // تسجيل رسوم التوصيل في خزينة المندوب
+                if ($order->delivery_fee > 0) {
+                    $wallet = $delivery->getOrCreateWallet();
+                    app(\App\Services\WalletService::class)->credit(
+                        wallet: $wallet,
+                        amount: (float) $order->delivery_fee,
+                        type: 'delivery_fee_received',
+                        description: 'رسوم توصيل — طلب ' . $order->order_number,
+                        createdBy: $delivery->id,
+                        orderId: $order->id,
+                        date: now()->toDateString()
+                    );
+                }
 
                 OrderLog::create([
                     'order_id' => $order->id,
@@ -193,12 +208,12 @@ class OrderController extends Controller
     public function deliveredData()
     {
         $delivery = auth()->user();
-        $today = Carbon::today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
         $orders = Order::with(['items.shop', 'client'])
             ->where('delivery_id', $delivery->id)
             ->where('status', 'delivered')
-            ->whereDate('delivered_at', $today)
+            ->whereBetween('delivered_at', [$startOfToday, $endOfToday])
             ->get();
 
         return response()->json(['orders' => $orders]);

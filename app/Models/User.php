@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -136,5 +137,20 @@ class User extends Authenticatable
     public function isReserveDelivery(): bool
     {
         return $this->role === 'reserve_delivery';
+    }
+
+    // ─── الخزينة (Wallet) ─────────────────────────────────────
+
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    /**
+     * إرجاع خزينة المستخدم — تُنشأ تلقائياً إذا لم توجد.
+     */
+    public function getOrCreateWallet(): Wallet
+    {
+        return $this->wallet ?? $this->wallet()->create(['balance' => 0]);
     }
 }

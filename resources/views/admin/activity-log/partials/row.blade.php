@@ -32,12 +32,12 @@
         @endif
     </td>
     <td>
-        <div style="font-size:13px;">{{ $subjectLabels[$log->subject_type] ?? ($log->subject_type ?? '—') }}</div>
+        <div style="font-size:13px; text-align: center;">{{ $subjectLabels[$log->subject_type] ?? ($log->subject_type ?? '—') }}</div>
     </td>
-    <td style="font-size:13px;font-weight:600;">{{ $log->causer?->name ?? '—' }}</td>
-    <td><span class="badge {{ $log->causer_role_badge }}">{{ $log->causer_role_label }}</span></td>
+    <td style="font-size:13px;font-weight:600; text-align: center;">{{ $log->causer?->name ?? '—' }}</td>
+    <td style="text-align: center;"><span class="badge {{ $log->causer_role_badge }}">{{ $log->causer_role_label }}</span></td>
     <td>
-        <div class="al-time-main" style="direction:ltr;text-align:right;">{{ $log->created_at->format('Y-m-d H:i:s') }}</div>
-        <div class="al-time-ago">{{ $log->created_at->diffForHumans() }}</div>
+        <div class="al-time-main" style="direction:ltr;text-align:center;">{{ $log->created_at->format('Y-m-d H:i:s') }}</div>
+        <div class="al-time-ago" style="text-align:center;">{{ $log->created_at->diffForHumans() }}</div>
     </td>
 </tr>

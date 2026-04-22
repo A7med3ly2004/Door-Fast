@@ -17,11 +17,14 @@ class DeliveryViewController extends Controller
     {
         $maxOrders  = (int) Setting::get('max_orders_per_delivery', 10);
 
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        $businessDate = $startOfToday->toDateString();
+
         $deliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->where('is_active', true)
-            ->with(['shifts' => fn($q) => $q->where('date', today()->toDateString())])
-            ->withCount(['deliveryOrders as orders_today'    => fn($q) => $q->where('created_at', '>=', today()->startOfDay())])
-            ->withCount(['deliveryOrders as cancelled_today' => fn($q) => $q->where('created_at', '>=', today()->startOfDay())->where('status', 'cancelled')])
+            ->with(['shifts' => fn($q) => $q->where('date', $businessDate)])
+            ->withCount(['deliveryOrders as orders_today'    => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
+            ->withCount(['deliveryOrders as cancelled_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'cancelled')])
             ->get()
             ->map(fn($d) => [
                 'id'               => $d->id,
@@ -55,11 +58,14 @@ class DeliveryViewController extends Controller
     {
         $maxOrders = (int) Setting::get('max_orders_per_delivery', 10);
 
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        $businessDate = $startOfToday->toDateString();
+
         $deliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->where('is_active', true)
-            ->whereHas('shifts', fn($q) => $q->where('is_active', true)->where('date', today()->toDateString()))
-            ->with(['shifts' => fn($q) => $q->where('is_active', true)->where('date', today()->toDateString())])
-            ->withCount(['deliveryOrders as orders_today' => fn($q) => $q->where('created_at', '>=', today()->startOfDay())->whereIn('status', ['received', 'delivered'])])
+            ->whereHas('shifts', fn($q) => $q->where('is_active', true)->where('date', $businessDate))
+            ->with(['shifts' => fn($q) => $q->where('is_active', true)->where('date', $businessDate)])
+            ->withCount(['deliveryOrders as orders_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])->whereIn('status', ['received', 'delivered'])])
             ->get()
             ->map(fn($d) => [
                 'id'         => $d->id,
@@ -81,11 +87,14 @@ class DeliveryViewController extends Controller
     {
         $maxOrders = (int) Setting::get('max_orders_per_delivery', 10);
 
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        $businessDate = $startOfToday->toDateString();
+
         $deliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->where('is_active', true)
-            ->with(['shifts' => fn($q) => $q->where('date', today()->toDateString())])
-            ->withCount(['deliveryOrders as orders_today' => fn($q) => $q->where('created_at', '>=', today()->startOfDay())])
-            ->withCount(['deliveryOrders as cancelled_today' => fn($q) => $q->where('created_at', '>=', today()->startOfDay())->where('status', 'cancelled')])
+            ->with(['shifts' => fn($q) => $q->where('date', $businessDate)])
+            ->withCount(['deliveryOrders as orders_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
+            ->withCount(['deliveryOrders as cancelled_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'cancelled')])
             ->get()
             ->map(fn($d) => [
                 'id'              => $d->id,
@@ -111,11 +120,12 @@ class DeliveryViewController extends Controller
     public function toggleShift(Request $request, $id)
     {
         $delivery  = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
-        $today     = today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        $businessDate = $startOfToday->toDateString();
         $maxOrders = (int) Setting::get('max_orders_per_delivery', 10);
 
         $shift = Shift::where('delivery_id', $id)
-                      ->where('date', $today->toDateString())
+                      ->where('date', $businessDate)
                       ->first();
 
         if ($shift && $shift->is_active) {
@@ -136,7 +146,7 @@ class DeliveryViewController extends Controller
             } else {
                 Shift::create([
                     'delivery_id' => $id,
-                    'date'        => $today,
+                    'date'        => $businessDate,
                     'started_at'  => now(),
                     'is_active'   => true,
                     'max_orders'  => $maxOrders,
@@ -158,77 +168,4 @@ class DeliveryViewController extends Controller
         return response()->json(['success' => true, 'message' => $message, 'is_on' => $is_on]);
     }
 
-    public function settlement($id)
-    {
-        $delivery = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
-
-        $orders = Order::with(['client', 'items'])
-            ->where('delivery_id', $id)
-            ->where('callcenter_id', auth()->id())
-            ->where('status', 'delivered')
-            ->where('is_settled', false)
-            ->get();
-
-        $todayDelivered = Order::where('delivery_id', $id)
-            ->where('callcenter_id', auth()->id())
-            ->where('status', 'delivered')
-            ->where('delivered_at', '>=', today()->startOfDay())
-            ->get();
-
-        return response()->json([
-            'delivery'   => ['id' => $delivery->id, 'name' => $delivery->name],
-            'orders'     => $orders->map(fn($o) => [
-                'order_number' => $o->order_number,
-                'client'       => $o->client?->name ?? '—',
-                'total'        => $o->total,
-                'delivery_fee' => $o->delivery_fee,
-                'delivered_at' => $o->delivered_at?->toIso8601String(),
-            ]),
-            'summary' => [
-                'count'           => $todayDelivered->count(),
-                'total_values'    => $todayDelivered->sum('total'),
-                'total_fees'      => $todayDelivered->sum('delivery_fee'),
-                'unsettled_value' => $orders->sum('total'),
-                'unsettled_fees'  => $orders->sum('delivery_fee'),
-            ],
-        ]);
-    }
-
-    public function doSettlement($id)
-    {
-        $delivery = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
-        
-        $orders = Order::where('delivery_id', $id)
-            ->where('callcenter_id', auth()->id())
-            ->where('status', 'delivered')
-            ->where('is_settled', false)
-            ->get();
-
-        $totalValue = $orders->sum('total');
-        $totalFees  = $orders->sum('delivery_fee');
-
-        if ($orders->isNotEmpty()) {
-            Order::whereIn('id', $orders->pluck('id'))->update(['is_settled' => true]);
-
-            // Decrement the global driver accounts by the amounts just settled
-            $delivery->decrement('unsettled_value', $totalValue);
-            $delivery->decrement('unsettled_fees', $totalFees);
-
-            ActivityLog::log(
-                event: 'settlement.cc_delivery',
-                description: 'تسوية مندوب مع كول سنتر — ' . $delivery->name,
-                subjectType: 'settlement',
-                subjectId: $delivery->id,
-                subjectLabel: $delivery->name,
-                properties: [
-                    'delivery_name' => $delivery->name,
-                    'orders_count'  => $orders->count(),
-                    'total_value'   => $totalValue,
-                    'total_fees'    => $totalFees,
-                ]
-            );
-        }
-
-        return response()->json(['success' => true, 'message' => 'تمت التسوية بنجاح وتصفير العهدة']);
-    }
 }

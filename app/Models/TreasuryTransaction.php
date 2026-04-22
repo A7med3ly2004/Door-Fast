@@ -116,7 +116,7 @@ class TreasuryTransaction extends Model
      */
     public function scopeOfType(Builder $query, ?string $type): Builder
     {
-        if ($type && in_array($type, ['income', 'expense', 'settlement', 'dain', 'discount'])) {
+        if ($type && in_array($type, ['income', 'expense', 'settlement', 'dain', 'discount', 'pay_to_user', 'receive_from_user'])) {
             $query->where('type', $type);
         }
 
@@ -147,24 +147,29 @@ class TreasuryTransaction extends Model
             ->groupBy('type')
             ->pluck('total', 'type');
 
-        $totalIncome     = (float) ($rows['income']     ?? 0);
-        $totalExpense    = (float) ($rows['expense']    ?? 0);
-        $totalSettlement = (float) ($rows['settlement'] ?? 0);
-        $totalDain       = (float) ($rows['dain']       ?? 0);
-        $totalDiscount   = (float) ($rows['discount']   ?? 0);
+        $totalIncome         = (float) ($rows['income']           ?? 0);
+        $totalExpense        = (float) ($rows['expense']          ?? 0);
+        $totalSettlement     = (float) ($rows['settlement']       ?? 0);
+        $totalDain           = (float) ($rows['dain']             ?? 0);
+        $totalDiscount       = (float) ($rows['discount']         ?? 0);
+        $totalPayToUser      = (float) ($rows['pay_to_user']      ?? 0);
+        $totalReceiveFromUser= (float) ($rows['receive_from_user']?? 0);
 
-        // Dain counts as expense (مصرف) — per user feedback
-        // Discount is NOT added to balance calculation for now per user request
-        $adjustedExpenses = $totalExpense + $totalDain;
+        // KPI 1: إجمالي الدفع لموظف
+        $paymentReceipts   = $totalPayToUser;
+        // KPI 2: إجمالي الاستلام من موظف
+        $receivingReceipts = $totalReceiveFromUser;
+        // KPI 3: إجمالي المصروفات (expense only)
+        $totalExpenses     = $totalExpense;
+        // KPI 4: الرصيد = (income + settlement + receive_from_user) − (expense + dain + discount + pay_to_user)
+        $balance = ($totalIncome + $totalSettlement + $totalReceiveFromUser)
+                 - ($totalExpense + $totalDain + $totalDiscount + $totalPayToUser);
 
         return [
-            'total_income'   => number_format($totalIncome, 2),
-            'total_expense'  => number_format($adjustedExpenses, 2),
-            'total_dain'     => number_format($totalDain, 2),
-            'balance'        => number_format(
-                ($totalIncome + $totalSettlement) - $adjustedExpenses,
-                2
-            ),
+            'payment_receipts'   => number_format($paymentReceipts, 2),
+            'receiving_receipts' => number_format($receivingReceipts, 2),
+            'total_expenses'     => number_format($totalExpenses, 2),
+            'balance'            => number_format($balance, 2),
         ];
     }
 
@@ -232,12 +237,14 @@ class TreasuryTransaction extends Model
     public function getTypeLabelAttribute(): string
     {
         return match ($this->type) {
-            'income'     => 'إيراد',
-            'expense'    => 'مصروف',
-            'settlement' => 'تسوية',
-            'dain'       => 'صرف مديونية',
-            'discount'   => 'خصم',
-            default      => $this->type,
+            'income'           => 'إيراد',
+            'expense'          => 'مصروف',
+            'settlement'       => 'تسوية',
+            'dain'             => 'صرف مديونية',
+            'discount'         => 'خصم',
+            'pay_to_user'      => 'دفع لموظف',
+            'receive_from_user'=> 'استلام من موظف',
+            default            => $this->type,
         };
     }
 
@@ -248,12 +255,14 @@ class TreasuryTransaction extends Model
     public function getTypeBadgeClassAttribute(): string
     {
         return match ($this->type) {
-            'income'     => 'success',
-            'expense'    => 'danger',
-            'settlement' => 'warning',
-            'dain'       => 'indigo', // specific color for dain
-            'discount'   => 'danger', // requested red color (danger)
-            default      => 'secondary',
+            'income'           => 'success',
+            'expense'          => 'danger',
+            'settlement'       => 'warning',
+            'dain'             => 'indigo',
+            'discount'         => 'danger',
+            'pay_to_user'      => 'cyan',
+            'receive_from_user'=> 'teal',
+            default            => 'secondary',
         };
     }
 }

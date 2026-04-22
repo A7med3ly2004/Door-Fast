@@ -25,28 +25,29 @@ class StatsController extends Controller
     public function data()
     {
         $me    = auth()->id();
-        $today = today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
-        $ordersToday    = Order::where('callcenter_id', $me)->whereDate('created_at', $today)->count();
-        $deliveredToday = Order::where('callcenter_id', $me)->whereDate('created_at', $today)->where('status', 'delivered')->count();
-        $cancelledToday = Order::where('callcenter_id', $me)->whereDate('created_at', $today)->where('status', 'cancelled')->count();
-        $revenueToday   = Order::where('callcenter_id', $me)->whereDate('created_at', $today)->where('status', 'delivered')->sum('total');
-        $feesToday      = Order::where('callcenter_id', $me)->whereDate('created_at', $today)->where('status', 'delivered')->sum('delivery_fee');
-        $discountToday  = Order::where('callcenter_id', $me)->whereDate('created_at', $today)->sum('discount');
+        $ordersToday    = Order::where('callcenter_id', $me)->whereBetween('created_at', [$startOfToday, $endOfToday])->count();
+        $deliveredToday = Order::where('callcenter_id', $me)->whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->count();
+        $cancelledToday = Order::where('callcenter_id', $me)->whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'cancelled')->count();
+        $revenueToday   = Order::where('callcenter_id', $me)->whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->sum('total');
+        $feesToday      = Order::where('callcenter_id', $me)->whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->sum('delivery_fee');
+        $discountToday  = Order::where('callcenter_id', $me)->whereBetween('created_at', [$startOfToday, $endOfToday])->sum('discount');
 
         // Bar chart: last 7 days
         $chart = [];
         for ($i = 6; $i >= 0; $i--) {
             $day = Carbon::today()->subDays($i);
+            $dayRange = \App\Models\Setting::businessDayRange($day);
             $chart[] = [
                 'label' => $day->format('d/m'),
-                'count' => Order::where('callcenter_id', $me)->whereDate('created_at', $day)->count(),
+                'count' => Order::where('callcenter_id', $me)->whereBetween('created_at', $dayRange)->count(),
             ];
         }
 
         // Per-delivery breakdown (from my orders only)
         $deliveries = User::where('role', 'delivery')
-            ->with(['deliveryOrders' => fn($q) => $q->where('callcenter_id', $me)->whereDate('created_at', $today)])
+            ->with(['deliveryOrders' => fn($q) => $q->where('callcenter_id', $me)->whereBetween('created_at', [$startOfToday, $endOfToday])])
             ->get()
             ->map(fn($d) => [
                 'name'      => $d->name,

@@ -56,12 +56,12 @@ class ReportDiscountController extends Controller
     public function data(Request $request)
     {
         $from = $request->filled('from')
-            ? Carbon::parse($request->from)->startOfDay()
-            : Carbon::now()->subDays(30)->startOfDay();
+            ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0]
+            : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
 
         $to = $request->filled('to')
-            ? Carbon::parse($request->to)->endOfDay()
-            : Carbon::now()->endOfDay();
+            ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]
+            : \App\Models\Setting::businessDayRange(today())[1];
 
         $query = Order::with(['client', 'callcenter', 'delivery', 'items'])
             ->whereBetween('created_at', [$from, $to])

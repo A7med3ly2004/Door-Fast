@@ -17,11 +17,11 @@ class DeliveryManagementController extends Controller
     public function index()
     {
         if (request()->header('X-SPA-Navigation')) {
-            $today      = today();
+            list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
             $allDeliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
                 ->with([
                     'activeShift',
-                    'deliveryOrders' => fn($q) => $q->whereDate('created_at', $today),
+                    'deliveryOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday]),
                 ])
                 ->orderBy('name')
                 ->get()
@@ -48,11 +48,11 @@ class DeliveryManagementController extends Controller
             ]);
         }
 
-        $today      = today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
         $allDeliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->with([
                 'activeShift',
-                'deliveryOrders' => fn($q) => $q->whereDate('created_at', $today),
+                'deliveryOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday]),
             ])
             ->orderBy('name')
             ->get()

@@ -4,17 +4,17 @@
 
 @section('content')
 <div class="section-header">
-    <h2>📋 إدارة الطلبات</h2>
+    <h2> إدارة الطلبات</h2>
     <a href="{{ route('admin.orders.export-pdf') }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}"
        id="export-pdf-btn" class="btn btn-danger" target="_blank">
-        📄 تصدير PDF
+        تصدير PDF
     </a>
 </div>
 
 {{-- Filters --}}
 <div class="card" style="margin-bottom:20px">
     <div class="filter-bar">
-        <input type="text" id="filter-search" class="form-control" placeholder="بحث بالطلب / العميل / الهاتف" style="min-width:220px">
+        <input type="text" id="filter-search" class="form-control" placeholder="بحث بالطلب / العميل / الهاتف" style="min-width:260px">
         <select id="filter-status" class="form-select">
             <option value="">كل الحالات</option>
             <option value="pending">باقي</option>
@@ -36,8 +36,8 @@
         </select>
         <input type="date" id="filter-from" class="form-control" placeholder="من">
         <input type="date" id="filter-to" class="form-control" placeholder="إلى">
-        <button class="btn btn-primary" onclick="loadOrders(1)">🔍 بحث</button>
-        <button class="btn btn-secondary" onclick="resetFilters()">↺ إعادة</button>
+        <button class="btn btn-primary" onclick="loadOrders(1)">بحث</button>
+        <button class="btn btn-secondary" onclick="resetFilters()">إعادة</button>
     </div>
 </div>
 
@@ -48,17 +48,17 @@
         <table>
             <thead>
                 <tr>
-                    <th>رقم الطلب</th>
-                    <th>التاريخ</th>
-                    <th>العميل</th>
-                    <th>كول سنتر</th>
-                    <th>المندوب</th>
-                    <th>عدد الأصناف</th>
-                    <th>توصيل</th>
-                    <th>خصم</th>
-                    <th>الإجمالي</th>
-                    <th>الحالة</th>
-                    <th>إجراءات</th>
+                    <th style="text-align: center;">رقم الطلب</th>
+                    <th style="text-align: center;">التاريخ</th>
+                    <th style="text-align: center;">العميل</th>
+                    <th style="text-align: center;">كول سنتر</th>
+                    <th style="text-align: center;">المندوب</th>
+                    <th style="text-align: center;">عدد الأصناف</th>
+                    <th style="text-align: center;">توصيل</th>
+                    <th style="text-align: center;">خصم</th>
+                    <th style="text-align: center;">الإجمالي</th>
+                    <th style="text-align: center;">الحالة</th>
+                    <th style="text-align: center;">إجراءات</th>
                 </tr>
             </thead>
             <tbody id="orders-body">
@@ -66,7 +66,7 @@
             </tbody>
         </table>
     </div>
-    <div id="pagination-wrap" style="padding:16px"></div>
+    <div id="pagination-wrap" style="padding:16px; background: var(--bg);"></div>
 </div>
 
 {{-- View Order Modal --}}
@@ -137,21 +137,21 @@ async function loadOrders(page = 1) {
         body.innerHTML = data.data.map(o => {
             const itemsSummary = o.items ? o.items.map(i => `${i.item_name}×${i.quantity}`).join('، ').substring(0, 60) + '...' : '—';
             return `<tr>
-                <td><strong style="color:var(--yellow)">${o.order_number}</strong></td>
-                <td style="font-size:12px;color:var(--text-muted)">${formatDate(o.created_at)}</td>
-                <td>${o.client?.name ?? '—'}</td>
-                <td>${o.callcenter?.name ?? '—'}</td>
-                <td>
+                <td><strong style="color:var(--yellow) text-align: center;">${o.order_number}</strong></td>
+                <td style="font-size:12px;color:var(--text-muted) text-align: center;">${formatDate(o.created_at)}</td>
+                <td style="text-align: center;">${o.client?.name ?? '—'}</td>
+                <td style="text-align: center;">${o.callcenter?.name ?? '—'}</td>
+                <td style="text-align: center;">
                     ${o.delivery?.name ?? '—'}
                     ${o.is_delivery_chosen ? '<div class="kpi-sub" style="font-size:11px; margin-top:4px; color:var(--text-muted);">تم اختيار المندوب</div>' : ''}
                 </td>
-                <td style="text-align:center">${o.items_count}</td>
-                <td>${parseFloat(o.delivery_fee||0).toFixed(2)} ج</td>
-                <td>${parseFloat(o.discount||0).toFixed(2)} ج</td>
-                <td><strong>${parseFloat(o.total||0).toFixed(2)} ج</strong></td>
-                <td>${statusBadge(o.status)}</td>
-                <td>
-                    <div style="display:flex;gap:6px">
+                <td style="text-align: center;">${o.items_count}</td>
+                <td style="text-align: center;">${parseFloat(o.delivery_fee||0).toFixed(2)} ج</td>
+                <td style="text-align: center;">${parseFloat(o.discount||0).toFixed(2)} ج</td>
+                <td style="text-align: center;"><strong>${parseFloat(o.total||0).toFixed(2)} ج</strong></td>
+                <td style="text-align: center;">${statusBadge(o.status)}</td>
+                <td style="text-align: center;">
+                    <div style="display:flex;gap:6px;justify-content: center;">
                         <button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">👁 عرض</button>
                         ${o.status !== 'cancelled' && o.status !== 'delivered' ? `<button class="btn btn-sm btn-danger" onclick="cancelOrder(${o.id})">✕ إلغاء</button>` : ''}
                     </div>

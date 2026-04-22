@@ -8,7 +8,7 @@
 {{-- ── Page KPI strip ── --}}
 <div class="section-header">
     <h2 style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:22px;">📋</span> سجل العمليات
+        <span style="font-size:22px;">سجل العمليات</span>
         <span class="badge badge-blue" id="al-total-badge" style="font-size:20px;padding:2px 26px;border-radius:8px;">{{ $initialLogs->total() }}</span>
     </h2>
     <div style="display:flex;gap:8px;">
@@ -21,7 +21,7 @@
 
 {{-- ── Filter Bar ── --}}
 <div class="card" style="margin-bottom:20px;">
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;align-items:end;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:12px;align-items:end;">
 
 
 
@@ -79,7 +79,7 @@
 </div>
 
 {{-- ── Log Table ── --}}
-<div class="card" style="padding:0;overflow:hidden;position:relative;">
+<div class="card" style="padding:0;overflow:hidden;position:relative;border: 1px solid var(--border);">
     <div id="al-loading" style="display:none;position:absolute;inset:0;background:rgba(15,23,42,0.6);z-index:10;align-items:center;justify-content:center;border-radius:16px;">
         <div style="text-align:center;color:#f1f5f9">
             <div class="spin" style="width:32px;height:32px;border-width:3px;margin:0 auto 8px;"></div>
@@ -92,11 +92,11 @@
             <thead>
                 <tr>
                     <th>النشاط</th>
-                    <th>البيان</th>
-                    <th>الموضوع</th>
-                    <th>المستخدم</th>
-                    <th>الدور</th>
-                    <th>التاريخ والوقت</th>
+                    <th style="text-align: center;">البيان</th>
+                    <th style="text-align: center;">الموضوع</th>
+                    <th style="text-align: center;">المستخدم</th>
+                    <th style="text-align: center;">الدور</th>
+                    <th style="text-align: center;">التاريخ والوقت</th>
                 </tr>
             </thead>
             <tbody id="al-tbody">
@@ -155,9 +155,9 @@
 
 .al-event-icon { font-size:18px; line-height:1; }
 .al-desc       { font-size:13px; color:var(--text); font-weight:500; }
-.al-sub        { font-size:11px; color:var(--text-muted); margin-top:2px; }
-.al-time-main  { font-size:13px; color:var(--text); font-weight:600; direction:ltr; text-align:right; }
-.al-time-ago   { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.al-sub        { font-size:11px; color:var(--text-muted); margin-top:2px;text-align: center; }
+.al-time-main  { font-size:13px; color:var(--text); font-weight:600; direction:ltr; text-align:center; }
+.al-time-ago   { font-size:11px; color:var(--text-muted); margin-top:2px;text-align: center; }
 </style>
 
 <script>
@@ -233,10 +233,10 @@
                     ${r.subject_label ? `<div class="al-sub">${r.subject_label}</div>` : '—'}
                 </td>
                 <td>
-                    <div style="font-size:13px;">${r.subject_type ? subjectTypeLabel(r.subject_type) : '—'}</div>
+                    <div style="font-size:13px; text-align: center;">${r.subject_type ? subjectTypeLabel(r.subject_type) : '—'}</div>
                 </td>
-                <td style="font-size:13px;font-weight:600;">${r.causer_name}</td>
-                <td><span class="badge ${r.causer_role_badge}">${r.causer_role_label}</span></td>
+                <td style="font-size:13px;font-weight:600; text-align: center;">${r.causer_name}</td>
+                <td style="text-align: center;"><span class="badge ${r.causer_role_badge}">${r.causer_role_label}</span></td>
                 <td>
                     <div class="al-time-main">${r.created_at}</div>
                     <div class="al-time-ago">${r.created_at_human}</div>

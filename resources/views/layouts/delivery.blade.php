@@ -381,6 +381,9 @@
             <a href="{{ route('delivery.orders.delivered') }}" class="menu-item" data-spa="true">
                 تم التوصيل
             </a>
+            <a href="{{ route('delivery.wallet.index') }}" class="menu-item" data-spa="true">
+                💰 كشف حسابي
+            </a>
         </div>
     </div>
 
@@ -403,6 +406,10 @@
             <a href="{{ route('delivery.orders.delivered') }}" class="bottom-nav-item" data-spa="true" data-bnav="true">
                 <span class="bnav-icon">✅</span>
                 <span>الموصلة</span>
+            </a>
+            <a href="{{ route('delivery.wallet.index') }}" class="bottom-nav-item" data-spa="true" data-bnav="true">
+                <span class="bnav-icon">💰</span>
+                <span>حسابي</span>
             </a>
         </div>
     </nav>

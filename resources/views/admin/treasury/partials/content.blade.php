@@ -11,55 +11,73 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 
 {{-- ── Page header ──────────────────────────────────────────────── --}}
 <div class="section-header">
-    <h2>🏦 الخزينة</h2>
+    <h2>ادارة الخزينة</h2>
     <style>
         :root {
             --indigo: #4f46e5;
             --indigo-light: #e0e7ff;
             --indigo-dark: #3730a3;
         }
+
         .badge-indigo {
             background: var(--indigo-light);
             color: var(--indigo-dark);
         }
-        .pagination a { cursor: pointer; }
+
+        .badge-cyan {
+            background: #cffafe;
+            color: #0e7490;
+        }
+
+        .badge-teal {
+            background: #ccfbf1;
+            color: #0f766e;
+        }
+
+        .pagination a {
+            cursor: pointer;
+        }
     </style>
-    <div style="display:flex;gap:10px;">
-        <button class="btn btn-success" onclick="openModal('modal-income')">
-            ➕ إضافة إيراد
-        </button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-danger" onclick="openModal('modal-expense')">
-            ➖ إضافة مصروف
-        </button>
-        <button class="btn btn-indigo" onclick="openDainModal()" style="background:var(--indigo);color:#fff;">
-            ⚖️ صرف مديونية
+            صرف مصروف
         </button>
         <button class="btn btn-danger" onclick="openDiscountModal()" style="background:var(--red);color:#fff;">
-            ✂️ خصم
+            خصم
+        </button>
+        <button class="btn" onclick="openPayToUserModal()" style="background:#0891b2;color:#fff;">
+           ايصال دفع نقدي   
+        </button>
+        <button class="btn" onclick="openReceiveFromUserModal()" style="background:#059669;color:#fff;">
+            ايصال استلام نقدي
         </button>
     </div>
 </div>
 
 {{-- ── KPI Cards ─────────────────────────────────────────────────── --}}
 <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
-    <div class="kpi-card green">
-        <div class="kpi-label">إجمالي الإيرادات</div>
-        <div class="kpi-value" id="kpi-income" style="color:var(--success)">{{ $initialStats['total_income'] }}</div>
-        <div class="kpi-sub">ج.م</div>
-    </div>
     <div class="kpi-card red">
-        <div class="kpi-label">إجمالي المصروفات</div>
-        <div class="kpi-value" id="kpi-expense" style="color:var(--red)">{{ $initialStats['total_expense'] }}</div>
+        <div class="kpi-label">إجمالي الدفع لموظف</div>
+        <div class="kpi-value" id="kpi-payment-receipts" style="color: #0891b2">
+            {{ $initialStats['payment_receipts'] }}
+        </div>
         <div class="kpi-sub">ج.م</div>
     </div>
-    <div class="kpi-card" style="border-left:4px solid var(--indigo);">
-        <div class="kpi-label">إجمالي المديونية</div>
-        <div class="kpi-value" id="kpi-dain" style="color:var(--indigo)">{{ $initialStats['total_dain'] }}</div>
+    <div class="kpi-card green">
+        <div class="kpi-label">إجمالي الاستلام من موظف</div>
+        <div class="kpi-value" id="kpi-receiving-receipts" style="color:var(--success)">
+            {{ $initialStats['receiving_receipts'] }}
+        </div>
         <div class="kpi-sub">ج.م</div>
     </div>
     <div class="kpi-card">
-        <div class="kpi-label">رصيد الخزينة الحالي</div>
-        <div class="kpi-value" id="kpi-balance" style="color:var(--yellow)">{{ $initialStats['balance'] }}</div>
+        <div class="kpi-label">إجمالي المصروفات</div>
+        <div class="kpi-value" id="kpi-expenses" style="color:var(--yellow)">{{ $initialStats['total_expenses'] }}</div>
+        <div class="kpi-sub">ج.م</div>
+    </div>
+    <div class="kpi-card" style="border-left:4px solid #0891b2;">
+        <div class="kpi-label">الرصيد الحالي للخزينة</div>
+        <div class="kpi-value" id="kpi-balance" style="color:#0891b2">{{ $initialStats['balance'] }}</div>
         <div class="kpi-sub">ج.م</div>
     </div>
 </div>
@@ -79,11 +97,15 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             <div class="form-label" style="margin-bottom:4px;">نوع المعاملة</div>
             <select id="filter-type" class="form-select">
                 <option value="">الكل</option>
-                <option value="income"     {{ ($filters['type'] ?? '') === 'income'     ? 'selected' : '' }}>إيراد</option>
-                <option value="expense"    {{ ($filters['type'] ?? '') === 'expense'    ? 'selected' : '' }}>مصروف</option>
-                <option value="settlement" {{ ($filters['type'] ?? '') === 'settlement' ? 'selected' : '' }}>تسوية</option>
-                <option value="dain"       {{ ($filters['type'] ?? '') === 'dain'       ? 'selected' : '' }}>صرف مديونية</option>
-                <option value="discount"   {{ ($filters['type'] ?? '') === 'discount'   ? 'selected' : '' }}>خصم</option>
+                <option value="income" {{ ($filters['type'] ?? '') === 'income' ? 'selected' : '' }}>إيراد</option>
+                <option value="expense" {{ ($filters['type'] ?? '') === 'expense' ? 'selected' : '' }}>مصروف</option>
+                <option value="settlement" {{ ($filters['type'] ?? '') === 'settlement' ? 'selected' : '' }}>تسوية
+                </option>
+                <option value="dain" {{ ($filters['type'] ?? '') === 'dain' ? 'selected' : '' }}>صرف مديونية</option>
+                <option value="discount" {{ ($filters['type'] ?? '') === 'discount' ? 'selected' : '' }}>خصم</option>
+                <option value="pay_to_user" {{ ($filters['type'] ?? '') === 'pay_to_user' ? 'selected' : '' }}>دفع لموظف
+                </option>
+                <option value="receive_from_user" {{ ($filters['type'] ?? '') === 'receive_from_user' ? 'selected' : '' }}>استلام من موظف</option>
             </select>
         </div>
         <div style="display:flex;gap:8px;align-self:flex-end;">
@@ -127,6 +149,10 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                                 <span class="badge badge-yellow">تسوية</span>
                             @elseif($tx->type === 'discount')
                                 <span class="badge badge-red">خصم</span>
+                            @elseif($tx->type === 'pay_to_user')
+                                <span class="badge badge-cyan">دفع لموظف</span>
+                            @elseif($tx->type === 'receive_from_user')
+                                <span class="badge badge-teal">استلام من موظف</span>
                             @else
                                 <span class="badge badge-indigo">صرف مديونية</span>
                             @endif
@@ -135,8 +161,12 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                         <td>{{ $tx->by_whom }}</td>
                         <td style="color:var(--text-muted);font-size:12px;">{{ Str::limit($tx->note ?? '—', 40) }}</td>
                         <td style="text-align:center;">
-                            <button class="btn btn-sm btn-info" onclick="showDetail({{ $tx->id }})"
-                                title="عرض التفاصيل">عرض</button>
+                            <div style="display:flex;gap:6px;justify-content:center;">
+                                <button class="btn btn-sm btn-info" onclick="showDetail({{ $tx->id }})"
+                                    title="عرض التفاصيل">👁</button>
+                                <button class="btn btn-sm" style="background:var(--yellow);color:#000;"
+                                    onclick="editTransaction({{ $tx->id }})" title="تعديل">✏️ تعديل</button>
+                            </div>
                         </td>
                     </tr>
                 @empty
@@ -422,11 +452,146 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
     </div>
 </div>
 
+{{-- ── Pay To User Modal ──────────────────────────────────────────── --}}
+<div class="modal-overlay" id="modal-pay-to-user">
+    <div class="modal">
+        <div class="modal-header" style="background:rgba(8,145,178,.08);border-bottom:0;">
+            <h3 style="color:#0891b2;">💵 دفع نقدي لموظف</h3>
+            <button class="btn-close" onclick="closeModal('modal-pay-to-user')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="error-text" id="pay-global-error"
+                style="background:var(--red-light);color:var(--red-dark);padding:10px;border-radius:8px;margin-bottom:12px;display:none;">
+            </div>
+
+            <div class="form-group">
+                <label for="pay-user-id" class="form-label">الموظف <span style="color:var(--red)">*</span></label>
+                <select id="pay-user-id" class="form-select">
+                    <option value="">اختر موظف...</option>
+                    <optgroup label="كول سينتر">
+                        @foreach($callcenters as $cc)
+                            <option value="{{ $cc->id }}">{{ $cc->name }}</option>
+                        @endforeach
+                    </optgroup>
+                    <optgroup label="مناديب">
+                        @foreach($deliveries as $d)
+                            <option value="{{ $d->id }}">{{ $d->name }}</option>
+                        @endforeach
+                    </optgroup>
+                </select>
+                <div class="error-text" id="pay-user-id-error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="pay-amount" class="form-label">المبلغ <span style="color:var(--red)">*</span></label>
+                <div style="display:flex;">
+                    <input type="number" id="pay-amount" class="form-control" placeholder="0.00" min="0.01" step="0.01"
+                        max="9999999.99" style="border-radius:0 8px 8px 0;flex:1;">
+                    <span
+                        style="background:var(--input-bg);padding:9px 12px;border-radius:8px 0 0 8px;font-size:13px;color:var(--text-muted);border:1px solid var(--border);border-right:none;">ج.م</span>
+                </div>
+                <div class="error-text" id="pay-amount-error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="pay-date" class="form-label">التاريخ <span
+                        style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري — اليوم)</span></label>
+                <input type="date" id="pay-date" class="form-control" max="{{ now()->toDateString() }}">
+                <div class="error-text" id="pay-date-error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="pay-description" class="form-label">ملاحظة <span
+                        style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري)</span></label>
+                <textarea id="pay-description" class="form-control" rows="2" maxlength="500"
+                    placeholder="وصف مختصر..."></textarea>
+                <div class="error-text" id="pay-description-error"></div>
+            </div>
+        </div>
+        <div class="modal-footer" style="border-top:0;">
+            <button class="btn btn-secondary" onclick="closeModal('modal-pay-to-user')">إلغاء</button>
+            <button class="btn" id="pay-submit-btn" onclick="submitPayToUser()" style="background:#0891b2;color:#fff;">
+                <span id="pay-submit-spinner" class="spin"
+                    style="display:none;width:14px;height:14px;margin-left:6px;border-width:2px;border-color:rgba(255,255,255,.3);border-top-color:#fff;"></span>
+                تأكيد الدفع
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- ── Receive From User Modal ───────────────────────────────────── --}}
+<div class="modal-overlay" id="modal-receive-from-user">
+    <div class="modal">
+        <div class="modal-header" style="background:rgba(5,150,105,.08);border-bottom:0;">
+            <h3 style="color:#059669;">💵 استلام نقدي من موظف</h3>
+            <button class="btn-close" onclick="closeModal('modal-receive-from-user')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="error-text" id="receive-global-error"
+                style="background:var(--red-light);color:var(--red-dark);padding:10px;border-radius:8px;margin-bottom:12px;display:none;">
+            </div>
+
+            <div class="form-group">
+                <label for="receive-user-id" class="form-label">الموظف <span style="color:var(--red)">*</span></label>
+                <select id="receive-user-id" class="form-select">
+                    <option value="">اختر موظف...</option>
+                    <optgroup label="كول سينتر">
+                        @foreach($callcenters as $cc)
+                            <option value="{{ $cc->id }}">{{ $cc->name }}</option>
+                        @endforeach
+                    </optgroup>
+                    <optgroup label="مناديب">
+                        @foreach($deliveries as $d)
+                            <option value="{{ $d->id }}">{{ $d->name }}</option>
+                        @endforeach
+                    </optgroup>
+                </select>
+                <div class="error-text" id="receive-user-id-error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="receive-amount" class="form-label">المبلغ <span style="color:var(--red)">*</span></label>
+                <div style="display:flex;">
+                    <input type="number" id="receive-amount" class="form-control" placeholder="0.00" min="0.01"
+                        step="0.01" max="9999999.99" style="border-radius:0 8px 8px 0;flex:1;">
+                    <span
+                        style="background:var(--input-bg);padding:9px 12px;border-radius:8px 0 0 8px;font-size:13px;color:var(--text-muted);border:1px solid var(--border);border-right:none;">ج.م</span>
+                </div>
+                <div class="error-text" id="receive-amount-error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="receive-date" class="form-label">التاريخ <span
+                        style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري — اليوم)</span></label>
+                <input type="date" id="receive-date" class="form-control" max="{{ now()->toDateString() }}">
+                <div class="error-text" id="receive-date-error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="receive-description" class="form-label">ملاحظة <span
+                        style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري)</span></label>
+                <textarea id="receive-description" class="form-control" rows="2" maxlength="500"
+                    placeholder="وصف مختصر..."></textarea>
+                <div class="error-text" id="receive-description-error"></div>
+            </div>
+        </div>
+        <div class="modal-footer" style="border-top:0;">
+            <button class="btn btn-secondary" onclick="closeModal('modal-receive-from-user')">إلغاء</button>
+            <button class="btn" id="receive-submit-btn" onclick="submitReceiveFromUser()"
+                style="background:#059669;color:#fff;">
+                <span id="receive-submit-spinner" class="spin"
+                    style="display:none;width:14px;height:14px;margin-left:6px;border-width:2px;border-color:rgba(255,255,255,.3);border-top-color:#fff;"></span>
+                تأكيد الاستلام
+            </button>
+        </div>
+    </div>
+</div>
+
 {{-- ── Detail Modal ──────────────────────────────────────────────── --}}
 <div class="modal-overlay" id="modal-detail">
     <div class="modal">
         <div class="modal-header">
-            <h3>👁 تفاصيل المعاملة</h3>
+            <h3>تفاصيل المعاملة</h3>
             <button class="btn-close" onclick="closeModal('modal-detail')">✕</button>
         </div>
         <div class="modal-body" id="detail-modal-body">
@@ -438,6 +603,64 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
     </div>
 </div>
 
+{{-- ── Edit Transaction Modal ─────────────────────────────────── --}}
+<div class="modal-overlay" id="modal-edit-transaction">
+    <div class="modal">
+        <div class="modal-header" style="background:rgba(245,158,11,.08);border-bottom:0;">
+            <h3 style="color:var(--yellow);">✏️ تعديل معاملة مالية</h3>
+            <button class="btn-close" onclick="closeModal('modal-edit-transaction')">✕</button>
+        </div>
+        <div class="modal-body" id="edit-tx-body">
+            <input type="hidden" id="edit-tx-id" value="">
+            <div class="error-text" id="edit-tx-global-error"
+                style="background:var(--red-light);color:var(--red-dark);padding:10px;border-radius:8px;margin-bottom:12px;display:none;">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">نوع المعاملة</label>
+                <div style="padding:8px 12px;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;font-size:13px;"
+                    id="edit-tx-type-label">...</div>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-tx-by-whom" class="form-label">بواسطة <span style="color:var(--red)">*</span></label>
+                <input type="text" id="edit-tx-by-whom" class="form-control" placeholder="اسم الشخص أو الجهة"
+                    maxlength="100" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="edit-tx-amount" class="form-label">المبلغ <span style="color:var(--red)">*</span></label>
+                <div style="display:flex;">
+                    <input type="number" id="edit-tx-amount" class="form-control" placeholder="0.00" min="0.01"
+                        step="0.01" max="9999999.99" style="border-radius:0 8px 8px 0;flex:1;">
+                    <span
+                        style="background:var(--input-bg);padding:9px 12px;border-radius:8px 0 0 8px;font-size:13px;color:var(--text-muted);border:1px solid var(--border);border-right:none;">ج.م</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-tx-date" class="form-label">التاريخ <span
+                        style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري)</span></label>
+                <input type="date" id="edit-tx-date" class="form-control" max="{{ now()->toDateString() }}">
+            </div>
+
+            <div class="form-group">
+                <label for="edit-tx-note" class="form-label">ملاحظة <span
+                        style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري)</span></label>
+                <textarea id="edit-tx-note" class="form-control" rows="2" maxlength="500"
+                    placeholder="وصف مختصر..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer" style="border-top:0;">
+            <button class="btn btn-secondary" onclick="closeModal('modal-edit-transaction')">إلغاء</button>
+            <button class="btn btn-primary" id="edit-tx-submit-btn" onclick="submitEditTransaction()">
+                <span id="edit-tx-submit-spinner" class="spin"
+                    style="display:none;width:14px;height:14px;margin-left:6px;border-width:2px;border-color:rgba(255,255,255,.3);border-top-color:#fff;"></span>
+                حفظ التعديل
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
     (function () {
@@ -467,10 +690,10 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         // ── KPI fetch ────────────────────────────────────────────────
         async function fetchStats() {
             try {
-                const res = await axios.get('/admin/treasury/stats', { params: buildParams() });
-                document.getElementById('kpi-income').textContent = res.data.total_income;
-                document.getElementById('kpi-expense').textContent = res.data.total_expense;
-                document.getElementById('kpi-dain').textContent = res.data.total_dain;
+                var res = await axios.get('/admin/treasury/stats', { params: buildParams() });
+                document.getElementById('kpi-payment-receipts').textContent = res.data.payment_receipts;
+                document.getElementById('kpi-receiving-receipts').textContent = res.data.receiving_receipts;
+                document.getElementById('kpi-expenses').textContent = res.data.total_expenses;
                 document.getElementById('kpi-balance').textContent = res.data.balance;
             } catch (e) {
                 console.warn('Treasury stats fetch failed', e);
@@ -499,6 +722,8 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             if (type === 'expense') return '<span class="badge badge-red">مصروف</span>';
             if (type === 'settlement') return '<span class="badge badge-yellow">تسوية</span>';
             if (type === 'discount') return '<span class="badge badge-red">خصم</span>';
+            if (type === 'pay_to_user') return '<span class="badge badge-cyan">دفع لموظف</span>';
+            if (type === 'receive_from_user') return '<span class="badge badge-teal">استلام من موظف</span>';
             return '<span class="badge badge-indigo">صرف مديونية</span>';
         }
 
@@ -522,7 +747,10 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                 <td>${escHtml(tx.by_whom)}</td>
                 <td style="color:var(--text-muted);font-size:12px;">${truncate(escHtml(tx.note), 40)}</td>
                 <td style="text-align:center;">
-                    <button class="btn btn-sm btn-info" onclick="showDetail(${tx.id})" title="عرض التفاصيل">👁</button>
+                    <div style="display:flex;gap:6px;justify-content:center;">
+                        <button class="btn btn-sm btn-info" onclick="showDetail(${tx.id})" title="عرض التفاصيل">👁</button>
+                        <button class="btn btn-sm" style="background:var(--yellow);color:#000;" onclick="editTransaction(${tx.id})" title="تعديل">✏️ تعديل</button>
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -819,16 +1047,82 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             }
 
             return `
-            <div class="info-row"><span class="info-label">رقم المعاملة:</span><strong>#${tx.id}</strong></div>
-            <div class="info-row"><span class="info-label">التاريخ:</span><span>${escHtml(tx.transaction_date)}</span></div>
-            <div class="info-row"><span class="info-label">النوع:</span>${badgeHtml}</div>
-            <div class="info-row"><span class="info-label">المبلغ:</span><strong style="font-size:16px;color:var(--yellow)">${tx.amount} ج.م</strong></div>
-            <div class="info-row"><span class="info-label">بواسطة:</span><span>${escHtml(tx.by_whom)}</span></div>
-            <div class="info-row"><span class="info-label">سُجِّل بواسطة:</span><span>${escHtml(tx.recorded_by)}</span></div>
-            <div class="info-row"><span class="info-label">ملاحظة:</span><span>${escHtml(tx.note)}</span></div>
-            <div class="info-row" style="font-size:11px;color:var(--text-muted);"><span class="info-label">أُنشئ في:</span><span>${escHtml(tx.created_at)}</span></div>
-            ${settlementSection}`;
+            <div class="info-row"><span class="info-label">رقم المعاملة : </span><strong>#${tx.id}</strong></div>
+            <div class="info-row"><span class="info-label">التاريخ: </span><span>${escHtml(tx.transaction_date)}</span></div>
+            <div class="info-row"><span class="info-label">النوع: </span>${badgeHtml}</div>
+            <div class="info-row"><span class="info-label">المبلغ: </span><strong style="font-size:16px;color:var(--yellow)">${tx.amount} ج.م</strong></div>
+            <div class="info-row"><span class="info-label">بواسطة: </span><span>${escHtml(tx.by_whom)}</span></div>
+            <div class="info-row"><span class="info-label">سُجِّل بواسطة: </span><span>${escHtml(tx.recorded_by)}</span></div>
+            <div class="info-row"><span class="info-label">ملاحظة: </span><span>${escHtml(tx.note)}</span></div>
+            <div class="info-row" style="font-size:11px;color:var(--text-muted);"><span class="info-label">أُنشئ في: </span><span>${escHtml(tx.created_at)}</span></div>
+            ${settlementSection}
+            <div style="margin-top:14px;">
+                <button class="btn btn-danger btn-sm" onclick="exportTransactionPdf(${tx.id})">📄 تصدير PDF</button>
+            </div>`;
         }
+
+        // ── Edit Transaction ──────────────────────────────────────────
+        window.editTransaction = async function (id) {
+            var modal = document.getElementById('modal-edit-transaction');
+            var body = document.getElementById('edit-tx-body');
+            // Reset fields
+            ['edit-tx-by-whom', 'edit-tx-amount', 'edit-tx-note', 'edit-tx-date'].forEach(function (f) {
+                var el = document.getElementById(f); if (el) el.value = '';
+            });
+            document.getElementById('edit-tx-type-label').textContent = '...';
+            document.getElementById('edit-tx-id').value = id;
+            document.getElementById('edit-tx-global-error').style.display = 'none';
+            openModal('modal-edit-transaction');
+            try {
+                var res = await axios.get('/admin/treasury/' + id);
+                var tx = res.data;
+                document.getElementById('edit-tx-by-whom').value = tx.by_whom !== '—' ? tx.by_whom : '';
+                document.getElementById('edit-tx-amount').value = parseFloat(tx.amount.replace(/,/g, ''));
+                document.getElementById('edit-tx-note').value = tx.note !== '—' ? tx.note : '';
+                // transaction_date from show is formatted d/m/Y, convert to Y-m-d for input
+                var parts = tx.transaction_date.split('/');
+                if (parts.length === 3) document.getElementById('edit-tx-date').value = parts[2] + '-' + parts[1] + '-' + parts[0];
+                document.getElementById('edit-tx-type-label').textContent = tx.type_label;
+            } catch (e) {
+                document.getElementById('edit-tx-global-error').textContent = 'فشل تحميل البيانات.';
+                document.getElementById('edit-tx-global-error').style.display = 'block';
+            }
+        };
+
+        window.submitEditTransaction = async function () {
+            var id = document.getElementById('edit-tx-id').value;
+            var btn = document.getElementById('edit-tx-submit-btn');
+            var spinner = document.getElementById('edit-tx-submit-spinner');
+            var errEl = document.getElementById('edit-tx-global-error');
+            errEl.style.display = 'none';
+            btn.disabled = true; spinner.style.display = 'inline-block';
+            var payload = {
+                by_whom: document.getElementById('edit-tx-by-whom').value.trim(),
+                amount: document.getElementById('edit-tx-amount').value,
+                note: document.getElementById('edit-tx-note').value.trim() || null,
+                date: document.getElementById('edit-tx-date').value || null,
+            };
+            try {
+                await axios.patch('/admin/treasury/' + id, payload);
+                closeModal('modal-edit-transaction');
+                if (typeof showSuccess === 'function') showSuccess('تم التعديل بنجاح ✓');
+                await refreshAll();
+            } catch (error) {
+                if (error.response?.status === 422) {
+                    var msgs = Object.values(error.response.data.errors || {}).flat().join(' | ');
+                    errEl.textContent = msgs; errEl.style.display = 'block';
+                } else {
+                    errEl.textContent = 'حدث خطأ غير متوقع.'; errEl.style.display = 'block';
+                }
+            } finally {
+                btn.disabled = false; spinner.style.display = 'none';
+            }
+        };
+
+        // ── PDF Export ────────────────────────────────────────────────
+        window.exportTransactionPdf = function (id) {
+            window.open('/admin/treasury/' + id + '/pdf', '_blank');
+        };
 
         // ── Utility helpers ───────────────────────────────────────────
         function escHtml(str) {
@@ -844,6 +1138,93 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             if (!ymd) return '—';
             const [y, m, d] = ymd.split('-');
             return `${d}/${m}/${y}`;
+        }
+
+        // ── Pay To User handlers ──────────────────────────────────────
+        window.openPayToUserModal = function () {
+            resetWalletModalFields('pay');
+            openModal('modal-pay-to-user');
+            setTimeout(() => { const el = document.getElementById('pay-user-id'); if (el) el.focus(); }, 250);
+        };
+
+        window.submitPayToUser = async function () {
+            await submitWalletTransfer('pay', '/admin/treasury/pay-to-user', 'modal-pay-to-user', 'تم الدفع بنجاح ✓');
+        };
+
+        // ── Receive From User handlers ────────────────────────────────
+        window.openReceiveFromUserModal = function () {
+            resetWalletModalFields('receive');
+            openModal('modal-receive-from-user');
+            setTimeout(() => { const el = document.getElementById('receive-user-id'); if (el) el.focus(); }, 250);
+        };
+
+        window.submitReceiveFromUser = async function () {
+            await submitWalletTransfer('receive', '/admin/treasury/receive-from-user', 'modal-receive-from-user', 'تم الاستلام بنجاح ✓');
+        };
+
+        // ── Wallet modal shared helpers ───────────────────────────────
+        function resetWalletModalFields(prefix) {
+            ['user-id', 'amount', 'date', 'description'].forEach(field => {
+                const el = document.getElementById(`${prefix}-${field}`);
+                if (el) el.value = '';
+            });
+            clearWalletModalErrors(prefix);
+        }
+
+        function clearWalletModalErrors(prefix) {
+            ['user-id', 'amount', 'date', 'description'].forEach(field => {
+                const input = document.getElementById(`${prefix}-${field}`);
+                const error = document.getElementById(`${prefix}-${field}-error`);
+                if (input) input.style.borderColor = 'var(--border)';
+                if (error) error.textContent = '';
+            });
+            const globalErr = document.getElementById(`${prefix}-global-error`);
+            if (globalErr) { globalErr.textContent = ''; globalErr.style.display = 'none'; }
+        }
+
+        async function submitWalletTransfer(prefix, endpoint, modalId, successMsg) {
+            clearWalletModalErrors(prefix);
+            const btn = document.getElementById(`${prefix}-submit-btn`);
+            const spinner = document.getElementById(`${prefix}-submit-spinner`);
+            if (btn) btn.disabled = true;
+            if (spinner) spinner.style.display = 'inline-block';
+
+            const payload = {
+                user_id: document.getElementById(`${prefix}-user-id`).value || null,
+                amount: document.getElementById(`${prefix}-amount`).value,
+                description: document.getElementById(`${prefix}-description`).value.trim() || null,
+                date: document.getElementById(`${prefix}-date`).value || null,
+            };
+
+            try {
+                const res = await axios.post(endpoint, payload);
+                resetWalletModalFields(prefix);
+                closeModal(modalId);
+                if (typeof showSuccess === 'function') showSuccess(res.data.message || successMsg);
+                else if (typeof showToast === 'function') showToast(res.data.message || successMsg, 'success');
+                await refreshAll();
+            } catch (error) {
+                if (error.response?.status === 422) {
+                    const errors = error.response.data.errors || {};
+                    const fieldMap = { user_id: 'user-id', amount: 'amount', description: 'description', date: 'date' };
+                    Object.entries(errors).forEach(([field, messages]) => {
+                        const idSuffix = fieldMap[field] ?? field;
+                        const input = document.getElementById(`${prefix}-${idSuffix}`);
+                        const errorEl = document.getElementById(`${prefix}-${idSuffix}-error`);
+                        if (input) input.style.borderColor = 'var(--red)';
+                        if (errorEl) errorEl.textContent = messages[0];
+                    });
+                } else {
+                    const globalErr = document.getElementById(`${prefix}-global-error`);
+                    if (globalErr) {
+                        globalErr.textContent = error.response?.data?.message || 'حدث خطأ غير متوقع.';
+                        globalErr.style.display = 'block';
+                    }
+                }
+            } finally {
+                if (btn) btn.disabled = false;
+                if (spinner) spinner.style.display = 'none';
+            }
         }
 
         // ── Boot: register polling ────────────────────────────────────

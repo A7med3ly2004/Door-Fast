@@ -325,6 +325,9 @@
             <a href="{{ route('reserve.orders.delivered') }}" class="menu-item" data-spa="true">
                 مكتملة
             </a>
+            <a href="{{ route('reserve.wallet.index') }}" class="menu-item" data-spa="true">
+                💰 كشف حسابي
+            </a>
         </div>
     </div>
 
@@ -380,6 +383,10 @@
         <a href="{{ route('reserve.orders.delivered') }}" class="nav-item" data-spa="true">
             <div class="nav-icon">✅</div>
             <span>مكتملة</span>
+        </a>
+        <a href="{{ route('reserve.wallet.index') }}" class="nav-item" data-spa="true">
+            <div class="nav-icon">💰</div>
+            <span>حسابي</span>
         </a>
     </div>
 

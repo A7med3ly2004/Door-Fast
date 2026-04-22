@@ -26,15 +26,15 @@ class DashboardController extends Controller
 
     public function stats()
     {
-        $today = today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
-        $ordersToday      = Order::whereDate('created_at', $today)->count();
-        $completedToday   = Order::whereDate('created_at', $today)->where('status', 'delivered')->count();
-        $pendingToday     = Order::whereDate('created_at', $today)->where('status', 'pending')->count();
-        $cancelledToday   = Order::whereDate('created_at', $today)->where('status', 'cancelled')->count();
-        $dailyRevenue     = Order::whereDate('created_at', $today)->where('status', 'delivered')->sum('total');
-        $monthlyRevenue   = Order::whereYear('created_at', $today->year)
-                                 ->whereMonth('created_at', $today->month)
+        $ordersToday      = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->count();
+        $completedToday   = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->count();
+        $pendingToday     = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'pending')->count();
+        $cancelledToday   = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'cancelled')->count();
+        $dailyRevenue     = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->sum('total');
+        $monthlyRevenue   = Order::whereYear('created_at', $startOfToday->year)
+                                 ->whereMonth('created_at', $startOfToday->month)
                                  ->where('status', 'delivered')->sum('total');
         $totalClients     = Client::count();
 
@@ -42,16 +42,17 @@ class DashboardController extends Controller
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
             $day = Carbon::today()->subDays($i);
+            $dayRange = \App\Models\Setting::businessDayRange($day);
             $chartData[] = [
                 'date'  => $day->format('m/d'),
                 'label' => $day->locale('ar')->isoFormat('ddd D/M'),
-                'count' => Order::whereDate('created_at', $day)->count(),
+                'count' => Order::whereBetween('created_at', $dayRange)->count(),
             ];
         }
 
         // Delivery performance today
         $deliveryPerf = User::where('role', 'delivery')
-            ->with(['deliveryOrders' => fn($q) => $q->whereDate('created_at', $today)])
+            ->with(['deliveryOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
             ->get()
             ->map(fn($d) => [
                 'name'      => $d->name,
@@ -63,7 +64,7 @@ class DashboardController extends Controller
 
         // Callcenter performance today
         $ccPerf = User::where('role', 'callcenter')
-            ->with(['createdOrders' => fn($q) => $q->whereDate('created_at', $today)])
+            ->with(['createdOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
             ->get()
             ->map(fn($cc) => [
                 'name'      => $cc->name,

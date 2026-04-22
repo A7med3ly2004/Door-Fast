@@ -17,17 +17,22 @@
 
     body {
       font-family: 'Cairo', sans-serif;
-      background: #0e1525;
+      background: #eef5fdff;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
     }
 
     .card {
-      background: #1a2035;
-      border: 1px solid #2a3a55;
-      border-radius: 16px;
+      background: #ffffff;
+      border-top-width: 5px;
+      border-top-style: solid;
+      border-top-color: #f8c624;
+      box-shadow: 0px 10px 30px 0px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
       padding: 40px;
       width: 100%;
       max-width: 400px;
@@ -39,113 +44,156 @@
     }
 
     .logo-icon {
-      width: 56px;
-      height: 56px;
-      background: #2563eb;
-      border-radius: 14px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
       margin-bottom: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    .logo-text {
-      font-size: 22px;
-      font-weight: 800;
-      color: #fff;
+    .logo-img {
+      max-width: 120px;
+      height: auto;
+      object-fit: contain;
     }
 
     .logo-sub {
-      font-size: 13px;
+      font-size: 14px;
       color: #4a5568;
       margin-top: 4px;
+      font-weight: 600;
     }
 
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     label {
       display: block;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       color: #4a5568;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
-    input {
+    input[type="text"],
+    input[type="password"] {
       width: 100%;
-      background: #0e1525;
-      border: 1px solid #2a3a55;
-      border-radius: 9px;
-      color: #e2e8f0;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      color: #1e293b;
       font-family: 'Cairo', sans-serif;
-      font-size: 14px;
-      padding: 11px 14px;
+      font-size: 16px;
+      /* 16px minimum to prevent iOS auto-zoom */
+      min-height: 48px;
+      /* Recommended minimum touch target size */
+      padding: 10px 16px;
       outline: none;
-      transition: border-color 0.2s;
+      transition: all 0.2s ease;
     }
 
-    input:focus {
-      border-color: #2563eb;
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #ba282e;
+      box-shadow: 0 0 0 3px rgba(186, 40, 46, 0.1);
     }
 
     input::placeholder {
-      color: #4a5568;
+      color: #94a3b8;
     }
 
     .btn {
       width: 100%;
+      min-height: 48px;
+      /* Touch target size */
       padding: 12px;
-      background: #2563eb;
+      background: #ba282e;
       color: #fff;
       border: none;
-      border-radius: 9px;
+      border-radius: 6px;
       font-family: 'Cairo', sans-serif;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
       cursor: pointer;
       margin-top: 8px;
       transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .btn:hover {
-      background: #1d4ed8;
+      background: #831c20;
     }
 
     .btn:disabled {
-      background: #2a3a55;
+      background: #e2e8f0;
+      color: #94a3b8;
       cursor: not-allowed;
     }
 
     .error-msg {
       background: rgba(239, 68, 68, 0.1);
       border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 9px;
-      padding: 10px 14px;
-      color: #ef4444;
-      font-size: 13px;
-      margin-bottom: 16px;
+      border-radius: 6px;
+      padding: 12px 14px;
+      color: #ba282e;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
       display: none;
     }
 
     .remember {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: #94a3b8;
-      margin-bottom: 16px;
+      gap: 10px;
+      font-size: 14px;
+      color: #4a5568;
+      margin-bottom: 24px;
     }
 
-    .remember input[type=checkbox] {
-      width: 16px;
-      height: 16px;
-      accent-color: #2563eb;
+    .remember input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: #ba282e;
       cursor: pointer;
+    }
+
+    .remember label {
+      text-transform: none;
+      letter-spacing: 0;
+      margin: 0;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+
+      .card {
+        padding: 30px 20px;
+        border-radius: 12px;
+        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
+      }
+
+      .logo {
+        margin-bottom: 24px;
+      }
+
+      .logo-img {
+        max-width: 100px;
+      }
+
+      .btn {
+        margin-bottom: 10px;
+      }
     }
   </style>
 </head>
@@ -153,8 +201,9 @@
 <body>
   <div class="card">
     <div class="logo">
-      <div class="logo-icon">🚀</div>
-      <div class="logo-text">DoorFast</div>
+      <div class="logo-icon">
+        <img src="{{ asset('DF_logo_2026.PNG') }}" alt="DoorFast Logo" class="logo-img">
+      </div>
       <div class="logo-sub">نظام إدارة التوصيل</div>
     </div>
 

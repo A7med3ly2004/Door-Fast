@@ -17,6 +17,9 @@ class SettingController extends Controller
         'max_discount_percentage',
         'max_unsettled_limit',
         'max_active_orders',
+        'day_end_time',
+        'notif_delay_delivery_mins',
+        'notif_unaccepted_mins',
     ];
 
     public function index()
@@ -33,6 +36,9 @@ class SettingController extends Controller
         $settings['max_discount_percentage'] ??= '50';
         $settings['max_unsettled_limit']     ??= '500';
         $settings['max_active_orders']       ??= '3';
+        $settings['day_end_time']            ??= '00:00';
+        $settings['notif_delay_delivery_mins'] ??= '20';
+        $settings['notif_unaccepted_mins']     ??= '20';
 
         if (request()->header('X-SPA-Navigation')) {
             return response()->json([
@@ -56,6 +62,9 @@ class SettingController extends Controller
             'max_discount_percentage' => 'nullable|integer|min:0|max:100',
             'max_unsettled_limit'     => 'nullable|numeric|min:0',
             'max_active_orders'       => 'nullable|integer|min:1|max:100',
+            'day_end_time'            => 'nullable|string|date_format:H:i',
+            'notif_delay_delivery_mins' => 'nullable|integer|min:1|max:1440',
+            'notif_unaccepted_mins'     => 'nullable|integer|min:1|max:1440',
         ]);
 
         foreach ($this->keys as $key) {

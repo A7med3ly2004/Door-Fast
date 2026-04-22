@@ -71,12 +71,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/delivery', [AdminDelivery::class, 'store'])->name('delivery.store');
         Route::put('/delivery/{id}', [AdminDelivery::class, 'update'])->name('delivery.update');
         Route::get('/delivery/{id}/performance', [AdminDelivery::class, 'performance'])->name('delivery.performance');
-        Route::get('/delivery/{id}/settlement', [AdminOrderController::class, 'deliverySettlement'])->name('delivery.settlement');
-        Route::post('/delivery/{id}/settlement', [AdminOrderController::class, 'doDeliverySettlement'])->name('delivery.do-settlement');
 
         // Call Center
         Route::get('/callcenter', [AdminCallCenter::class, 'index'])->name('callcenter.index');
-        Route::post('/callcenter/{user}/settle', [\App\Http\Controllers\Admin\CallCenterManagementController::class, 'settle'])->name('callcenter.settle');
         Route::post('/callcenter', [AdminCallCenter::class, 'store'])->name('callcenter.store');
         Route::put('/callcenter/{id}', [AdminCallCenter::class, 'update'])->name('callcenter.update');
         Route::get('/callcenter/{id}/performance', [AdminCallCenter::class, 'performance'])->name('callcenter.performance');
@@ -85,6 +82,14 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/reports/data', [AdminReports::class, 'data'])->name('reports.data');
         Route::get('/reports/export-pdf', [AdminReports::class, 'exportPdf'])->name('reports.export-pdf');
         Route::get('/reports', [AdminReports::class, 'index'])->name('reports.index');
+
+        // Delivery Reports
+        Route::get('/report-delivery/data', [App\Http\Controllers\Admin\ReportDeliveryController::class, 'data'])->name('report-delivery.data');
+        Route::get('/report-delivery', [App\Http\Controllers\Admin\ReportDeliveryController::class, 'index'])->name('report-delivery.index');
+
+        // Call Center Reports
+        Route::get('/report-callcenter/data', [App\Http\Controllers\Admin\ReportCallCenterController::class, 'data'])->name('report-callcenter.data');
+        Route::get('/report-callcenter', [App\Http\Controllers\Admin\ReportCallCenterController::class, 'index'])->name('report-callcenter.index');
 
         // Report Hops
         Route::get('/report-hops/data', [AdminReportHops::class, 'data'])->name('report-hops.data');
@@ -105,7 +110,20 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/treasury/expense', [TreasuryController::class, 'addExpense'])->name('treasury.expense.store');
         Route::post('/treasury/dain', [TreasuryController::class, 'addDain'])->name('treasury.dain.store');
         Route::post('/treasury/discount', [TreasuryController::class, 'addDiscount'])->name('treasury.discount.store');
+        Route::post('/treasury/pay-to-user', [TreasuryController::class, 'payToUser'])->name('treasury.pay-to-user');
+        Route::post('/treasury/receive-from-user', [TreasuryController::class, 'receiveFromUser'])->name('treasury.receive-from-user');
         Route::get('/treasury/{transaction}', [App\Http\Controllers\Admin\TreasuryController::class, 'show'])->name('treasury.show');
+        Route::patch('/treasury/{transaction}', [TreasuryController::class, 'update'])->name('treasury.update');
+        Route::get('/treasury/{transaction}/pdf', [TreasuryController::class, 'exportPdf'])->name('treasury.pdf');
+
+        // Trial Balance Report (ميزان المراجعة)
+        Route::get('/report-trial-balance/data', [\App\Http\Controllers\Admin\ReportTrialBalanceController::class, 'data'])->name('report-trial-balance.data');
+        Route::get('/report-trial-balance', [\App\Http\Controllers\Admin\ReportTrialBalanceController::class, 'index'])->name('report-trial-balance.index');
+
+        // General Ledger (كشف حساب عام)
+        Route::get('/general-ledger', [App\Http\Controllers\Admin\GeneralLedgerController::class, 'index'])->name('general-ledger.index');
+        Route::get('/general-ledger/data', [App\Http\Controllers\Admin\GeneralLedgerController::class, 'data'])->name('general-ledger.data');
+        Route::get('/general-ledger/user/{userId}', [App\Http\Controllers\Admin\GeneralLedgerController::class, 'userStatement'])->name('general-ledger.user');
 
         // Activity Log (العمليات)
         Route::get('/activity-log/data', [AdminActivityLog::class, 'data'])->name('activity-log.data');
@@ -114,6 +132,11 @@ Route::middleware(['auth', 'role:admin'])
         // Settings
         Route::get('/settings', [AdminSettings::class, 'index'])->name('settings.index');
         Route::post('/settings', [AdminSettings::class, 'update'])->name('settings.update');
+
+        // Admin Notifications
+        Route::get('/notifications', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/count', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'count'])->name('notifications.count');
+        Route::post('/notifications/read-all', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'markAllRead'])->name('notifications.read-all');
     });
 
 // ── Call Center ──
@@ -152,13 +175,17 @@ Route::middleware(['auth', 'role:callcenter'])
         Route::get('/delivery/active', [CCDelivery::class, 'active'])->name('delivery.active');
         Route::get('/delivery/all', [CCDelivery::class, 'allForCC'])->name('delivery.all');
         Route::patch('/delivery/{id}/toggle', [CCDelivery::class, 'toggleShift'])->name('delivery.toggle');
-        Route::get('/delivery/{id}/settlement', [CCDelivery::class, 'settlement'])->name('delivery.settlement');
-        Route::post('/delivery/{id}/settlement', [CCDelivery::class, 'doSettlement'])->name('delivery.do-settlement');
         Route::get('/delivery', [CCDelivery::class, 'index'])->name('delivery.index');
 
         // Stats
         Route::get('/stats/data', [CCStats::class, 'data'])->name('stats.data');
         Route::get('/stats', [CCStats::class, 'index'])->name('stats.index');
+
+        // Wallet (كشف حسابي)
+        Route::get('/wallet', [\App\Http\Controllers\CallCenter\WalletController::class, 'index'])->name('wallet.index');
+        Route::get('/wallet/statement', [\App\Http\Controllers\CallCenter\WalletController::class, 'statement'])->name('wallet.statement');
+        Route::post('/wallet/pay-delivery', [\App\Http\Controllers\CallCenter\WalletController::class, 'payToDelivery'])->name('wallet.pay-delivery');
+        Route::post('/wallet/receive-delivery', [\App\Http\Controllers\CallCenter\WalletController::class, 'receiveFromDelivery'])->name('wallet.receive-delivery');
     });
 
 // ── Delivery ──
@@ -189,6 +216,10 @@ Route::middleware(['auth', 'role:delivery'])
         // Delivered Orders
         Route::get('/orders/delivered', [\App\Http\Controllers\Delivery\OrderController::class, 'delivered'])->name('orders.delivered');
         Route::get('/orders/delivered-data', [\App\Http\Controllers\Delivery\OrderController::class, 'deliveredData'])->name('orders.delivered-data');
+
+        // Wallet (كشف حسابي)
+        Route::get('/wallet', [\App\Http\Controllers\Delivery\WalletController::class, 'index'])->name('wallet.index');
+        Route::get('/wallet/statement', [\App\Http\Controllers\Delivery\WalletController::class, 'statement'])->name('wallet.statement');
     });
 
 // ── Reserve Delivery ──
@@ -219,4 +250,8 @@ Route::middleware(['auth', 'role:reserve_delivery'])
         // Delivered Orders
         Route::get('/orders/delivered', [\App\Http\Controllers\ReserveDelivery\OrderController::class, 'delivered'])->name('orders.delivered');
         Route::get('/orders/delivered-data', [\App\Http\Controllers\ReserveDelivery\OrderController::class, 'deliveredData'])->name('orders.delivered-data');
+
+        // Wallet (كشف حسابي)
+        Route::get('/wallet', [\App\Http\Controllers\ReserveDelivery\WalletController::class, 'index'])->name('wallet.index');
+        Route::get('/wallet/statement', [\App\Http\Controllers\ReserveDelivery\WalletController::class, 'statement'])->name('wallet.statement');
     });

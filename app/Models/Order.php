@@ -64,6 +64,11 @@ class Order extends Model
         return $this->hasMany(OrderLog::class);
     }
 
+    public function adminNotifications()
+    {
+        return $this->hasMany(\App\Models\AdminNotification::class);
+    }
+
     // Scopes
     public function scopePending($query)
     {

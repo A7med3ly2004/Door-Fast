@@ -113,6 +113,14 @@ class OrderController extends Controller
 
         $order->update(['status' => 'cancelled']);
 
+        $notif = \App\Models\AdminNotification::create([
+            'type'         => 'cancelled',
+            'order_id'     => $order->id,
+            'order_number' => $order->order_number,
+            'message'      => "تم إلغاء الطلب #{$order->order_number}",
+        ]);
+        event(new \App\Events\AdminNotificationCreated($notif));
+
         OrderLog::create([
             'order_id' => $order->id,
             'user_id'  => auth()->id(),

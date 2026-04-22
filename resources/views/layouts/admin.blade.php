@@ -65,11 +65,19 @@
             border-left: 1px solid var(--border);
             z-index: 100;
             overflow-y: auto;
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE and Edge */
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, and Opera */
         }
 
         .sidebar-logo {
-            padding: 24px 20px 20px;
-            border-bottom: 1px solid var(--border);
+            padding: 1px 1px 1px;
         }
 
         .sidebar-logo .logo-text {
@@ -94,9 +102,9 @@
         }
 
         .nav-section-title {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 1000;
+            color: #bb272c;
             text-transform: uppercase;
             letter-spacing: 1px;
             padding: 10px 10px 6px;
@@ -122,8 +130,8 @@
         }
 
         .nav-link.active {
-            background: linear-gradient(135deg, var(--yellow), var(--yellow-dark));
-            color: #000;
+            background: linear-gradient(135deg, #ba272d, #323232);
+            color: #ffffffff;
         }
 
         .nav-link svg {
@@ -149,9 +157,8 @@
         /* ── Topbar ── */
         .topbar {
             background: var(--sidebar-bg);
-            border-bottom: 1px solid var(--border);
             padding: 0 28px;
-            height: 64px;
+            height: 86px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -194,7 +201,7 @@
         }
 
         .btn-logout {
-            background: var(--red);
+            background: #bb272c;
             color: #fff;
             border: 1px solid var(--red);
             padding: 7px 18px;
@@ -220,7 +227,6 @@
         /* ── Cards ── */
         .card {
             background: var(--card-bg);
-            border: 1px solid var(--border);
             border-radius: 16px;
             padding: 20px;
         }
@@ -237,10 +243,10 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 8px 18px;
+            padding: 8px 25px;
             border-radius: 8px;
             font-family: 'Cairo', sans-serif;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             border: none;
@@ -250,6 +256,7 @@
         .btn-primary {
             background: var(--yellow);
             color: #000;
+
         }
 
         .btn-primary:hover {
@@ -286,7 +293,7 @@
 
         .btn-sm {
             padding: 5px 12px;
-            font-size: 12px;
+            font-size: 15px;
             border-radius: 6px;
         }
 
@@ -306,6 +313,7 @@
             overflow-x: auto;
             border-radius: 12px;
             border: 1px solid var(--border);
+            border-radius: 8px;
         }
 
         table {
@@ -570,16 +578,16 @@
         /* ── Filter bar ── */
         .filter-bar {
             display: flex;
+            justify-content: flex-start;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
             flex-wrap: wrap;
-            margin-bottom: 20px;
         }
 
         .filter-bar .form-control,
         .filter-bar .form-select {
             width: auto;
-            min-width: 140px;
+            min-width: 170px;
         }
 
         /* ── KPI Cards ── */
@@ -599,28 +607,9 @@
             overflow: hidden;
         }
 
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--yellow);
-            border-radius: 0 14px 14px 0;
-        }
-
-        .kpi-card.red::before {
-            background: var(--red);
-        }
-
-        .kpi-card.green::before {
-            background: var(--success);
-        }
-
-        .kpi-card.blue::before {
-            background: var(--info);
-        }
+        .kpi-card.red { }
+        .kpi-card.green { }
+        .kpi-card.blue { }
 
         .kpi-label {
             font-size: 12px;
@@ -634,6 +623,8 @@
             font-weight: 800;
             color: var(--text);
         }
+
+
 
         .kpi-sub {
             font-size: 11px;
@@ -812,9 +803,9 @@
 
     {{-- ── Sidebar ── --}}
     <aside class="sidebar">
-        <div class="sidebar-logo">
-            <span class="logo-text">Door Fast</span>
-            <span class="logo-sub">لوحة الأدمن</span>
+        <div class="sidebar-logo"
+            style="display: flex; justify-content: center; align-items: center; padding: 1px 1px;">
+            <img src="{{ asset('DF_logo_for_sb.png') }}" alt="Door Fast Logo" style="max-width: 70%; height: auto;">
         </div>
         <nav class="sidebar-nav">
             <span class="nav-section-title">الرئيسية</span>
@@ -826,7 +817,13 @@
                 لوحة التحكم
             </a>
 
-            <span class="nav-section-title">العمليات</span>
+            <span class="nav-section-title">الطلبات والعمليات</span>
+            <a href="{{ route('admin.orders.create') }}" class="nav-link" data-spa="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                إنشاء طلب
+            </a>
             <a href="{{ route('admin.orders.index') }}" class="nav-link" data-spa="true">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -834,12 +831,15 @@
                 </svg>
                 الطلبات
             </a>
-            <a href="{{ route('admin.orders.create') }}" class="nav-link" data-spa="true">
+            <a href="{{ route('admin.activity-log.index') }}" class="nav-link" data-spa="true">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
-                إنشاء طلب
+                العمليات
             </a>
+
+            <span class="nav-section-title">إدارة الجهات والمستخدمين</span>
             <a href="{{ route('admin.clients.index') }}" class="nav-link" data-spa="true">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -854,15 +854,6 @@
                 </svg>
                 المتاجر
             </a>
-            <a href="{{ route('admin.treasury.index') }}" class="nav-link" data-spa="true">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 10h18M7 15h1m4 0h1m4 0h1m-7 4h12a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                الخزينة
-            </a>
-
-            <span class="nav-section-title">الموظفون</span>
             <a href="{{ route('admin.delivery.index') }}" class="nav-link" data-spa="true">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -879,13 +870,51 @@
                 كول سنتر
             </a>
 
-            <span class="nav-section-title">التقارير</span>
+            <span class="nav-section-title">الإدارة المالية</span>
+            <a href="{{ route('admin.treasury.index') }}" class="nav-link" data-spa="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 10h18M7 15h1m4 0h1m4 0h1m-7 4h12a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                الخزينة
+            </a>
+            <a href="{{ route('admin.general-ledger.index') }}" class="nav-link" data-spa="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                كشف حساب عام
+            </a>
+            <a href="{{ route('admin.report-trial-balance.index') }}" class="nav-link" data-spa="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                </svg>
+                ميزان المراجعة
+            </a>
+
+            <span class="nav-section-title">التقارير والإحصائيات</span>
             <a href="{{ route('admin.reports.index') }}" class="nav-link" data-spa="true">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                التقارير
+                التقارير العامة
+            </a>
+            <a href="{{ route('admin.report-delivery.index') }}" class="nav-link" data-spa="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                </svg>
+                تقارير المناديب
+            </a>
+            <a href="{{ route('admin.report-callcenter.index') }}" class="nav-link" data-spa="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                تقارير الكول سنتر
             </a>
             <a href="{{ route('admin.report-hops.index') }}" class="nav-link" data-spa="true">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -902,14 +931,9 @@
                 تقارير الخصومات
             </a>
 
+
             <span class="nav-section-title">النظام</span>
-            <a href="{{ route('admin.activity-log.index') }}" class="nav-link" data-spa="true">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-                العمليات
-            </a>
+
             <a href="{{ route('admin.settings.index') }}" class="nav-link" data-spa="true">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -933,6 +957,12 @@
         <header class="topbar">
             <span class="topbar-title" id="spa-page-title">@yield('page-title', 'لوحة التحكم')</span>
             <div class="topbar-right">
+                <div style="position:relative;cursor:pointer" onclick="toggleNotifPanel()">
+                    <span style="font-size:22px;">🔔</span>
+                    <span id="notif-count-badge" style="display:none;position:absolute;top:-4px;left:-4px;background:var(--red);color:#fff;
+                               font-size:10px;font-weight:800;min-width:18px;height:18px;line-height:18px;
+                               text-align:center;border-radius:9px;padding:0 4px;">0</span>
+                </div>
                 <div class="admin-badge">
                     <span class="dot"></span>
                     <span>{{ auth()->user()->name }}</span>
@@ -1102,6 +1132,78 @@
             updateActiveLink(location.href);
             history.replaceState({ url: location.href }, document.title, location.href);
         });
+    </script>
+
+    <div id="notif-panel" style="display:none;position:fixed;top:64px;left:0;width:360px;max-height:80vh;
+         overflow-y:auto;background:var(--card-bg);border:1px solid var(--border);border-radius:0 0 16px 16px;
+         z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.4);">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
+            <strong>التنبيهات</strong>
+            <button onclick="markAllRead()" class="btn btn-sm btn-secondary"
+                style="border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;padding:4px 8px;font-size:11px;">تحديد
+                كمقروء</button>
+        </div>
+        <div id="notif-list" style="padding:8px 0;"></div>
+    </div>
+
+    <script>
+        // ── Admin Notifications ──────────────────────────────────────
+        var _notifOpen = false;
+        var _notifCount = 0;
+
+        function toggleNotifPanel() {
+            _notifOpen = !_notifOpen;
+            document.getElementById('notif-panel').style.display = _notifOpen ? 'block' : 'none';
+            if (_notifOpen) loadNotifications();
+        }
+
+        async function loadNotifications() {
+            try {
+                var res = await axios.get('/admin/notifications');
+                var list = document.getElementById('notif-list');
+                _notifCount = res.data.unread_count;
+                updateNotifBadge();
+                if (!res.data.items.length) {
+                    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)">لا تنبيهات جديدة</div>';
+                    return;
+                }
+                list.innerHTML = res.data.items.map(function (n) {
+                    var bgColor = n.is_read ? 'transparent' : 'rgba(245,158,11,0.08)';
+                    var icon = n.type === 'cancelled' ? '❌' : n.type === 'delayed_delivery' ? '⏱️' : '⚠️';
+                    return '<div style="padding:12px 18px;border-bottom:1px solid var(--border);background:' + bgColor + '">' +
+                        '<div style="font-size:13px;font-weight:600">' + icon + ' ' + n.message + '</div>' +
+                        '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + new Date(n.created_at).toLocaleString("ar-EG") + '</div>' +
+                        '</div>';
+                }).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        function updateNotifBadge() {
+            var badge = document.getElementById('notif-count-badge');
+            if (_notifCount > 0) { badge.style.display = 'block'; badge.textContent = _notifCount; }
+            else badge.style.display = 'none';
+        }
+
+        async function markAllRead() {
+            await axios.post('/admin/notifications/read-all');
+            _notifCount = 0;
+            updateNotifBadge();
+            loadNotifications();
+        }
+
+        // Real-time: listen on admin-notifications channel
+        if (typeof window.Echo !== 'undefined') {
+            window.Echo.channel('admin-notifications').listen('AdminNotificationCreated', function (e) {
+                _notifCount++;
+                updateNotifBadge();
+                if (_notifOpen) loadNotifications();
+                var ToastInstance = window.Swal ? Swal.mixin({ toast: true, position: 'top-start', showConfirmButton: false, timer: 5000 }) : null;
+                if (ToastInstance) ToastInstance.fire({ icon: 'warning', title: e.message });
+            });
+        }
+
+        // Initial badge count
+        axios.get('/admin/notifications/count').then(function (r) { _notifCount = r.data.count; updateNotifBadge(); }).catch(e => console.error(e));
     </script>
 
     @stack('scripts')

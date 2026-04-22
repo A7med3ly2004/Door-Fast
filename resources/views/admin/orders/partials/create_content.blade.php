@@ -108,11 +108,11 @@
 
             <button class="btn btn-secondary btn-sm" style="margin-bottom:8px" onclick="admToggleSendTo('${id}')">↗ إرسال إلى عميل آخر</button>
             <div class="sendto-section" id="${id}-sendto">
-                <div class="form-row">
-                    <div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx"></div>
-                    <div class="form-group"><label class="form-label">عنوان المستلم</label><input type="text" class="form-control" id="${id}-st-addr" placeholder="العنوان"></div>
-                </div>
+                <div class="form-row"><div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="admStSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div><div class="form-group"><label class="form-label">عنوان المستلم *</label><div id="${id}-st-addr-wrap"><input type="text" class="form-control" id="${id}-st-addr-txt" placeholder="العنوان"></div></div></div>
+                <div class="form-row"><div class="form-group"><label class="form-label">الكود</label><div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" onblur="admStSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="admStGenCode('${id}')">كود جديد</button></div></div><div class="form-group"><label class="form-label">اسم المستلم</label><input type="text" class="form-control" id="${id}-st-name" placeholder="Unnamed if left blank"></div></div>
             </div>
+            <input type="hidden" id="${id}-st-client-id" value="">
+            <input type="hidden" id="${id}-st-client-found" value="0">
 
             <div class="section-label">📦 الأصناف</div>
             <table class="items-table">
@@ -221,6 +221,15 @@
     window.admToggleSendTo = function (cardId) {
         document.getElementById(cardId+'-sendto').classList.toggle('open');
     };
+    window.admStSearchByPhone = async function (cardId) {
+        var phone = document.getElementById(cardId+'-st-phone').value.trim(); var wrap = document.getElementById(cardId+'-st-addr-wrap'); if (!phone) return;
+        try { var { data } = await axios.get(SEARCH_URL, { params: { phone } }); if (data.found) { document.getElementById(cardId+'-st-name').value = data.name; document.getElementById(cardId+'-st-code').value = data.code; document.getElementById(cardId+'-st-client-id').value = data.id; document.getElementById(cardId+'-st-client-found').value = '1'; if (data.addresses.length) { var html = `<select class="form-select" id="${cardId}-st-addr-txt">`; data.addresses.forEach(a => { html += `<option value="${a.address}">${a.address}</option>`; }); html += '</select>'; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId+'-st-name').value = ''; document.getElementById(cardId+'-st-code').value = ''; document.getElementById(cardId+'-st-client-id').value = ''; document.getElementById(cardId+'-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } } catch (e) { }
+    };
+    window.admStSearchByCode = async function (cardId) {
+        var code = document.getElementById(cardId+'-st-code').value.trim(); var wrap = document.getElementById(cardId+'-st-addr-wrap'); if (!code) return;
+        try { var { data } = await axios.get(SEARCH_URL, { params: { code } }); if (data.found) { document.getElementById(cardId+'-st-phone').value = data.phone; document.getElementById(cardId+'-st-name').value = data.name; document.getElementById(cardId+'-st-client-id').value = data.id; document.getElementById(cardId+'-st-client-found').value = '1'; if (data.addresses.length) { var html = `<select class="form-select" id="${cardId}-st-addr-txt">`; data.addresses.forEach(a => { html += `<option value="${a.address}">${a.address}</option>`; }); html += '</select>'; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId+'-st-phone').value = ''; document.getElementById(cardId+'-st-name').value = ''; document.getElementById(cardId+'-st-client-id').value = ''; document.getElementById(cardId+'-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } } catch (e) { }
+    };
+    window.admStGenCode = function (cardId) { document.getElementById(cardId+'-st-code').value = String(Math.floor(10000 + Math.random() * 90000)); };
 
     // ─── Item Rows ────────────────────────────────────────────
     window.admAddItemRow = function (cardId) {
@@ -302,8 +311,17 @@
         var fee      = parseFloat(document.getElementById(cardId+'-fee').value) || 0;
         var disc     = parseFloat(document.getElementById(cardId+'-disc').value) || 0;
         var discType = document.getElementById(cardId+'-disc-type').value;
-        var sendToPhone = document.getElementById(cardId+'-st-phone')?.value.trim() || '';
-        var sendToAddr  = document.getElementById(cardId+'-st-addr')?.value.trim() || '';
+        var stOpen = document.getElementById(cardId + '-sendto')?.classList.contains('open');
+        var sendToPhone = ''; var sendToAddr = ''; var sendToCode = ''; var sendToName = ''; var sendToClientId = ''; 
+        if (stOpen) { 
+            sendToPhone = document.getElementById(cardId + '-st-phone')?.value.trim() || ''; 
+            var stEl = document.getElementById(cardId + '-st-addr-txt'); 
+            sendToAddr = stEl ? (stEl.value || (stEl.options ? stEl.options[stEl.selectedIndex]?.value : '')) : ''; 
+            sendToCode = document.getElementById(cardId + '-st-code')?.value.trim() || ''; 
+            var rawName = document.getElementById(cardId + '-st-name')?.value.trim(); 
+            sendToName = rawName ? rawName : 'Unnamed'; 
+            sendToClientId = (document.getElementById(cardId + '-st-client-found')?.value === '1') ? document.getElementById(cardId + '-st-client-id')?.value : ''; 
+        }
         var isNewAddr = document.getElementById(cardId+'-is-new-addr').value;
 
         var addrSel = document.getElementById(cardId+'-address-sel');
@@ -344,6 +362,9 @@
                 delivery_id: delivery,
                 send_to_phone: sendToPhone || null,
                 send_to_address: sendToAddr || null,
+                send_to_code: sendToCode || null,
+                send_to_name: sendToName || null,
+                send_to_client_id: sendToClientId || null,
                 notes, delivery_fee: fee, discount: disc, discount_type: discType, items
             });
             if (typeof showSuccess === 'function') showSuccess('✅ تم إرسال الطلب ' + data.order_number + ' للمندوب فوراً');

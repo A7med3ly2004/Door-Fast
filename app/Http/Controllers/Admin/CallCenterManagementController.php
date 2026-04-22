@@ -6,23 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Order;
 use App\Models\User;
-use App\Models\CallcenterSettlement;
-use App\Models\TreasuryTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 
 class CallCenterManagementController extends Controller
 {
     public function index()
     {
         if (request()->header('X-SPA-Navigation')) {
-            $today = today();
+            list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
             $agents = User::where('role', 'callcenter')
-                ->with(['createdOrders' => fn($q) => $q->whereDate('created_at', $today)])
+                ->with(['createdOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
                 ->orderBy('name')
                 ->get()
                 ->map(fn($cc) => [
@@ -42,9 +38,9 @@ class CallCenterManagementController extends Controller
             ]);
         }
 
-        $today = today();
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
         $agents = User::where('role', 'callcenter')
-            ->with(['createdOrders' => fn($q) => $q->whereDate('created_at', $today)])
+            ->with(['createdOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
             ->orderBy('name')
             ->get()
             ->map(fn($cc) => [
@@ -156,96 +152,5 @@ class CallCenterManagementController extends Controller
         ]);
     }
 
-    public function settle(Request $request, User $user): JsonResponse
-    {
-        // ── Guard: target must be an active call center agent ─────
-        // We use the route-model binding ($user) but add a role check
-        // so the endpoint cannot be misused against other role types.
-        if ($user->role !== 'callcenter' || !$user->is_active) {
-            return response()->json([
-                'message' => 'المستخدم المحدد ليس موظف كول سنتر نشطًا.',
-            ], 404);
-        }
 
-        // ── Validate ──────────────────────────────────────────────
-        $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
-            'note' => ['nullable', 'string', 'max:500'],
-        ], $this->settlementValidationMessages());
-
-        // ── Atomic double-write ───────────────────────────────────
-        try {
-            $settlement = DB::transaction(function () use ($validated, $user): CallcenterSettlement {
-
-                // 1. Source-of-truth row for the CC Management page
-                $settlement = CallcenterSettlement::create([
-                    'callcenter_id' => $user->id,
-                    'settled_by' => auth()->id(),
-                    'amount' => (float) $validated['amount'],
-                    'note' => $validated['note'] ?? null,
-                    'settled_at' => now(),
-                ]);
-
-                $settlement->load('callcenter:id,name,phone');
-                TreasuryTransaction::createFromSettlement($settlement);
-
-                ActivityLog::log(
-                    event: 'settlement.callcenter_admin',
-                    description: "تسوية كول سنتر مع الأدمن — {$user->name}",
-                    subjectType: 'settlement',
-                    subjectId: $settlement->id,
-                    subjectLabel: $user->name,
-                    properties: [
-                        'callcenter_name' => $user->name,
-                        'amount' => (float) $validated['amount'],
-                        'note'   => $validated['note'] ?? null,
-                    ]
-                );
-
-                return $settlement;
-            });
-
-        } catch (\Throwable $e) {
-            // Log for debugging; never expose raw exception to the client
-            \Log::error('CallCenter settlement failed', [
-                'callcenter_id' => $user->id,
-                'admin_id' => auth()->id(),
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'حدث خطأ أثناء تسجيل التسوية. يرجى المحاولة مرة أخرى.',
-            ], 500);
-        }
-
-        // ── Success response ──────────────────────────────────────
-        return response()->json([
-            'success' => true,
-            'message' => "تم تسجيل تسوية {$user->name} بنجاح وإضافتها للخزينة.",
-            'settlement' => [
-                'id' => $settlement->id,
-                'callcenter_id' => $settlement->callcenter_id,
-                'agent_name' => $user->name,
-                'amount' => number_format((float) $settlement->amount, 2),
-                'note' => $settlement->note ?? '—',
-                'settled_at' => $settlement->settled_at->format('d/m/Y H:i'),
-            ],
-        ], 201);
-    }
-
-
-    // ──────────────────────────────────────────────────────────────
-    // Private helper — Arabic validation messages for settle()
-    // ──────────────────────────────────────────────────────────────
-
-    private function settlementValidationMessages(): array
-    {
-        return [
-            'amount.required' => 'حقل "المبلغ" مطلوب.',
-            'amount.numeric' => 'يجب أن يكون المبلغ رقمًا.',
-            'amount.gt' => 'يجب أن يكون المبلغ أكبر من صفر.',
-            'amount.max' => 'المبلغ المدخل كبير جدًا.',
-            'note.max' => 'يجب ألا تتجاوز الملاحظة 500 حرف.',
-        ];
-    }
 }

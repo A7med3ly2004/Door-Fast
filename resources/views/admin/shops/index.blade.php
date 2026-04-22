@@ -30,7 +30,7 @@
     <div class="table-wrap">
         <table>
             <thead>
-                <tr><th>الكود</th><th>الاسم</th><th>الفئة</th><th>الهاتف</th><th>العنوان</th><th>عدد الطلبات</th><th>إجمالي المبيعات</th><th>الحالة</th><th>إجراءات</th></tr>
+                <tr><th style="text-align: center;">الكود</th><th style="text-align: center;">الاسم</th><th style="text-align: center;">الفئة</th><th style="text-align: center;">الهاتف</th><th style="text-align: right;">العنوان</th><th style="text-align: center;">عدد الطلبات</th><th style="text-align: center;">إجمالي المبيعات</th><th style="text-align: center;">الحالة</th><th style="text-align: center;">إجراءات</th></tr>
             </thead>
             <tbody id="shops-body">
                 <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">جاري التحميل...</td></tr>
@@ -162,14 +162,14 @@ async function loadShops(page = 1) {
             return;
         }
         body.innerHTML = data.data.map(s => `<tr id="shop-row-${s.id}">
-            <td><code style="color:var(--yellow)">${s.code ?? '—'}</code></td>
-            <td><strong>${s.name}</strong></td>
-            <td><span class="badge" style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-main)">${s.category ? s.category.name : '—'}</span></td>
-            <td>${s.phone ?? '—'}</td>
-            <td>${s.address ?? '—'}</td>
-            <td>${s.orders_count ?? 0}</td>
-            <td>${parseFloat(s.order_items_sum_total||0).toFixed(2)} ج</td>
-            <td>
+            <td style="text-align: center;"><code style="color:var(--yellow)">${s.code ?? '—'}</code></td>
+            <td style="text-align: center;"><strong>${s.name}</strong></td>
+            <td style="text-align: center;"><span class="badge" style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-main)">${s.category ? s.category.name : '—'}</span></td>
+            <td style="text-align: center;">${s.phone ?? '—'}</td>
+            <td style="text-align: right;">${s.address ?? '—'}</td>
+            <td style="text-align: center;">${s.orders_count ?? 0}</td>
+            <td style="text-align: center;">${parseFloat(s.order_items_sum_total||0).toFixed(2)} ج</td>
+            <td style="text-align: center;">
                 <button id="status-btn-${s.id}" onclick="toggleShop(${s.id}, this)"
                     style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;transition:all .2s ease;
                     ${s.is_active ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);'}"
@@ -177,10 +177,10 @@ async function loadShops(page = 1) {
                     ${s.is_active ? '✓ نشط' : '✗ غير نشط'}
                 </button>
             </td>
-            <td>
-                <div style="display:flex;gap:6px">
-                    <button class="btn btn-sm btn-info" onclick="viewShop(${s.id}, '${s.name}')">👁</button>
-                    <button class="btn btn-sm btn-secondary" onclick="openEdit(${s.id},'${s.name.replace(/'/g,"\\'")}','${(s.phone??'').replace(/'/g,"\\'")}','${(s.address??'').replace(/'/g,"\\'")}','${(s.shop_category_id??'')}','${(s.code??'').replace(/'/g,"\\'")}')">✏️</button>
+            <td style="text-align: center;">
+                <div style="display:flex;gap:3px;justify-content: space-evenly;">
+                    <button class="btn btn-sm btn-info" onclick="viewShop(${s.id}, '${s.name}')">عرض</button>
+                    <button class="btn btn-sm btn-secondary" onclick="openEdit(${s.id},'${s.name.replace(/'/g,"\\'")}','${(s.phone??'').replace(/'/g,"\\'")}','${(s.address??'').replace(/'/g,"\\'")}','${(s.shop_category_id??'')}','${(s.code??'').replace(/'/g,"\\'")}')">تعديل</button>
                 </div>
             </td>
         </tr>`).join('');

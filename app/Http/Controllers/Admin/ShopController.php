@@ -75,17 +75,17 @@ class ShopController extends Controller
     {
         $shop = Shop::findOrFail($id);
 
-        $from = $request->filled('from') ? Carbon::parse($request->from) : Carbon::now()->subDays(30);
-        $to   = $request->filled('to')   ? Carbon::parse($request->to)   : Carbon::now();
+        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(Carbon::now()->subDays(30))[0];
+        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]   : \App\Models\Setting::businessDayRange(Carbon::now())[1];
 
         $itemsQuery = OrderItem::where('shop_id', $id)
-            ->whereHas('order', fn($q) => $q->whereBetween('created_at', [$from->startOfDay(), $to->endOfDay()]));
+            ->whereHas('order', fn($q) => $q->whereBetween('created_at', [$from, $to]));
 
         $ordersCount   = $itemsQuery->clone()->distinct('order_id')->count('order_id');
         $totalPurchases = $itemsQuery->clone()->sum('total');
 
         $topItems = OrderItem::where('shop_id', $id)
-            ->whereHas('order', fn($q) => $q->whereBetween('created_at', [$from->startOfDay(), $to->clone()->endOfDay()]))
+            ->whereHas('order', fn($q) => $q->whereBetween('created_at', [$from, $to]))
             ->selectRaw('item_name, SUM(quantity) as total_qty, SUM(total) as total_value')
             ->groupBy('item_name')
             ->orderByDesc('total_qty')

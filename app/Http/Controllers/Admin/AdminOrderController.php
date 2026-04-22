@@ -10,7 +10,6 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderLog;
 use App\Models\Shop;
-use App\Models\TreasuryTransaction;
 use App\Models\User;
 use App\Events\OrderStatusUpdated;
 use Carbon\Carbon;
@@ -24,11 +23,14 @@ class AdminOrderController extends Controller
     /** Active deliveries for the order-create dropdown. */
     private function activeDeliveries(): array
     {
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        $businessDate = $startOfToday->toDateString();
+
         return User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->where('is_active', true)
-            ->whereHas('shifts', fn($q) => $q->where('is_active', true)->where('date', today()->toDateString()))
-            ->withCount(['deliveryOrders as orders_today' => fn($q) => $q->where('created_at', '>=', today()->startOfDay())->whereIn('status', ['received', 'delivered'])])
-            ->with(['shifts' => fn($q) => $q->where('is_active', true)->where('date', today()->toDateString())])
+            ->whereHas('shifts', fn($q) => $q->where('is_active', true)->where('date', $businessDate))
+            ->withCount(['deliveryOrders as orders_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])->whereIn('status', ['received', 'delivered'])])
+            ->with(['shifts' => fn($q) => $q->where('is_active', true)->where('date', $businessDate)])
             ->get()
             ->map(fn($d) => [
                 'id'         => $d->id,
@@ -167,6 +169,31 @@ class AdminOrderController extends Controller
             'accepted_at'        => now(),
         ]);
 
+        // Handle send-to customer creation
+        if ($request->filled('send_to_phone') && !$request->filled('send_to_client_id')) {
+            $sendToClient = \App\Models\Client::firstOrCreate(
+                ['phone' => $request->send_to_phone],
+                [
+                    'name'  => $request->send_to_name ?: 'Unnamed',
+                    'code'  => $request->send_to_code ?: \App\Models\Client::generateCode(),
+                    'phone2'=> null,
+                ]
+            );
+            if ($sendToClient->wasRecentlyCreated) {
+                $sendToClient->addresses()->create([
+                    'address'    => $request->send_to_address ?? '',
+                    'is_default' => true,
+                ]);
+                \App\Models\ActivityLog::log(
+                    event: 'client.created_sendto',
+                    description: 'تم إضافة عميل الإرسال إليه تلقائياً — ' . $sendToClient->name,
+                    subjectType: 'client', subjectId: $sendToClient->id,
+                    subjectLabel: $sendToClient->name,
+                    properties: ['phone' => $sendToClient->phone, 'code' => $sendToClient->code]
+                );
+            }
+        }
+
         // 5. Create items
         foreach ($items as $item) {
             if (empty($item['item_name'])) continue;
@@ -250,110 +277,4 @@ class AdminOrderController extends Controller
         ]);
     }
 
-    // ─── Delivery Settlement (Admin → Treasury) ───────────────────
-
-    /**
-     * GET /admin/delivery/{id}/settlement
-     *
-     * Returns unsettled admin orders (callcenter_id IS NULL, status=delivered,
-     * is_settled=false) for a specific delivery agent.
-     * Settlement amount = total (items + delivery_fee - discount).
-     */
-    public function deliverySettlement($id)
-    {
-        $delivery = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
-
-        $orders = Order::where('delivery_id', $id)
-            ->whereNull('callcenter_id')      // admin orders only
-            ->where('status', 'delivered')
-            ->where('is_settled', false)
-            ->with(['client', 'items'])
-            ->latest('delivered_at')
-            ->get();
-
-        $summary = [
-            'count'           => $orders->count(),
-            'total_amount'    => $orders->sum('total'),         // items + fee - discount
-            'total_items_val' => $orders->sum(fn($o) => $o->items->sum('total')),
-            'total_fees'      => $orders->sum('delivery_fee'),
-            'total_discounts' => $orders->sum('discount'),
-        ];
-
-        $mapped = $orders->map(fn($o) => [
-            'id'           => $o->id,
-            'order_number' => $o->order_number,
-            'client'       => $o->client?->name ?? '—',
-            'total'        => $o->total,
-            'delivery_fee' => $o->delivery_fee,
-            'discount'     => $o->discount,
-            'items_count'  => $o->items->count(),
-            'delivered_at' => $o->delivered_at?->toIso8601String(),
-        ]);
-
-        return response()->json([
-            'delivery' => ['id' => $delivery->id, 'name' => $delivery->name],
-            'summary'  => $summary,
-            'orders'   => $mapped,
-        ]);
-    }
-
-    /**
-     * POST /admin/delivery/{id}/settlement
-     *
-     * Marks all unsettled admin orders as settled and records the total
-     * in the treasury as a 'settlement' transaction.
-     */
-    public function doDeliverySettlement($id)
-    {
-        $delivery = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
-
-        DB::transaction(function () use ($delivery) {
-            $orders = Order::where('delivery_id', $delivery->id)
-                ->whereNull('callcenter_id')
-                ->where('status', 'delivered')
-                ->where('is_settled', false)
-                ->lockForUpdate()
-                ->get();
-
-            if ($orders->isEmpty()) {
-                abort(422, 'لا توجد طلبات مستحقة للتسوية');
-            }
-
-            $totalAmount = $orders->sum('total');
-
-            // Mark orders as settled
-            Order::whereIn('id', $orders->pluck('id'))
-                ->update(['is_settled' => true]);
-
-            // Record in Treasury
-            TreasuryTransaction::create([
-                'type'             => 'settlement',
-                'source_type'      => 'admin_delivery_settlement',
-                'source_id'        => null,
-                'amount'           => $totalAmount,
-                'by_whom'          => $delivery->name,
-                'note'             => "تسوية مندوب: {$delivery->name} — " . $orders->count() . " طلب",
-                'recorded_by'      => auth()->id(),
-                'transaction_date' => now()->toDateString(),
-            ]);
-
-            ActivityLog::log(
-                event: 'settlement.admin_delivery',
-                description: "تسوية مندوب مع الأدمن — {$delivery->name}",
-                subjectType: 'settlement',
-                subjectId: $delivery->id,
-                subjectLabel: $delivery->name,
-                properties: [
-                    'delivery_name'  => $delivery->name,
-                    'orders_count'   => $orders->count(),
-                    'total_amount'   => $totalAmount,
-                ]
-            );
-        });
-
-        return response()->json([
-            'success' => true,
-            'message' => "تمت التسوية بنجاح وتم تسجيلها في الخزنة",
-        ]);
-    }
 }

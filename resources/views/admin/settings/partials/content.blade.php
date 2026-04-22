@@ -13,6 +13,14 @@
         <div class="form-group"><label class="form-label">الحد الأقصى للعهدة للمندوب</label><input type="number" id="max_unsettled_limit" class="form-control" value="{{ $settings['max_unsettled_limit'] ?? 500 }}" min="0"><span style="font-size:12px;color:var(--text-muted)">المبلغ الذي يتوقف عنده المندوب عن استلام طلبات (بالجنيه)</span></div>
         <div class="form-group"><label class="form-label">الحد الأقصى للطلبات قيد التوصيل</label><input type="number" id="max_active_orders" class="form-control" value="{{ $settings['max_active_orders'] ?? 3 }}" min="1"><span style="font-size:12px;color:var(--text-muted)">عدد الطلبات المستلمة مع المندوب في نفس الوقت</span></div>
     </div>
+    <div class="form-group"><label class="form-label">وقت انتهاء اليوم (لإحصائيات وتقارير النظام)</label><input type="time" id="day_end_time" class="form-control" value="{{ $settings['day_end_time'] ?? '00:00' }}"><span style="font-size:12px;color:var(--text-muted)">يحدد متى يعتبر النظام أن اليوم قد انتهى (مثلاً 03:00 تعني 3 فجراً)</span></div>
+    
+    <div class="section-header" style="margin-top: 24px; margin-bottom: 16px;"><h4>⚙️ إعدادات التنبيهات</h4></div>
+    <div class="form-row">
+        <div class="form-group"><label class="form-label">تأخير التوصيل (دقائق)</label><input type="number" id="notif_delay_delivery_mins" class="form-control" value="{{ $settings['notif_delay_delivery_mins'] ?? 20 }}" min="1"></div>
+        <div class="form-group"><label class="form-label">طلب غير مقبول من المندوب (دقائق)</label><input type="number" id="notif_unaccepted_mins" class="form-control" value="{{ $settings['notif_unaccepted_mins'] ?? 20 }}" min="1"></div>
+    </div>
+    
     <hr class="divider">
     <div class="form-group"><label class="form-label">خدمة الرسائل (SMS)</label>
         <div class="toggle-wrap" style="margin-top:8px"><label class="toggle"><input type="checkbox" id="sms_enabled" {{ ($settings['sms_enabled'] ?? '0') == '1' ? 'checked' : '' }}><span class="toggle-slider"></span></label><span style="color:var(--text-muted);font-size:13px">تفعيل SMS (غير متاح حالياً)</span></div>
@@ -31,6 +39,9 @@ async function saveSettings() {
             max_discount_percentage: document.getElementById('max_discount_percentage').value,
             max_unsettled_limit: document.getElementById('max_unsettled_limit').value,
             max_active_orders: document.getElementById('max_active_orders').value,
+            day_end_time: document.getElementById('day_end_time').value,
+            notif_delay_delivery_mins: document.getElementById('notif_delay_delivery_mins').value,
+            notif_unaccepted_mins: document.getElementById('notif_unaccepted_mins').value,
             sms_enabled: document.getElementById('sms_enabled').checked ? 1 : 0,
         });
         showSuccess(data.message);

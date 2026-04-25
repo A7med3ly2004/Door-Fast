@@ -29,7 +29,9 @@ class User extends Authenticatable
     {
         static::creating(function ($user) {
             if (empty($user->code)) {
-                if ($user->role === 'callcenter') {
+                if ($user->role === 'admin') {
+                    $user->code = self::generateUniqueRoleCode('A');
+                } elseif ($user->role === 'callcenter') {
                     $user->code = self::generateUniqueRoleCode('C');
                 } elseif (in_array($user->role, ['delivery', 'reserve_delivery'])) {
                     $user->code = self::generateUniqueRoleCode('D');

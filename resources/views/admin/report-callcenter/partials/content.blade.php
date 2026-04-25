@@ -1,5 +1,5 @@
 <div class="section-header">
-    <h2>📞 تقارير الكول سنتر</h2>
+    <h2>تقارير الكول سنتر</h2>
 </div>
 
 <div class="card" style="margin-bottom:20px;">
@@ -7,7 +7,7 @@
         <div style="flex:1;min-width:200px;">
             <label class="form-label">الموظف <span style="color:var(--red)">*</span></label>
             <select id="filter-callcenter-id" class="form-select">
-                <option value="">-- اختر الموظف --</option>
+                <option value="">اختر الموظف</option>
                 @foreach($callcenters as $cc)
                     <option value="{{ $cc->id }}">{{ $cc->name }}</option>
                 @endforeach
@@ -22,7 +22,7 @@
             <input type="date" id="filter-to" class="form-control">
         </div>
         <div style="display:flex;gap:8px;align-self:flex-end;">
-            <button class="btn btn-primary" id="search-btn" onclick="loadReport(1)">🔍 عرض التقرير</button>
+            <button class="btn btn-primary" id="search-btn" onclick="loadReport(1)">عرض التقرير</button>
             <span id="report-spinner" class="spin" style="display:none;align-self:center;margin-right:10px;"></span>
         </div>
     </div>
@@ -33,9 +33,9 @@
         <h3 id="report-agent-name" style="margin-bottom:20px;font-size:18px;color:var(--info);"></h3>
 
         <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);gap:20px;">
-            <div class="kpi-card">
+            <div class="kpi-card cyan">
                 <div class="kpi-label">إجمالي الطلبات</div>
-                <div class="kpi-value" id="kpi-total-orders">0</div>
+                <div class="kpi-value" id="kpi-total-orders" style="color:var(--cyan)">0</div>
             </div>
             <div class="kpi-card green">
                 <div class="kpi-label">إجمالي المستلم (مُوصل)</div>
@@ -45,36 +45,58 @@
                 <div class="kpi-label">الطلبات الملغية</div>
                 <div class="kpi-value" id="kpi-cancelled" style="color:var(--red)">0</div>
             </div>
-            
-            <div class="kpi-card blue">
-                <div class="kpi-label">دائن (للدور فاست)</div>
-                <div class="kpi-value" id="kpi-debtor" style="color:var(--info)">0</div>
-                <div class="kpi-sub">ج.م (الطلبات الموصلة)</div>
+            <div class="kpi-card yellow">
+                <div class="kpi-label">الطلبات المعلقة</div>
+                <div class="kpi-value" id="kpi-pending" style="color:var(--yellow)">0</div>
+                <div class="kpi-sub">معلقة + مستلمة للمندوب</div>
             </div>
-
-            <div class="kpi-card" style="border-left:4px solid var(--yellow);">
-                <div class="kpi-label">مدين (للموظف)</div>
-                <div class="kpi-value" id="kpi-creditor" style="color:var(--yellow)">0</div>
-                <div class="kpi-sub">ج.م (سلف / مديونيات)</div>
+            <div class="kpi-card cyan">
+                <div class="kpi-label">إجمالي الطلبات الموصلة</div>
+                <div class="kpi-value" id="kpi-total-delivered-revenue" style="color:var(--cyan)">0</div>
+                <div class="kpi-sub">ج.م (الإجمالي الصافي)</div>
             </div>
-            
-            <div class="kpi-card">
+            <div class="kpi-card green">
                 <div class="kpi-label">إجمالي رسوم التوصيل</div>
-                <div class="kpi-value" id="kpi-total-fees">0</div>
+                <div class="kpi-value" id="kpi-total-fees" style="color:var(--success)">0</div>
                 <div class="kpi-sub">ج.م</div>
             </div>
-            <div class="kpi-card">
+
+            <div class="kpi-card red">
                 <div class="kpi-label">إجمالي الخصومات</div>
-                <div class="kpi-value" id="kpi-total-discounts">0</div>
+                <div class="kpi-value" id="kpi-total-discounts" style="color:var(--red)">0</div>
                 <div class="kpi-sub">ج.م</div>
             </div>
             
-            <div class="kpi-card" id="kpi-period-safe-card" style="border-left:4px solid var(--border);">
-                <div class="kpi-label">رصيد الخزنة للفترة</div>
-                <div class="kpi-value" id="kpi-period-safe-balance" style="color:inherit;">0</div>
-                <div class="kpi-sub">ج.م (توريدات - سلف)</div>
+            <div class="kpi-card blue" id="kpi-period-safe-card">
+                <div class="kpi-label">رصيد الخزنة في الفترة</div>
+                <div class="kpi-value" id="kpi-period-safe-balance" style="color:var(--blue);">0</div>
+                <div class="kpi-sub">ج.م (الرصيد الفعلي للفترة)</div>
             </div>
 
+
+            <div class="kpi-card cyan">
+                <div class="kpi-label">دائن</div>
+                <div class="kpi-value" id="kpi-creditor" style="color:var(--cyan)">0</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
+
+            <div class="kpi-card green" >
+                <div class="kpi-label">مدين</div>
+                <div class="kpi-value" id="kpi-debtor" style="color:var(--success)">0</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
+
+            <div class="kpi-card" style="border-right:4px solid lightblue;">
+                <div class="kpi-label">إجمالي ساعات العمل</div>
+                <div class="kpi-value" id="kpi-total-work-hours" style="color:lightblue">00:00</div>
+                <div class="kpi-sub">ساعة : دقيقة</div>
+            </div>
+
+            <div class="kpi-card" style="border-right:4px solid lightblue;">
+                <div class="kpi-label">إجمالي أيام العمل</div>
+                <div class="kpi-value" id="kpi-total-work-days" style="color:lightblue">0</div>
+                <div class="kpi-sub">يوم عمل</div>
+            </div>
         </div>
     </div>
 
@@ -87,13 +109,13 @@
             <table>
                 <thead>
                     <tr>
-                        <th>رقم الطلب</th>
-                        <th>التاريخ</th>
-                        <th>العميل</th>
-                        <th>الموظف</th>
-                        <th>رسوم التوصيل</th>
-                        <th>الخصم</th>
-                        <th>الإجمالي</th>
+                        <th style="text-align:center;">كود الطلب</th>
+                        <th style="text-align:center;">التاريخ</th>
+                        <th style="text-align:right;">العميل</th>
+                        <th style="text-align:center;">الموظف</th>
+                        <th style="text-align:center;">رسوم التوصيل</th>
+                        <th style="text-align:center;">الخصم</th>
+                        <th style="text-align:center;">الإجمالي</th>
                         <th style="text-align:center;">الحالة</th>
                     </tr>
                 </thead>
@@ -157,12 +179,20 @@
 
     function fillKpis(kpis) {
         document.getElementById('kpi-total-orders').textContent    = kpis.total_orders;
+        document.getElementById('kpi-pending').textContent         = kpis.pending;
         document.getElementById('kpi-total-received').textContent  = kpis.total_received;
         document.getElementById('kpi-cancelled').textContent       = kpis.cancelled;
+        document.getElementById('kpi-total-delivered-revenue').textContent = kpis.total_delivered_revenue;
         document.getElementById('kpi-debtor').textContent          = kpis.debtor;
         document.getElementById('kpi-creditor').textContent        = kpis.creditor;
         document.getElementById('kpi-total-fees').textContent      = kpis.total_fees;
         document.getElementById('kpi-total-discounts').textContent = kpis.total_discounts;
+        
+        var workHoursEl = document.getElementById('kpi-total-work-hours');
+        if (workHoursEl) workHoursEl.textContent = kpis.total_work_hours;
+
+        var workDaysEl = document.getElementById('kpi-total-work-days');
+        if (workDaysEl) workDaysEl.textContent = kpis.total_work_days;
         
         var safeBalanceCard = document.getElementById('kpi-period-safe-card');
         var safeBalanceVal  = document.getElementById('kpi-period-safe-balance');
@@ -199,13 +229,13 @@
             var clientName     = order.client      ? esc(order.client.name)      : '—';
             var callcenterName = order.callcenter  ? esc(order.callcenter.name)  : '—';
             rows += '<tr>'
-                  + '<td style="color:var(--yellow);font-weight:700;">#' + order.id + '</td>'
-                  + '<td style="font-size:12px;">' + formatDate(order.created_at) + '</td>'
-                  + '<td>' + clientName + '</td>'
-                  + '<td>' + callcenterName + '</td>'
-                  + '<td>' + (order.delivery_fee || 0) + ' ج.م</td>'
-                  + '<td>' + (order.discount || 0) + ' ج.م</td>'
-                  + '<td style="font-weight:700;">' + (order.total || 0) + ' ج.م</td>'
+                  + '<td style="color:var(--yellow);font-weight:700;text-align:center;">' + (order.order_number || ('#' + order.id)) + '</td>'
+                  + '<td style="font-size:12px;text-align:center;">' + formatDate(order.created_at) + '</td>'
+                  + '<td style="text-align:right;">' + clientName + '</td>'
+                  + '<td style="text-align:center;">' + callcenterName + '</td>'
+                  + '<td style="text-align:center;">' + (order.delivery_fee || 0) + ' ج.م</td>'
+                  + '<td style="text-align:center;">' + (order.discount || 0) + ' ج.م</td>'
+                  + '<td style="font-weight:700;text-align:center;">' + (order.total || 0) + ' ج.م</td>'
                   + '<td style="text-align:center;">' + statusBadge(order.status) + '</td>'
                   + '</tr>';
         }

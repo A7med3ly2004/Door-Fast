@@ -4,10 +4,10 @@
 
 @section('content')
 <div class="section-header">
-    <h2>🏪 إدارة المتاجر</h2>
+    <h2>إدارة المتاجر</h2>
     <div style="display:flex;gap:10px">
-        <button class="btn btn-secondary" onclick="openModal('modal-add-category')">📁 إضافة فئة</button>
-        <button class="btn btn-primary" onclick="openModal('modal-add-shop')">➕ إضافة متجر</button>
+        <button class="btn btn-secondary" onclick="openModal('modal-add-category')">إضافة فئة</button>
+        <button class="btn btn-primary" onclick="openModal('modal-add-shop')">إضافة متجر</button>
     </div>
 </div>
 
@@ -20,8 +20,8 @@
                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
             @endforeach
         </select>
-        <button class="btn btn-primary" onclick="loadShops(1)">🔍 بحث</button>
-        <button class="btn btn-secondary" onclick="resetFilters()">↺ إعادة</button>
+        <button class="btn btn-primary" onclick="loadShops(1)">بحث</button>
+        <button class="btn btn-secondary" onclick="resetFilters()">إعادة</button>
     </div>
 </div>
 
@@ -43,7 +43,7 @@
 {{-- Add Modal --}}
 <div class="modal-overlay" id="modal-add-shop">
     <div class="modal">
-        <div class="modal-header"><h3>➕ إضافة متجر</h3><button class="btn-close" onclick="closeModal('modal-add-shop')">✕</button></div>
+        <div class="modal-header"><h3>إضافة متجر</h3><button class="btn-close" onclick="closeModal('modal-add-shop')">✕</button></div>
         <div class="modal-body">
             <div class="form-row">
                 <div class="form-group"><label class="form-label">الاسم *</label><input id="add-name" type="text" class="form-control"></div>
@@ -101,28 +101,10 @@
     </div>
 </div>
 
-{{-- View Modal --}}
-<div class="modal-overlay" id="modal-view-shop">
-    <div class="modal modal-lg">
-        <div class="modal-header">
-            <h3>👁 تفاصيل المتجر — <span id="view-shop-name"></span></h3>
-            <button class="btn-close" onclick="closeModal('modal-view-shop')">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="filter-bar" style="margin-bottom:16px">
-                <input type="date" id="view-from" class="form-control">
-                <input type="date" id="view-to" class="form-control">
-                <button class="btn btn-primary" onclick="loadShopDetails(document.getElementById('view-shopid').value)">تحديث</button>
-            </div>
-            <input type="hidden" id="view-shopid">
-            <div id="shop-details-body"><div style="text-align:center;padding:40px;color:var(--text-muted)">جاري التحميل...</div></div>
-        </div>
-    </div>
-</div>
 {{-- Add Category Modal --}}
 <div class="modal-overlay" id="modal-add-category">
     <div class="modal">
-        <div class="modal-header"><h3>📁 إضافة فئة جديدة</h3><button class="btn-close" onclick="closeModal('modal-add-category')">✕</button></div>
+        <div class="modal-header"><h3>إضافة فئة جديدة</h3><button class="btn-close" onclick="closeModal('modal-add-category')">✕</button></div>
         <div class="modal-body">
             <div class="form-group"><label class="form-label">اسم الفئة *</label><input id="cat-name" type="text" class="form-control" placeholder="مثال: لحوم، خضروات..."></div>
         </div>
@@ -178,10 +160,7 @@ async function loadShops(page = 1) {
                 </button>
             </td>
             <td style="text-align: center;">
-                <div style="display:flex;gap:3px;justify-content: space-evenly;">
-                    <button class="btn btn-sm btn-info" onclick="viewShop(${s.id}, '${s.name}')">عرض</button>
-                    <button class="btn btn-sm btn-secondary" onclick="openEdit(${s.id},'${s.name.replace(/'/g,"\\'")}','${(s.phone??'').replace(/'/g,"\\'")}','${(s.address??'').replace(/'/g,"\\'")}','${(s.shop_category_id??'')}','${(s.code??'').replace(/'/g,"\\'")}')">تعديل</button>
-                </div>
+                <button class="btn btn-sm btn-secondary" onclick="openEdit(${s.id},'${s.name.replace(/'/g,"\\'")}','${(s.phone??'').replace(/'/g,"\\'")}','${(s.address??'').replace(/'/g,"\\'")}','${(s.shop_category_id??'')}','${(s.code??'').replace(/'/g,"\\'")}')">تعديل</button>
             </td>
         </tr>`).join('');
         renderPagination(data.last_page, data.current_page);
@@ -281,37 +260,6 @@ function applyStatusBtn(btn, active) {
     }
 }
 
-async function viewShop(id, name) {
-    document.getElementById('view-shopid').value = id;
-    document.getElementById('view-shop-name').textContent = name;
-    openModal('modal-view-shop');
-    loadShopDetails(id);
-}
-
-async function loadShopDetails(id) {
-    document.getElementById('shop-details-body').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">جاري التحميل...</div>';
-    const from = document.getElementById('view-from').value;
-    const to   = document.getElementById('view-to').value;
-    try {
-        const { data } = await axios.get(`/admin/shops/${id}`, { params: { from, to } });
-        const s = data.shop;
-        document.getElementById('shop-details-body').innerHTML = `
-            <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
-                <div class="kpi-card"><div class="kpi-label">عدد الطلبات</div><div class="kpi-value">${s.orders_count}</div></div>
-                <div class="kpi-card blue"><div class="kpi-label">إجمالي المشتريات</div><div class="kpi-value">${parseFloat(s.total_purchases).toFixed(0)}</div><div class="kpi-sub">ج.م</div></div>
-                <div class="kpi-card green"><div class="kpi-label">الحالة</div><div class="kpi-value" style="font-size:16px">${s.is_active ? '✅ نشط' : '❌ متوقف'}</div></div>
-            </div>
-            <div class="card-title" style="margin-bottom:8px">أكثر الأصناف طلباً</div>
-            <div class="table-wrap">
-                <table><thead><tr><th>الصنف</th><th>الكمية</th><th>القيمة</th></tr></thead>
-                <tbody>${s.top_items.length ? s.top_items.map(i => `<tr>
-                    <td>${i.item_name}</td><td>${i.total_qty}</td><td>${parseFloat(i.total_value).toFixed(2)} ج</td>
-                </tr>`).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">لا بيانات</td></tr>'}</tbody>
-                </table>
-            </div>
-        `;
-    } catch(e) { document.getElementById('shop-details-body').innerHTML = '<div style="text-align:center;color:var(--red)">حدث خطأ</div>'; }
-}
 
 loadShops(1);
 </script>

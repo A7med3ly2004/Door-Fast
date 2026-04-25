@@ -70,7 +70,7 @@
             <button class="btn-close" onclick="admRemoveCard('${id}')">✕</button>
         </div>
         <div class="order-card-body">
-            <div class="section-label">📞 بيانات العميل</div>
+            <div class="section-label">بيانات العميل</div>
             <div class="form-row">
                 <div class="form-group"><label class="form-label">الهاتف *</label><input type="text" class="form-control" id="${id}-phone" placeholder="01xxxxxxxxx" onblur="admSearchClient('${id}','phone')" onkeydown="if(event.key==='Enter') this.blur()"></div>
                 <div class="form-group"><label class="form-label">هاتف 2</label><input type="text" class="form-control" id="${id}-phone2" placeholder="اختياري"></div>

@@ -46,11 +46,11 @@ function renderNewOrders() {
         var itemsCount = order.items ? order.items.reduce((s,i) => s+i.quantity, 0) : 0;
         var waitedMins = order.sent_to_delivery_at ? Math.floor((new Date() - new Date(order.sent_to_delivery_at))/60000) : 0;
         var cardClass = 'order-card';
-        var alertHtml = `<div class="wait-alert">انتظر ${waitedMins} دقيقة بدون قبول</div>`;
-        if (waitedMins > reserveDelayMin+10) { cardClass += ' very-urgent'; alertHtml = `<div class="wait-alert" style="color:var(--secondary);background:#fee2e2">انتظر ${waitedMins} دقيقة ⚠️</div>`; }
+        var alertHtml = `<div class="wait-alert" style="display:flex;align-items:center;gap:5px;">انتظر <span class="order-timer" data-time="${order.sent_to_delivery_at || order.created_at}">00:00</span> بدون قبول</div>`;
+        if (waitedMins > reserveDelayMin+10) { cardClass += ' very-urgent'; alertHtml = `<div class="wait-alert" style="color:var(--secondary);background:#fee2e2;display:flex;align-items:center;gap:5px;">انتظر <span class="order-timer" data-time="${order.sent_to_delivery_at || order.created_at}">00:00</span> ⚠️</div>`; }
         else if (waitedMins > reserveDelayMin+5) cardClass += ' urgent';
         var card = document.createElement('div'); card.className = cardClass; card.id = `order-${order.id}`;
-        card.innerHTML = `<div class="order-header"><div class="order-number">#${order.order_number}</div>${alertHtml}</div><div style="font-weight:600;margin-bottom:15px;color:var(--primary)">${itemsCount} أصناف | إجمالي: ${order.total} ج</div><div class="hidden-zone"><div class="blur-overlay"><span style="font-size:18px">🔒 إخفاء</span></div><div class="hidden-content"><strong>الاسم:</strong> ${order.client?.name ?? ''}<br><strong>الهاتف:</strong> ${order.client?.phone ?? ''}</div></div><button class="btn-accept" onclick="acceptOrder(${order.id})">✔ قبول الطلب</button>`;
+        card.innerHTML = `<div class="order-header"><div class="order-number">#${order.order_number}</div>${alertHtml}</div><div style="font-weight:600;margin-bottom:15px;color:var(--primary)">إجمالي: ${order.total} ج</div><div class="hidden-zone"><div class="blur-overlay"><span style="font-size:18px">🔒 إخفاء</span></div><div class="hidden-content"><strong>الاسم:</strong> ${order.client?.name ?? ''}<br><strong>الهاتف:</strong> ${order.client?.phone ?? ''}</div></div><button class="btn-accept" onclick="acceptOrder(${order.id})">✔ قبول الطلب</button>`;
         grid.appendChild(card);
     });
 }
@@ -74,4 +74,24 @@ if (typeof window.Echo !== 'undefined') {
         else if (order && order.delivery_id && order.delivery_id !== window.myDeliveryId) { currentOrders = currentOrders.filter(o => o.id !== order.order_id); renderNewOrders(); }
     });
 }
+
+function formatWaitTime(dateStr) {
+    if (!dateStr) return '00:00';
+    var diffSecs = Math.floor((new Date() - new Date(dateStr)) / 1000);
+    if (diffSecs < 0) diffSecs = 0;
+    var hours = Math.floor(diffSecs / 3600);
+    var mins = Math.floor((diffSecs % 3600) / 60);
+    var secs = diffSecs % 60;
+    if (hours > 0) {
+        return String(hours).padStart(2, '0') + ':' + String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+    return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+}
+
+setInterval(() => {
+    document.querySelectorAll('.order-timer').forEach(el => {
+        var t = el.getAttribute('data-time');
+        if (t) el.innerText = formatWaitTime(t);
+    });
+}, 1000);
 </script>

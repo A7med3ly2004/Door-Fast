@@ -154,10 +154,10 @@
 
 
 .al-event-icon { font-size:18px; line-height:1; }
-.al-desc       { font-size:13px; color:var(--text); font-weight:500; }
-.al-sub        { font-size:11px; color:var(--text-muted); margin-top:2px;text-align: center; }
-.al-time-main  { font-size:13px; color:var(--text); font-weight:600; direction:ltr; text-align:center; }
-.al-time-ago   { font-size:11px; color:var(--text-muted); margin-top:2px;text-align: center; }
+.al-desc       { font-size:14px; color:var(--text); font-weight:500; }
+.al-sub        { font-size:14px; color:var(--text-muted); margin-top:2px;text-align: center; }
+.al-time-main  { font-size:14px; color:var(--text); font-weight:600; direction:ltr; text-align:center; }
+.al-time-ago   { font-size:12px; color:var(--text-muted); margin-top:2px;text-align: center; }
 </style>
 
 <script>
@@ -226,18 +226,18 @@
 
         tbody.innerHTML = rows.map(r => `
             <tr class="${alRowClass(r.event)}">
-                <td>
+                <td style="font-size:14px;">
                     <div class="al-desc">${r.description}</div>
                 </td>
-                <td>
-                    ${r.subject_label ? `<div class="al-sub">${r.subject_label}</div>` : '—'}
+                <td style="font-size:14px;">
+                    ${r.subject_label ? `<div class="al-sub" style="font-size:14px;">${r.subject_label}</div>` : '—'}
                 </td>
-                <td>
-                    <div style="font-size:13px; text-align: center;">${r.subject_type ? subjectTypeLabel(r.subject_type) : '—'}</div>
+                <td style="font-size:14px;">
+                    <div style="font-size:14px; text-align: center;">${r.subject_type ? subjectTypeLabel(r.subject_type) : '—'}</div>
                 </td>
-                <td style="font-size:13px;font-weight:600; text-align: center;">${r.causer_name}</td>
+                <td style="font-size:14px;font-weight:600; text-align: center;">${r.causer_name}</td>
                 <td style="text-align: center;"><span class="badge ${r.causer_role_badge}">${r.causer_role_label}</span></td>
-                <td>
+                <td style="font-size:14px;">
                     <div class="al-time-main">${r.created_at}</div>
                     <div class="al-time-ago">${r.created_at_human}</div>
                 </td>

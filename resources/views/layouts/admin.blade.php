@@ -33,6 +33,7 @@
             --input-bg: #0f172a;
             --success: #22c55e;
             --info: #3b82f6;
+            --cyan: #0891b2;
             --sidebar-width: 260px;
         }
 
@@ -121,7 +122,7 @@
             font-size: 14px;
             font-weight: 600;
             transition: all 0.2s ease;
-            margin-bottom: 2px;
+            margin-bottom: 5px;
         }
 
         .nav-link:hover {
@@ -261,15 +262,18 @@
 
         .btn-primary:hover {
             background: var(--yellow-dark);
+            transform: translateY(-2px);
         }
 
         .btn-danger {
             background: var(--red);
             color: #fff;
+            text-decoration: none;
         }
 
         .btn-danger:hover {
             background: var(--red-dark);
+            transform: translateY(-2px);
         }
 
         .btn-secondary {
@@ -279,11 +283,17 @@
 
         .btn-secondary:hover {
             background: #475569;
+            transform: translateY(-2px);
         }
 
         .btn-info {
             background: var(--info);
             color: #fff;
+        }
+
+        .btn-info:hover {
+            background: var(--cyan);
+            transform: translateY(-2px);
         }
 
         .btn-success {
@@ -306,6 +316,7 @@
 
         .btn-icon:hover {
             background: #475569;
+            transform: translateY(-2px);
         }
 
         /* ── Tables ── */
@@ -324,7 +335,7 @@
         thead th {
             background: var(--bg);
             padding: 12px 16px;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 700;
             color: var(--text-muted);
             text-align: right;
@@ -334,7 +345,7 @@
 
         tbody td {
             padding: 12px 16px;
-            font-size: 13px;
+            font-size: 17px;
             border-bottom: 1px solid var(--border);
             vertical-align: middle;
         }
@@ -352,7 +363,7 @@
             display: inline-block;
             padding: 3px 10px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
         }
 
@@ -388,7 +399,7 @@
 
         .form-label {
             display: block;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 700;
             color: var(--text-muted);
             margin-bottom: 6px;
@@ -593,7 +604,7 @@
         /* ── KPI Cards ── */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -605,14 +616,58 @@
             padding: 18px;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
         }
 
-        .kpi-card.red { }
-        .kpi-card.green { }
-        .kpi-card.blue { }
+        .kpi-card.red {
+            border-color: var(--red) !important;
+            background: rgba(220, 38, 38, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+
+        .kpi-card.green {
+            border-color: var(--success) !important;
+            background: rgba(34, 197, 94, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+
+        .kpi-card.blue {
+            border-color: var(--info) !important;
+            background: rgba(59, 130, 246, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+
+        .kpi-card.yellow {
+            border-color: var(--yellow) !important;
+            background: rgba(245, 158, 11, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+
+        .kpi-card.white {
+            border-color: var(--white) !important;
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+
+        .kpi-card.cyan {
+            border-color: var(--cyan) !important;
+            background: rgba(8, 145, 178, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
 
         .kpi-label {
-            font-size: 12px;
+            font-size: 16px;
             color: var(--text-muted);
             font-weight: 600;
             margin-bottom: 8px;
@@ -622,12 +677,13 @@
             font-size: 26px;
             font-weight: 800;
             color: var(--text);
+            text-align: right;
         }
 
 
 
         .kpi-sub {
-            font-size: 11px;
+            font-size: 14px;
             color: var(--text-muted);
             margin-top: 4px;
         }
@@ -869,6 +925,13 @@
                 </svg>
                 كول سنتر
             </a>
+            <a href="{{ route('admin.admin-management.index') }}" class="nav-link" data-spa="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                المديرين
+            </a>
 
             <span class="nav-section-title">الإدارة المالية</span>
             <a href="{{ route('admin.treasury.index') }}" class="nav-link" data-spa="true">
@@ -958,7 +1021,9 @@
             <span class="topbar-title" id="spa-page-title">@yield('page-title', 'لوحة التحكم')</span>
             <div class="topbar-right">
                 <div style="position:relative;cursor:pointer" onclick="toggleNotifPanel()">
-                    <span style="font-size:22px;">🔔</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
                     <span id="notif-count-badge" style="display:none;position:absolute;top:-4px;left:-4px;background:var(--red);color:#fff;
                                font-size:10px;font-weight:800;min-width:18px;height:18px;line-height:18px;
                                text-align:center;border-radius:9px;padding:0 4px;">0</span>

@@ -52,32 +52,72 @@ class ReportCallCenterController extends Controller
                 COUNT(*) as total_orders,
                 SUM(CASE WHEN status='delivered' THEN 1 ELSE 0 END) as total_received,
                 SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) as cancelled,
+                SUM(CASE WHEN status IN ('pending', 'received_by_delivery') THEN 1 ELSE 0 END) as total_pending,
                 SUM(CASE WHEN status='delivered' THEN delivery_fee ELSE 0 END) as total_fees,
                 SUM(CASE WHEN status='delivered' THEN discount ELSE 0 END) as total_discounts
             ")
             ->first();
 
-        // ── 2. Debtor (دائن — owed by cc to safe) 
-        // Money cc agent collected from customers but hasn't settled yet
-        $totalDelivered = Order::where('callcenter_id', $callcenterId)
+        // ── 2. Total Delivered Orders Value (إجمالي الطلبات الموصلة)
+        $totalDeliveredRevenue = Order::where('callcenter_id', $callcenterId)
             ->whereBetween('created_at', [$from, $to])
             ->where('status', 'delivered')
             ->sum('total');
 
-        // ── 3. Creditor (مدين — money given to cc agent, i.e. dain)
-        $creditor = TreasuryTransaction::where('type', 'dain')
-            ->where('source_type', 'manual')
-            ->where('source_id', $callcenterId)
-            ->whereBetween('transaction_date', [$from->toDateString(), $to->toDateString()])
-            ->sum('amount');
+        // ── 3. Ledger/Wallet logic 
+        $wallet = \App\Models\Wallet::where('user_id', $callcenterId)->first();
+        $totalDebit = 0;
+        $totalCredit = 0;
+
+        if ($wallet) {
+            $walletTx = \App\Models\WalletTransaction::where('wallet_id', $wallet->id);
+            if ($request->filled('from')) {
+                $walletTx->where('transaction_date', '>=', $from->toDateString());
+            }
+            if ($request->filled('to')) {
+                $walletTx->where('transaction_date', '<=', $to->toDateString());
+            }
+            
+            $totals = $walletTx->selectRaw("
+                    COALESCE(SUM(CASE WHEN direction = 'debit' THEN amount ELSE 0 END), 0) as total_debit,
+                    COALESCE(SUM(CASE WHEN direction = 'credit' THEN amount ELSE 0 END), 0) as total_credit
+                ")->first();
+            
+            $totalDebit = $totals->total_debit;
+            $totalCredit = $totals->total_credit;
+        }
 
         // ── 4. Period Safe Balance
-        $settlementsInPeriod = \App\Models\CallcenterSettlement::where('callcenter_id', $callcenterId)
-            ->whereBetween('settled_at', [$from, $to])
-            ->sum('amount');
-        
-        $dainInPeriod = $creditor;
-        $periodSafeBalance = $settlementsInPeriod - $dainInPeriod;
+        $periodSafeBalance = $totalDebit - $totalCredit;
+
+        // ── 4.5 Work Hours & Days
+        $shifts = \App\Models\CallcenterShift::where('callcenter_id', $callcenterId)
+            ->whereBetween('started_at', [$from, $to])
+            ->get();
+            
+        $totalWorkSeconds = 0;
+        foreach ($shifts as $shift) {
+            $start = $shift->started_at;
+            if (!$start) continue;
+
+            $end = $shift->ended_at;
+            if (!$end) {
+                $end = now()->min($to)->min($start->copy()->endOfDay());
+            }
+
+            $seconds = $end->getTimestamp() - $start->getTimestamp();
+            if ($seconds > 0) {
+                $totalWorkSeconds += $seconds;
+            }
+        }
+        $totalWorkHours = floor($totalWorkSeconds / 3600);
+        $totalWorkMinutes = floor(($totalWorkSeconds % 3600) / 60);
+        $formattedWorkHours = sprintf('%02d:%02d', $totalWorkHours, $totalWorkMinutes);
+
+        $totalWorkDays = \App\Models\CallcenterShift::where('callcenter_id', $callcenterId)
+            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+            ->distinct('date')
+            ->count('date');
 
         // ── 5. Datatable (Paginated, Eager Loaded)
         $orders = Order::with(['client:id,name', 'callcenter:id,name'])
@@ -91,12 +131,16 @@ class ReportCallCenterController extends Controller
                 'total_orders'        => (int) ($kpis->total_orders ?? 0),
                 'total_received'      => (int) ($kpis->total_received ?? 0),
                 'cancelled'           => (int) ($kpis->cancelled ?? 0),
+                'pending'             => (int) ($kpis->total_pending ?? 0),
                 'total_fees'          => number_format((float) ($kpis->total_fees ?? 0), 2),
                 'total_discounts'     => number_format((float) ($kpis->total_discounts ?? 0), 2),
-                'debtor'              => number_format((float) $totalDelivered, 2),
-                'creditor'            => number_format((float) $creditor, 2),
+                'total_delivered_revenue' => number_format((float) $totalDeliveredRevenue, 2),
+                'debtor'              => number_format((float) $totalDebit, 2),
+                'creditor'            => number_format((float) $totalCredit, 2),
                 'period_safe_balance' => number_format((float) $periodSafeBalance, 2),
                 'raw_period_safe_balance' => $periodSafeBalance, // Raw for JS coloring logic
+                'total_work_hours'    => $formattedWorkHours,
+                'total_work_days'     => $totalWorkDays,
             ],
             'orders' => $orders,
             'agent_name' => User::find($callcenterId)->name

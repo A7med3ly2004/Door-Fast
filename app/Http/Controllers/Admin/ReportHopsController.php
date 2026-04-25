@@ -35,12 +35,24 @@ class ReportHopsController extends Controller
 
         // Global KPIs
         $allShops       = Shop::count();
-        $allItems       = OrderItem::whereBetween('created_at', [$from, $to]);
-        $allOrders      = Order::whereBetween('created_at', [$from, $to]);
+        
+        $allItems       = OrderItem::whereNotNull('shop_id')
+            ->whereHas('order', function($q) use ($from, $to) {
+                $q->whereBetween('created_at', [$from, $to])
+                  ->where('status', 'delivered');
+            });
+            
         $totalPurchases = $allItems->clone()->sum('total');
-        $totalOrders    = $allItems->clone()->distinct('order_id')->count('order_id');
+        $totalOrders    = Order::whereBetween('created_at', [$from, $to])
+            ->where('status', 'delivered')
+            ->whereHas('items', fn($q) => $q->whereNotNull('shop_id'))
+            ->count();
 
-        $topShop = OrderItem::whereBetween('created_at', [$from, $to])
+        $topShop = OrderItem::whereNotNull('shop_id')
+            ->whereHas('order', function($q) use ($from, $to) {
+                $q->whereBetween('created_at', [$from, $to])
+                  ->where('status', 'delivered');
+            })
             ->selectRaw('shop_id, SUM(total) as revenue')
             ->groupBy('shop_id')
             ->orderByDesc('revenue')
@@ -53,7 +65,7 @@ class ReportHopsController extends Controller
             'total_shops'    => $allShops,
             'total_orders'   => $totalOrders,
             'total_purchases'=> $totalPurchases,
-            'top_shop'       => $topShop?->shop?->name ?? '—',
+            'top_shop'       => ($topShop && $topShop->shop) ? ($topShop->shop->name . ' (' . number_format((float) $topShop->revenue, 2) . ' ج)') : '—',
             'avg_order'      => $avgOrderValue,
         ];
 
@@ -66,13 +78,14 @@ class ReportHopsController extends Controller
                 ->latest()
                 ->get();
 
+            $deliveredOrders = $shopOrders->where('status', 'delivered');
             $shopKpis = [
                 'orders'    => $shopOrders->count(),
-                'completed' => $shopOrders->where('status', 'delivered')->count(),
+                'completed' => $deliveredOrders->count(),
                 'cancelled' => $shopOrders->where('status', 'cancelled')->count(),
-                'pending'   => $shopOrders->where('status', 'pending')->count(),
-                'revenue'   => $shopOrders->flatMap->items->sum('total'),
-                'avg_order' => $shopOrders->count() > 0 ? round($shopOrders->flatMap->items->sum('total') / $shopOrders->count(), 2) : 0,
+                'pending'   => $shopOrders->whereIn('status', ['pending', 'received', 'received_by_delivery'])->count(),
+                'revenue'   => $deliveredOrders->flatMap->items->sum('total'),
+                'avg_order' => $deliveredOrders->count() > 0 ? round($deliveredOrders->flatMap->items->sum('total') / $deliveredOrders->count(), 2) : 0,
             ];
 
             // Daily chart
@@ -95,22 +108,6 @@ class ReportHopsController extends Controller
                 ];
             })->sortByDesc('orders')->take(10)->values();
 
-            // Top items
-            $itemsRaw = OrderItem::where('shop_id', $shopId)
-                ->whereHas('order', fn($q) => $q->whereBetween('created_at', [$from, $to]))
-                ->selectRaw('item_name, SUM(quantity) as total_qty, SUM(total) as total_value, AVG(unit_price) as avg_price')
-                ->groupBy('item_name')
-                ->orderByDesc('total_qty')
-                ->get();
-
-            $totalQtyAll = $itemsRaw->sum('total_qty') ?: 1;
-            $topItems = $itemsRaw->map(fn($item) => [
-                'name'        => $item->item_name,
-                'qty'         => $item->total_qty,
-                'value'       => $item->total_value,
-                'avg_price'   => round($item->avg_price, 2),
-                'percentage'  => round($item->total_qty / $totalQtyAll * 100, 1),
-            ]);
 
             // Orders table
             $ordersTable = $shopOrders->map(fn($o) => [
@@ -130,12 +127,6 @@ class ReportHopsController extends Controller
                 'shop_kpis'   => $shopKpis,
                 'chart'       => $chart,
                 'top_clients' => $topClients,
-                'top_items'   => $topItems,
-                'items_summary' => [
-                    'total_qty'   => $itemsRaw->sum('total_qty'),
-                    'total_value' => $itemsRaw->sum('total_value'),
-                    'avg_price'   => $itemsRaw->count() > 0 ? round($itemsRaw->avg('avg_price'), 2) : 0,
-                ],
                 'orders'      => $ordersTable,
             ]);
         }

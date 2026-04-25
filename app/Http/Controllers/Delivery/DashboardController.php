@@ -28,13 +28,21 @@ class DashboardController extends Controller
         list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
         $businessDate = $startOfToday->toDateString();
 
-        $shift = Shift::where('delivery_id', $delivery->id)
+        $allShiftsToday = Shift::where('delivery_id', $delivery->id)
             ->where('date', $businessDate)
-            ->where('is_active', true)
-            ->first();
+            ->get();
 
-        $started_at = $shift ? Carbon::parse($shift->started_at)->format('H:i') : null;
-        $started_timestamp = $shift ? Carbon::parse($shift->started_at)->timestamp : null;
+        $previous_worked_seconds = 0;
+        foreach ($allShiftsToday as $s) {
+            if (!$s->is_active && $s->started_at && $s->ended_at) {
+                $previous_worked_seconds += Carbon::parse($s->ended_at)->timestamp - Carbon::parse($s->started_at)->timestamp;
+            }
+        }
+
+        $activeShift = $allShiftsToday->where('is_active', true)->first();
+
+        $started_at = $activeShift ? Carbon::parse($activeShift->started_at)->format('H:i') : null;
+        $started_timestamp = $activeShift ? Carbon::parse($activeShift->started_at)->timestamp : null;
 
         $orders = Order::where('delivery_id', $delivery->id)
             ->where(function($query) use ($startOfToday, $endOfToday) {
@@ -58,6 +66,7 @@ class DashboardController extends Controller
         return response()->json([
             'started_at' => $started_at,
             'started_timestamp' => $started_timestamp,
+            'previous_worked_seconds' => $previous_worked_seconds,
             'delivered_count' => $deliveredCount,
             'received_count' => $receivedCount,
             'cancelled_count' => $cancelledCount,

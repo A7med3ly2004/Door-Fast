@@ -15,22 +15,31 @@ class CallCenterManagementController extends Controller
 {
     public function index()
     {
-        if (request()->header('X-SPA-Navigation')) {
-            list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
-            $agents = User::where('role', 'callcenter')
-                ->with(['createdOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
-                ->orderBy('name')
-                ->get()
-                ->map(fn($cc) => [
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        $agents = User::where('role', 'callcenter')
+            ->with(['createdOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($cc) use ($startOfToday) {
+                $activeShift = \App\Models\CallcenterShift::where('callcenter_id', $cc->id)
+                    ->where('date', $startOfToday->toDateString())
+                    ->where('is_active', true)
+                    ->exists();
+
+                return [
                     'id' => $cc->id,
                     'name' => $cc->name,
                     'username' => $cc->username,
                     'phone' => $cc->phone,
                     'is_active' => $cc->is_active,
+                    'shift_active' => $activeShift,
                     'created' => $cc->createdOrders->count(),
                     'revenue' => $cc->createdOrders->where('status', 'delivered')->sum('total'),
                     'code' => $cc->code,
-                ]);
+                ];
+            });
+
+        if (request()->header('X-SPA-Navigation')) {
             return response()->json([
                 'html' => view('admin.callcenter.partials.content', compact('agents'))->render(),
                 'title' => 'كول سنتر',
@@ -38,23 +47,45 @@ class CallCenterManagementController extends Controller
             ]);
         }
 
-        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
-        $agents = User::where('role', 'callcenter')
-            ->with(['createdOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
-            ->orderBy('name')
-            ->get()
-            ->map(fn($cc) => [
-                'id' => $cc->id,
-                'name' => $cc->name,
-                'username' => $cc->username,
-                'phone' => $cc->phone,
-                'is_active' => $cc->is_active,
-                'created' => $cc->createdOrders->count(),
-                'revenue' => $cc->createdOrders->where('status', 'delivered')->sum('total'),
-                'code' => $cc->code,
-            ]);
-
         return view('admin.callcenter.index', compact('agents'));
+    }
+
+    public function toggleShift(Request $request, $id)
+    {
+        $callcenter = User::where('role', 'callcenter')->findOrFail($id);
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        $businessDate = $startOfToday->toDateString();
+
+        $activeShift = \App\Models\CallcenterShift::where('callcenter_id', $callcenter->id)
+            ->where('date', $businessDate)
+            ->where('is_active', true)
+            ->first();
+
+        if ($activeShift) {
+            $activeShift->update([
+                'ended_at' => Carbon::now(),
+                'is_active' => false,
+            ]);
+            $msg = 'تم إنهاء وردية الموظف بنجاح';
+        } else {
+            \App\Models\CallcenterShift::create([
+                'callcenter_id' => $callcenter->id,
+                'date' => $businessDate,
+                'started_at' => Carbon::now(),
+                'is_active' => true,
+            ]);
+            $msg = 'تم بدء وردية جديدة للموظف بنجاح';
+        }
+
+        ActivityLog::log(
+            event: 'callcenter.shift_toggled',
+            description: $msg . ' — ' . $callcenter->name,
+            subjectType: 'user',
+            subjectId: $callcenter->id,
+            subjectLabel: $callcenter->name
+        );
+
+        return response()->json(['success' => true, 'message' => $msg]);
     }
 
     public function store(Request $request)

@@ -28,7 +28,7 @@
     }
 </style>
 
-<h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">💰 كشف حسابي</h2>
+<h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">كشف حسابي</h2>
 
 {{-- Filters --}}
 <div class="w-card" style="margin-bottom:16px;">
@@ -41,8 +41,8 @@
             <span class="w-label">إلى تاريخ</span>
             <input type="date" id="rw-to" class="w-input">
         </div>
-        <button class="w-btn w-btn-primary" onclick="rwApply()">🔍 عرض</button>
-        <button class="w-btn w-btn-secondary" onclick="rwReset()">↺</button>
+        <button class="w-btn w-btn-primary" onclick="rwApply()">عرض</button>
+        <button class="w-btn w-btn-secondary" onclick="rwReset()">تصفير</button>
     </div>
 </div>
 
@@ -75,12 +75,12 @@
         <table class="w-table">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>التاريخ</th>
-                    <th>التعريف / الملاحظة</th>
-                    <th>مدين</th>
-                    <th>دائن</th>
-                    <th>الرصيد</th>
+                    <th style="text-align: center;">رقم العملية</th>
+                    <th style="text-align: center;">التاريخ</th>
+                    <th style="text-align: right;">التعريف / الملاحظة</th>
+                    <th style="text-align: center;">مدين</th>
+                    <th style="text-align: center;">دائن</th>
+                    <th style="text-align: center;">الرصيد</th>
                 </tr>
             </thead>
             <tbody id="rw-tbody">
@@ -121,12 +121,12 @@
 
             tbody.innerHTML = transactions.map(tx => `
                 <tr>
-                    <td style="color:var(--text-muted);font-size:12px;">${tx.id}</td>
-                    <td>${fmtDate(tx.transaction_date)}</td>
-                    <td style="font-size:12px;">${esc(tx.description)}</td>
-                    <td style="color:var(--success);font-weight:700;">${tx.debit || '—'}</td>
-                    <td style="color:var(--secondary);font-weight:700;">${tx.credit || '—'}</td>
-                    <td style="font-weight:700;color:var(--primary);">${tx.balance_after}</td>
+                    <td style="font-size:12px;text-align: center;">${tx.id}</td>
+                    <td style="text-align: center;">${fmtDate(tx.transaction_date)}</td>
+                    <td style="font-size:12px;text-align: right;">${esc(tx.description)}</td>
+                    <td style="color:var(--success);font-weight:700;text-align: center;">${tx.debit || '—'}</td>
+                    <td style="color:var(--secondary);font-weight:700;text-align: center;">${tx.credit || '—'}</td>
+                    <td style="font-weight:700;color:var(--primary);text-align: center;">${tx.balance_after}</td>
                 </tr>
             `).join('');
         } catch(e) {

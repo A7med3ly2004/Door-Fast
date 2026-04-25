@@ -41,7 +41,6 @@ var shiftStartedTimestamp = null;
 var durationInterval = null;
 
 function fetchDashboardData() {
-    if (!isShiftActive) return;
     const startedEl = document.getElementById('kpi-started-at');
     if (!startedEl) return; // Not on dashboard page
 
@@ -49,6 +48,7 @@ function fetchDashboardData() {
         var data = res.data;
         startedEl.innerText = data.started_at || '--:--';
         shiftStartedTimestamp = data.started_timestamp;
+        window.previousWorkedSeconds = data.previous_worked_seconds || 0;
         
         const ids = {
             'kpi-delivered-count': data.delivered_count,
@@ -70,16 +70,31 @@ function fetchDashboardData() {
 
 function startDurationTimer() {
     if (durationInterval) clearInterval(durationInterval);
-    if (!shiftStartedTimestamp) return;
+    
+    var el = document.getElementById('kpi-duration');
+    if (!el) return;
+
+    var baseDiff = window.previousWorkedSeconds || 0;
+
+    if (!shiftStartedTimestamp) {
+        if (baseDiff > 0) {
+            var h = Math.floor(baseDiff/3600).toString().padStart(2,'0');
+            var m = Math.floor((baseDiff%3600)/60).toString().padStart(2,'0');
+            var s = (baseDiff%60).toString().padStart(2,'0');
+            el.innerText = `${h}:${m}:${s}`;
+        } else {
+            el.innerText = '00:00:00';
+        }
+        return;
+    }
+
     durationInterval = setInterval(() => {
-        var diff = Math.floor(Date.now() / 1000) - shiftStartedTimestamp;
+        var diff = baseDiff + (Math.floor(Date.now() / 1000) - shiftStartedTimestamp);
         if (diff >= 0) {
             var h = Math.floor(diff/3600).toString().padStart(2,'0');
             var m = Math.floor((diff%3600)/60).toString().padStart(2,'0');
             var s = (diff%60).toString().padStart(2,'0');
-            var el = document.getElementById('kpi-duration');
-            if (el) el.innerText = `${h}:${m}:${s}`;
-            else { clearInterval(durationInterval); }
+            el.innerText = `${h}:${m}:${s}`;
         }
     }, 1000);
     if (typeof addPolling === 'function') addPolling(durationInterval);

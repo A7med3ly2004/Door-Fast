@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\TreasuryTransaction;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
@@ -59,6 +60,33 @@ class GeneralLedgerController extends Controller
             ->orderBy('name')
             ->get();
 
+        // ── Treasury row (special — not a user wallet) ──────────────
+        $treasuryKpis = TreasuryTransaction::calculateKpis($from, $to);
+        $treasuryBalance = str_replace(',', '', $treasuryKpis['balance']);
+
+        // Calculate debit/credit totals for treasury
+        $treasuryQuery = TreasuryTransaction::query();
+        if ($from) $treasuryQuery->whereDate('transaction_date', '>=', $from);
+        if ($to) $treasuryQuery->whereDate('transaction_date', '<=', $to);
+
+        $treasuryTotals = (clone $treasuryQuery)
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN type IN ('income','settlement','receive_from_user') THEN amount ELSE 0 END), 0) as total_debit,
+                COALESCE(SUM(CASE WHEN type IN ('expense','dain','discount','pay_to_user') THEN amount ELSE 0 END), 0) as total_credit
+            ")
+            ->first();
+
+        $treasuryRow = [
+            'user_id'      => 'treasury',
+            'name'         => 'الخزينة الرئيسية',
+            'role'         => 'treasury',
+            'role_label'   => 'خزينة',
+            'total_debit'  => number_format((float) $treasuryTotals->total_debit, 2),
+            'total_credit' => number_format((float) $treasuryTotals->total_credit, 2),
+            'balance'      => number_format((float) $treasuryBalance, 2),
+        ];
+
+        // ── User rows ──────────────────────────────────────────────
         $rows = $users->map(function (User $user) use ($from, $to, $roleLabels) {
             $wallet = $user->wallet;
 
@@ -101,7 +129,99 @@ class GeneralLedgerController extends Controller
             ];
         });
 
-        return response()->json(['data' => $rows]);
+        // Prepend treasury row
+        $allRows = collect([$treasuryRow])->merge($rows);
+
+        return response()->json(['data' => $allRows->values()]);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // treasuryStatement — Detailed statement for treasury
+    // ──────────────────────────────────────────────────────────────
+
+    public function treasuryStatement(Request $request): JsonResponse
+    {
+        $request->validate([
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+        ]);
+
+        $from = $request->input('from');
+        $to   = $request->input('to');
+
+        $query = TreasuryTransaction::query();
+        if ($from) $query->whereDate('transaction_date', '>=', $from);
+        if ($to) $query->whereDate('transaction_date', '<=', $to);
+
+        // Totals
+        $totals = (clone $query)
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN type IN ('income','settlement','receive_from_user') THEN amount ELSE 0 END), 0) as total_debit,
+                COALESCE(SUM(CASE WHEN type IN ('expense','dain','discount','pay_to_user') THEN amount ELSE 0 END), 0) as total_credit
+            ")
+            ->first();
+
+        $kpis = TreasuryTransaction::calculateKpis($from, $to);
+        $currentBalance = str_replace(',', '', $kpis['balance']);
+
+        // All transactions
+        $typeLabels = [
+            'income' => 'إيراد',
+            'expense' => 'مصروف',
+            'settlement' => 'تسوية',
+            'dain' => 'صرف مديونية',
+            'discount' => 'خصم',
+            'pay_to_user' => 'دفع لموظف',
+            'receive_from_user' => 'استلام من موظف',
+        ];
+
+        $transactions = (clone $query)
+            ->orderBy('transaction_date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function (TreasuryTransaction $tx) use ($typeLabels) {
+                $isDebit = in_array($tx->type, ['income', 'settlement', 'receive_from_user']);
+                return [
+                    'id'               => $tx->id,
+                    'transaction_date' => $tx->transaction_date->format('Y-m-d'),
+                    'description'      => ($typeLabels[$tx->type] ?? $tx->type) . ' — ' . ($tx->by_whom ?? '') . ($tx->note ? ' | ' . $tx->note : ''),
+                    'type_label'       => $typeLabels[$tx->type] ?? $tx->type,
+                    'debit'            => $isDebit ? number_format((float) $tx->amount, 2) : '',
+                    'credit'           => !$isDebit ? number_format((float) $tx->amount, 2) : '',
+                    'balance_after'    => '—',
+                ];
+            });
+
+        // Calculate running balance
+        $runningBalance = 0;
+        $txArray = $transactions->toArray();
+        foreach ($txArray as &$tx) {
+            if ($tx['debit']) {
+                $runningBalance += (float) str_replace(',', '', $tx['debit']);
+            }
+            if ($tx['credit']) {
+                $runningBalance -= (float) str_replace(',', '', $tx['credit']);
+            }
+            $tx['balance_after'] = number_format($runningBalance, 2);
+        }
+
+        $periodBalance = (float) $totals->total_debit - (float) $totals->total_credit;
+
+        return response()->json([
+            'user' => [
+                'id'         => 'treasury',
+                'name'       => 'الخزينة الرئيسية',
+                'role'       => 'treasury',
+                'role_label' => 'خزينة',
+            ],
+            'summary' => [
+                'total_debit'    => number_format((float) $totals->total_debit, 2),
+                'total_credit'   => number_format((float) $totals->total_credit, 2),
+                'period_balance' => number_format($periodBalance, 2),
+                'current_balance' => number_format((float) $currentBalance, 2),
+            ],
+            'transactions' => $txArray,
+        ]);
     }
 
     // ──────────────────────────────────────────────────────────────

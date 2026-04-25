@@ -61,8 +61,10 @@ function renderNewOrders() {
         var card = document.createElement('div');
         card.className = 'order-card'; card.id = `order-${order.id}`;
         card.innerHTML = `
-            <div class="order-header"><div class="order-number">#${order.order_number}</div><div style="font-size:12px;color:var(--text-muted)">منذ قليل</div></div>
-            <div style="font-weight:600;margin-bottom:15px;color:var(--primary)">${itemsCount} أصناف</div>
+            <div class="order-header">
+                <div class="order-number">#${order.order_number}</div>
+                <div style="font-size:14px;color:var(--text-muted);font-weight:bold" class="order-timer" data-time="${order.sent_to_delivery_at || order.created_at}">00:00</div>
+            </div>
             <div class="hidden-zone">
                 <div class="blur-overlay"><span>🔒</span><span>تفاصيل العميل مخفية</span></div>
                 <div class="hidden-content"><strong>الاسم:</strong> ${order.client?.name ?? ''}<br><strong>الهاتف:</strong> ${order.client?.phone ?? ''}<br><strong>العنوان:</strong> ${order.client_address ?? ''}</div>
@@ -99,4 +101,24 @@ if (typeof window.Echo !== 'undefined') {
         else if (order && order.delivery_id && order.delivery_id !== window.myDeliveryId) { currentOrders = currentOrders.filter(o => o.id !== order.order_id); renderNewOrders(); }
     });
 }
+
+function formatWaitTime(dateStr) {
+    if (!dateStr) return '00:00';
+    var diffSecs = Math.floor((new Date() - new Date(dateStr)) / 1000);
+    if (diffSecs < 0) diffSecs = 0;
+    var hours = Math.floor(diffSecs / 3600);
+    var mins = Math.floor((diffSecs % 3600) / 60);
+    var secs = diffSecs % 60;
+    if (hours > 0) {
+        return String(hours).padStart(2, '0') + ':' + String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+    return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+}
+
+setInterval(() => {
+    document.querySelectorAll('.order-timer').forEach(el => {
+        var t = el.getAttribute('data-time');
+        if (t) el.innerText = formatWaitTime(t);
+    });
+}, 1000);
 </script>

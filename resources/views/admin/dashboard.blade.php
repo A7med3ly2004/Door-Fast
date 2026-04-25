@@ -5,28 +5,28 @@
 @section('content')
     {{-- KPI Cards --}}
     <div class="kpi-grid" id="kpi-grid">
-        <div class="kpi-card" id="kpi-orders">
-            <div class="kpi-label" style="border-right: 4px solid #0891b2;">إجمالي الطلبات اليوم</div>
+        <div class="kpi-card blue" id="kpi-orders">
+            <div class="kpi-label">إجمالي الطلبات اليوم</div>
             <div class="kpi-value" id="v-orders">—</div>
         </div>
-        <div class="kpi-card" id="kpi-completed">
-            <div class="kpi-label" style="border-right: 4px solid #0891b2;">مُوصَّلة اليوم</div>
+        <div class="kpi-card green" id="kpi-completed">
+            <div class="kpi-label">مُوصَّلة اليوم</div>
             <div class="kpi-value" id="v-completed">—</div>
         </div>
-        <div class="kpi-card" style="--kpi-color:var(--yellow);">
+        <div class="kpi-card yellow">
             <div class="kpi-label">معلقة اليوم</div>
             <div class="kpi-value" id="v-pending">—</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card red">
             <div class="kpi-label">ملغاة اليوم</div>
             <div class="kpi-value" id="v-cancelled">—</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card blue">
             <div class="kpi-label">إيرادات اليوم</div>
             <div class="kpi-value" id="v-daily">—</div>
             <div class="kpi-sub">ج.م</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card blue">
             <div class="kpi-label">إيرادات الشهر</div>
             <div class="kpi-value" id="v-monthly">—</div>
             <div class="kpi-sub">ج.م</div>

@@ -28,7 +28,6 @@
 <script>
 var durationInterval;
 function fetchDashboardData() {
-    if (!isShiftActive) return;
     axios.get('{{ route("reserve.dashboard.data") }}').then(res => {
         var data = res.data;
         var elStartedAt = document.getElementById('kpi-started-at');

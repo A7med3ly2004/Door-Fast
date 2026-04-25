@@ -1,17 +1,16 @@
 {{-- Callcenter Delivery SPA partial --}}
-<div class="section-header"><h2>🚴 إدارة المناديب</h2></div>
+<div class="section-header"><h2>إدارة المناديب</h2></div>
 <div class="card" style="padding:0;position:relative">
     <div class="loading-overlay" id="tbl-loading"><div class="spin"></div></div>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>المندوب</th>
-                    <th>الهاتف</th>
-                    <th>حالة الوردية</th>
-                    <th>الملغي</th>
-                    <th>المحصّل</th>
-                    <th>إجراءات</th>
+                    <th style="text-align: center;">المندوب</th>
+                    <th style="text-align: center;">الهاتف</th>
+                    <th style="text-align: center;">حالة الوردية</th>
+                    <th style="text-align: center;">الرصيد الحالي</th>
+                    <th style="text-align: center;">إجراءات</th>
                 </tr>
             </thead>
             <tbody id="delivery-body">
@@ -21,6 +20,21 @@
     </div>
 </div>
 
+{{-- ── User Statement Modal ──────────────────────────────────────── --}}
+<div class="modal-overlay" id="modal-user-statement">
+    <div class="modal modal-xl">
+        <div class="modal-header">
+            <h3>كشف حساب — <span id="stmt-user-name"></span></h3>
+            <button class="btn-close" onclick="closeModal('modal-user-statement')">✕</button>
+        </div>
+        <div class="modal-body" id="stmt-modal-body">
+            <div style="text-align:center;padding:40px;color:var(--text-muted);">
+                <div class="spin" style="width:30px;height:30px;border-width:3px;margin:0 auto 12px;"></div>
+                جاري التحميل...
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 (function () {
@@ -46,9 +60,9 @@
 
             return `
                 <tr>
-                    <td><strong>${escHtml(d.name)}</strong> ${badge}</td>
-                    <td>${d.phone ?? '—'}</td>
-                    <td>
+                    <td style="text-align: center;"><strong>${escHtml(d.name)}</strong> ${badge}</td>
+                    <td style="text-align: center;">${d.phone ?? '—'}</td>
+                    <td style="text-align: center;">
                         <button
                             onclick="toggleShift(${d.id}, this)"
                             data-active="${isOn ? '1' : '0'}"
@@ -56,11 +70,91 @@
                             ${btnTxt}
                         </button>
                     </td>
-                    <td style="color:var(--red)">${d.cancelled_today ?? 0}</td>
-                    <td><strong style="color:var(--yellow)">${parseFloat(d.revenue_today ?? 0).toFixed(2)} ج</strong></td>
-                    <td>—</td>
+                    <td style="text-align: center;"><strong style="color:var(--yellow)">${parseFloat(d.current_balance ?? 0).toFixed(2)} ج</strong></td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-sm btn-info" style="font-size: 12px; padding: 4px 10px;" onclick="event.stopPropagation();openUserStatement(${d.id}, '${escAttr(d.name)}')" title="كشف حساب">كشف حساب</button>
+                    </td>
                 </tr>`;
         }).join('');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // User statement modal
+    // ─────────────────────────────────────────────────────────────
+    window.openUserStatement = async function (userId, name) {
+        document.getElementById('stmt-user-name').textContent = name;
+        document.getElementById('stmt-modal-body').innerHTML = `
+            <div style="text-align:center;padding:40px;color:var(--text-muted);">
+                <div class="spin" style="width:30px;height:30px;border-width:3px;margin:0 auto 12px;"></div>
+                جاري التحميل...
+            </div>`;
+        openModal('modal-user-statement');
+
+        try {
+            const res = await axios.get(`/callcenter/delivery/${userId}/statement`);
+            renderStatement(res.data);
+        } catch (e) {
+            document.getElementById('stmt-modal-body').innerHTML =
+                '<div style="color:var(--red);text-align:center;padding:30px;">حدث خطأ أثناء تحميل كشف الحساب</div>';
+            console.error('Statement fetch error', e);
+        }
+    };
+
+    function renderStatement(data) {
+        const s = data.summary;
+        const txs = data.transactions;
+
+        let transactionsHtml = '';
+        if (txs.length === 0) {
+            transactionsHtml = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">لا توجد عمليات</td></tr>`;
+        } else {
+            transactionsHtml = txs.map(tx => `
+                <tr>
+                    <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.id}</td>
+                    <td style="text-align:center;">${formatDate(tx.transaction_date)}</td>
+                    <td style="font-size:12px; text-align:right;">${escHtml(tx.description)}</td>
+                    <td style="color:var(--success);font-weight:700; text-align:center;">${tx.debit || '—'}</td>
+                    <td style="color:var(--red);font-weight:700; text-align:center;">${tx.credit || '—'}</td>
+                    <td style="font-weight:700;color:var(--yellow); text-align:center;">${tx.balance_after}</td>
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById('stmt-modal-body').innerHTML = `
+            <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+                <div class="kpi-card green">
+                    <div class="kpi-label">إجمالي المدين</div>
+                    <div class="kpi-value" style="font-size:20px;color:var(--success);">${s.total_debit}</div>
+                    <div class="kpi-sub">ج.م</div>
+                </div>
+                <div class="kpi-card red">
+                    <div class="kpi-label">إجمالي الدائن</div>
+                    <div class="kpi-value" style="font-size:20px;color:var(--red);">${s.total_credit}</div>
+                    <div class="kpi-sub">ج.م</div>
+                </div>
+                <div class="kpi-card yellow">
+                    <div class="kpi-label">الرصيد الحالي</div>
+                    <div class="kpi-value" style="font-size:20px;color:var(--yellow);">${s.current_balance}</div>
+                    <div class="kpi-sub">ج.م</div>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align:center;">رقم العملية</th>
+                            <th style="text-align:center;">التاريخ</th>
+                            <th style="text-align:right;">التعريف / الملاحظة</th>
+                            <th style="text-align:center;">مدين</th>
+                            <th style="text-align:center;">دائن</th>
+                            <th style="text-align:center;">الرصيد</th>
+                        </tr>
+                    </thead>
+                    <tbody>${transactionsHtml}</tbody>
+                </table>
+            </div>
+        `;
     }
 
     // ─────────────────────────────────────────────────────────────

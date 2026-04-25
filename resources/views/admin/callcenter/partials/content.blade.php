@@ -12,7 +12,8 @@
                     <th style="text-align: center;">الكود</th>
                     <th style="text-align: center;">اسم المستخدم</th>
                     <th style="text-align: center;">الهاتف</th>
-                    <th style="text-align: center;">نشط</th>
+                    <th style="text-align: center;">حالة الحساب</th>
+                    <th style="text-align: center;">حالة الوردية</th>
                     <th style="text-align: center;">أنشأ اليوم</th>
                     <th style="text-align: center;">إيراد اليوم</th>
                     <th style="text-align: center;">إجراءات</th>
@@ -34,14 +35,21 @@
                                 {{ $cc['is_active'] ? '✓ نشط' : '✗ غير نشط' }}
                             </button>
                         </td>
+                        <td style="text-align: center;">
+                            <button id="shift-btn-{{ $cc['id'] }}"
+                                onclick="toggleShiftCC({{ $cc['id'] }}, this)"
+                                style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
+                                {{ $cc['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                data-active="{{ $cc['shift_active'] ? '1' : '0' }}">
+                                {{ $cc['shift_active'] ? '⏱ تعمل الآن' : '⏸ متوقفة' }}
+                            </button>
+                        </td>
                         <td style="text-align: center;">{{ $cc['created'] }}</td>
                         <td style="text-align: center;">{{ number_format($cc['revenue'], 2) }} ج</td>
                         <td style="text-align: center;">
                             <div style="display:flex;gap:6px;justify-content: center;">
                                 <button class="btn btn-sm btn-secondary"
                                     onclick="openEdit({{ json_encode($cc) }})">تعديل</button>
-                                <button class="btn btn-sm btn-info"
-                                    onclick="viewPerf({{ $cc['id'] }}, '{{ addslashes($cc['name']) }}')">احصائيات</button>
                             </div>
                         </td>
                     </tr>
@@ -118,24 +126,6 @@
     </div>
 </div>
 
-{{-- Performance Modal --}}
-<div class="modal-overlay" id="modal-perf">
-    <div class="modal">
-        <div class="modal-header">
-            <h3>أداء:<span id="perf-name"></span></h3><button class="btn-close"
-                onclick="closeModal('modal-perf')">✕</button>
-        </div>
-        <div class="modal-body">
-            <input type="hidden" id="perf-id">
-            <div class="filter-bar" style="margin-bottom:16px">
-                <input type="date" id="perf-from" class="form-control">
-                <input type="date" id="perf-to" class="form-control">
-                <button class="btn btn-primary" onclick="loadPerf()">بحث</button>
-            </div>
-            <div id="perf-body"></div>
-        </div>
-    </div>
-</div>
 
 
 <script>
@@ -230,30 +220,33 @@
             }
         }
 
-        window.viewPerf = function (id, name) {
-            document.getElementById('perf-id').value = id;
-            document.getElementById('perf-name').textContent = name;
-            openModal('modal-perf');
-            loadPerf();
-        };
-
-        window.loadPerf = async function () {
-            const id = document.getElementById('perf-id').value;
+        window.toggleShiftCC = async function (id, btn) {
+            const isCurrentlyActive = btn.dataset.active === '1';
+            const newState = isCurrentlyActive ? 0 : 1;
+            applyShiftBtn(btn, newState);
             try {
-                const { data } = await axios.get(`/admin/callcenter/${id}/performance`, {
-                    params: { from: document.getElementById('perf-from').value, to: document.getElementById('perf-to').value }
-                });
-                document.getElementById('perf-body').innerHTML = `
-                <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
-                    <div class="kpi-card"><div class="kpi-label">إجمالي الطلبات</div><div class="kpi-value">${data.total}</div></div>
-                    <div class="kpi-card red"><div class="kpi-label">ملغاة</div><div class="kpi-value">${data.cancelled}</div></div>
-                    <div class="kpi-card blue"><div class="kpi-label">الإيراد</div><div class="kpi-value">${parseFloat(data.revenue).toFixed(0)}</div><div class="kpi-sub">ج.م</div></div>
-                </div>`;
+                const { data } = await axios.patch(`/admin/callcenter/${id}/toggle-shift`);
+                if (typeof showSuccess === 'function') showSuccess(data.message);
+                else if (typeof showToast === 'function') showToast(data.message, 'success');
             } catch (e) {
+                applyShiftBtn(btn, isCurrentlyActive ? 1 : 0);
                 if (typeof showError === 'function') showError('حدث خطأ');
                 else if (typeof showToast === 'function') showToast('حدث خطأ', 'error');
             }
         };
+
+        function applyShiftBtn(btn, active) {
+            btn.dataset.active = active ? '1' : '0';
+            if (active) {
+                btn.style.background = 'rgba(34,197,94,.15)';
+                btn.style.color = 'var(--success)';
+                btn.textContent = '⏱ تعمل الآن';
+            } else {
+                btn.style.background = 'rgba(220,38,38,.12)';
+                btn.style.color = 'var(--red)';
+                btn.textContent = '⏸ متوقفة';
+            }
+        }
 
     })();
 </script>

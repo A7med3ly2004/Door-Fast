@@ -22,9 +22,8 @@ class DeliveryViewController extends Controller
 
         $deliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->where('is_active', true)
-            ->with(['shifts' => fn($q) => $q->where('date', $businessDate)])
+            ->with(['shifts' => fn($q) => $q->where('date', $businessDate), 'wallet'])
             ->withCount(['deliveryOrders as orders_today'    => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
-            ->withCount(['deliveryOrders as cancelled_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'cancelled')])
             ->get()
             ->map(fn($d) => [
                 'id'               => $d->id,
@@ -36,11 +35,7 @@ class DeliveryViewController extends Controller
                 'orders_today'     => $d->orders_today,
                 'cancelled_today'  => $d->cancelled_today,
                 'max_orders'       => $d->shifts->first()?->max_orders ?? $maxOrders,
-                'revenue_today'    => Order::where('delivery_id', $d->id)
-                                          ->where('callcenter_id', auth()->id())
-                                          ->where('status', 'delivered')
-                                          ->where('is_settled', false)
-                                          ->sum('total'),
+                'current_balance'  => $d->wallet?->balance ?? 0,
             ]);
 
         if (request()->header('X-SPA-Navigation')) {
@@ -92,7 +87,7 @@ class DeliveryViewController extends Controller
 
         $deliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->where('is_active', true)
-            ->with(['shifts' => fn($q) => $q->where('date', $businessDate)])
+            ->with(['shifts' => fn($q) => $q->where('date', $businessDate), 'wallet'])
             ->withCount(['deliveryOrders as orders_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
             ->withCount(['deliveryOrders as cancelled_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'cancelled')])
             ->get()
@@ -106,11 +101,7 @@ class DeliveryViewController extends Controller
                 'orders_today'    => $d->orders_today,
                 'cancelled_today' => $d->cancelled_today,
                 'max_orders'      => $d->shifts->first()?->max_orders ?? $maxOrders,
-                'revenue_today'   => Order::where('delivery_id', $d->id)
-                                         ->where('callcenter_id', auth()->id())
-                                         ->where('status', 'delivered')
-                                         ->where('is_settled', false)
-                                         ->sum('total'),
+                'current_balance' => $d->wallet?->balance ?? 0,
             ]);
 
         return response()->json($deliveries);
@@ -168,4 +159,77 @@ class DeliveryViewController extends Controller
         return response()->json(['success' => true, 'message' => $message, 'is_on' => $is_on]);
     }
 
+    public function statement(Request $request, $id)
+    {
+        $request->validate([
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+        ]);
+
+        $from = $request->input('from');
+        $to   = $request->input('to');
+
+        // Only allow delivery and reserve_delivery
+        $user = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
+        $wallet = $user->getOrCreateWallet();
+
+        $roleLabels = [
+            'admin'            => 'أدمن',
+            'callcenter'       => 'كول سينتر',
+            'delivery'         => 'مندوب',
+            'reserve_delivery' => 'مندوب احتياطي',
+        ];
+
+        $query = \App\Models\WalletTransaction::where('wallet_id', $wallet->id);
+
+        if ($from) {
+            $query->where('transaction_date', '>=', $from);
+        }
+        if ($to) {
+            $query->where('transaction_date', '<=', $to);
+        }
+
+        // Totals for the period
+        $totals = (clone $query)
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN direction = 'debit' THEN amount ELSE 0 END), 0) as total_debit,
+                COALESCE(SUM(CASE WHEN direction = 'credit' THEN amount ELSE 0 END), 0) as total_credit
+            ")
+            ->first();
+
+        // All transactions ordered by date
+        $transactions = (clone $query)
+            ->orderBy('transaction_date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function (\App\Models\WalletTransaction $tx) {
+                return [
+                    'id'               => $tx->id,
+                    'transaction_date' => $tx->transaction_date->format('Y-m-d'),
+                    'description'      => $tx->description ?? '—',
+                    'type_label'       => $tx->type_label,
+                    'debit'            => $tx->direction === 'debit' ? number_format((float) $tx->amount, 2) : '',
+                    'credit'           => $tx->direction === 'credit' ? number_format((float) $tx->amount, 2) : '',
+                    'balance_after'    => number_format((float) $tx->balance_after, 2),
+                ];
+            });
+
+        $periodBalance = (float) $totals->total_debit - (float) $totals->total_credit;
+
+        return response()->json([
+            'user' => [
+                'id'         => $user->id,
+                'name'       => $user->name,
+                'role'       => $user->role,
+                'role_label' => $roleLabels[$user->role] ?? $user->role,
+            ],
+            'summary' => [
+                'total_debit'    => number_format((float) $totals->total_debit, 2),
+                'total_credit'   => number_format((float) $totals->total_credit, 2),
+                'period_balance' => number_format($periodBalance, 2),
+                'current_balance' => number_format((float) $wallet->balance, 2),
+            ],
+            'transactions' => $transactions,
+        ]);
+    }
 }

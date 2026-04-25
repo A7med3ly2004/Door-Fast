@@ -4,10 +4,10 @@ resources/views/callcenter/wallet/partials/content.blade.php
 --}}
 
 <div class="section-header">
-    <h2>💰 كشف حسابي</h2>
+    <h2>كشف حسابي</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn" onclick="openPayModal()" style="background:#0891b2;color:#fff;">💵 دفع لمندوب</button>
-        <button class="btn" onclick="openReceiveModal()" style="background:#059669;color:#fff;">💵 استلام من مندوب</button>
+        <button class="btn" onclick="openPayModal()" style="background:#0891b2;color:#fff;">ايصال دفع لمندوب</button>
+        <button class="btn" onclick="openReceiveModal()" style="background:#059669;color:#fff;">ايصال استلام من مندوب</button>
     </div>
 </div>
 
@@ -32,8 +32,8 @@ resources/views/callcenter/wallet/partials/content.blade.php
             </select>
         </div>
         <div style="display:flex;gap:8px;align-self:flex-end;">
-            <button class="btn btn-primary" onclick="wApplyFilters()">🔍 عرض</button>
-            <button class="btn btn-secondary" onclick="wResetFilters()">↺</button>
+            <button class="btn btn-primary" onclick="wApplyFilters()">عرض</button>
+            <button class="btn btn-secondary" onclick="wResetFilters()">اعادة</button>
         </div>
     </div>
 </div>
@@ -50,7 +50,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
         <div class="kpi-value" id="w-kpi-credit" style="color:var(--red);">—</div>
         <div class="kpi-sub">ج.م</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card yellow">
         <div class="kpi-label">الرصيد الحالي</div>
         <div class="kpi-value" id="w-kpi-balance" style="color:var(--yellow);">—</div>
         <div class="kpi-sub">ج.م</div>
@@ -67,12 +67,12 @@ resources/views/callcenter/wallet/partials/content.blade.php
         <table>
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>التاريخ</th>
-                    <th>التعريف / الملاحظة</th>
-                    <th>مدين</th>
-                    <th>دائن</th>
-                    <th>الرصيد</th>
+                    <th style="text-align:center">رقم العملية</th>
+                    <th style="text-align:center">التاريخ</th>
+                    <th style="text-align:right">التعريف / الملاحظة</th>
+                    <th style="text-align:center">مدين</th>
+                    <th style="text-align:center">دائن</th>
+                    <th style="text-align:center">الرصيد</th>
                 </tr>
             </thead>
             <tbody id="w-tbody">
@@ -88,7 +88,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
 <div class="modal-overlay" id="modal-cc-pay">
     <div class="modal">
         <div class="modal-header" style="background:rgba(8,145,178,.08);border-bottom:0;">
-            <h3 style="color:#0891b2;">💵 دفع نقدي لمندوب</h3>
+            <h3 style="color:#0891b2;">ايصال دفع لمندوب</h3>
             <button class="btn-close" onclick="closeModal('modal-cc-pay')">✕</button>
         </div>
         <div class="modal-body">
@@ -136,7 +136,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
 <div class="modal-overlay" id="modal-cc-receive">
     <div class="modal">
         <div class="modal-header" style="background:rgba(5,150,105,.08);border-bottom:0;">
-            <h3 style="color:#059669;">💵 استلام نقدي من مندوب</h3>
+            <h3 style="color:#059669;">ايصال استلام من مندوب</h3>
             <button class="btn-close" onclick="closeModal('modal-cc-receive')">✕</button>
         </div>
         <div class="modal-body">
@@ -224,12 +224,12 @@ resources/views/callcenter/wallet/partials/content.blade.php
 
             tbody.innerHTML = transactions.map(tx => `
                 <tr>
-                    <td style="color:var(--text-muted);font-size:12px;">${tx.id}</td>
-                    <td>${formatDate(tx.transaction_date)}</td>
-                    <td style="font-size:12px;">${escHtml(tx.description)}</td>
-                    <td style="color:var(--success);font-weight:700;">${tx.debit || '—'}</td>
-                    <td style="color:var(--red);font-weight:700;">${tx.credit || '—'}</td>
-                    <td style="font-weight:700;color:var(--yellow);">${tx.balance_after}</td>
+                    <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.id}</td>
+                    <td style="text-align:center;">${formatDate(tx.transaction_date)}</td>
+                    <td style="font-size:12px; text-align:right;">${escHtml(tx.description)}</td>
+                    <td style="color:var(--success);font-weight:700; text-align:center;">${tx.debit || '—'}</td>
+                    <td style="color:var(--red);font-weight:700; text-align:center;">${tx.credit || '—'}</td>
+                    <td style="font-weight:700;color:var(--yellow); text-align:center;">${tx.balance_after}</td>
                 </tr>
             `).join('');
         } catch (e) {

@@ -65,11 +65,19 @@
             border-left: 1px solid var(--border);
             z-index: 100;
             overflow-y: auto;
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE and Edge */
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, and Opera */
         }
 
         .sidebar-logo {
-            padding: 20px 16px;
-            border-bottom: 1px solid var(--border);
+            padding: 0px 5px;
         }
 
         .sidebar-logo .logo-text {
@@ -104,7 +112,7 @@
             font-size: 14px;
             font-weight: 600;
             transition: all 0.2s ease;
-            margin-bottom: 2px;
+            margin-bottom: 5px;
         }
 
         .nav-link:hover {
@@ -113,8 +121,8 @@
         }
 
         .nav-link.active {
-            background: linear-gradient(135deg, var(--yellow), var(--yellow-dark));
-            color: #000;
+            background: linear-gradient(135deg, #ba272d, #323232);
+            color: #fcfcfcff;
         }
 
         .nav-link .icon {
@@ -543,7 +551,7 @@
         /* ── KPIs ── */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 14px;
         }
 
@@ -554,11 +562,47 @@
             padding: 16px;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
         }
 
-        .kpi-card.red { }
-        .kpi-card.green { }
-        .kpi-card.blue { }
+        .kpi-card.red {
+            border-color: var(--red) !important;
+            background: rgba(220, 38, 38, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+        .kpi-card.cyan {
+            border-color: #00e5ff !important;
+            background: rgba(0, 229, 255, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+
+        .kpi-card.green {
+            border-color: var(--success) !important;
+            background: rgba(34, 197, 94, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+
+        .kpi-card.blue {
+            border-color: var(--info) !important;
+            background: rgba(59, 130, 246, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+
+        .kpi-card.yellow {
+            border-color: var(--yellow) !important;
+            background: rgba(245, 158, 11, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
 
         .kpi-label {
             font-size: 11px;
@@ -577,6 +621,34 @@
             font-size: 11px;
             color: var(--text-muted);
             margin-top: 4px;
+        }
+
+        /* ── Shift Overlay ── */
+        .shift-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(15, 23, 42, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            backdrop-filter: blur(5px);
+        }
+
+        .shift-overlay h2 {
+            font-size: 32px;
+            color: var(--yellow);
+            margin-bottom: 10px;
+        }
+
+        .shift-overlay p {
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 30px;
         }
 
         /* ── Misc ── */
@@ -722,33 +794,66 @@
     </div>
 
     <aside class="sidebar">
-        <div class="sidebar-logo" style="display: flex; justify-content: center; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border);">
+        <div class="sidebar-logo"
+            style="display: flex; justify-content: center; align-items: center;">
             <img src="{{ asset('DF_logo_for_sb.png') }}" alt="Door Fast Logo" style="max-width: 100%; height: auto;">
         </div>
         <nav class="sidebar-nav">
             <a href="{{ route('callcenter.orders.create') }}" class="nav-link" data-spa="true">
-                <span class="icon">➕</span> إنشاء طلب
+                <span class="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                </span> إنشاء طلب
             </a>
             <a href="{{ route('callcenter.orders.index') }}" class="nav-link" data-spa="true">
-                <span class="icon">📋</span> قائمة الطلبات
+                <span class="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                </span> قائمة الطلبات
             </a>
             <a href="{{ route('callcenter.orders.global-search') }}" class="nav-link" id="nav-global-search" data-spa="true">
-                <span class="icon">🌍</span> بحث الطلبات
+                <span class="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </span> بحث الطلبات
             </a>
             <a href="{{ route('callcenter.clients.index') }}" class="nav-link" data-spa="true">
-                <span class="icon">👥</span> العملاء
+                <span class="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </span> العملاء
             </a>
             <a href="{{ route('callcenter.shops.index') }}" class="nav-link" data-spa="true">
-                <span class="icon">🏪</span> المتاجر
+                <span class="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </span> المتاجر
             </a>
             <a href="{{ route('callcenter.delivery.index') }}" class="nav-link" data-spa="true">
-                <span class="icon">🚴</span> الدلفري
+                <span class="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                    </svg>
+                </span> الدلفري
             </a>
             <a href="{{ route('callcenter.stats.index') }}" class="nav-link" data-spa="true">
-                <span class="icon">📊</span> إحصائياتي
+                <span class="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </span> إحصائياتي
             </a>
             <a href="{{ route('callcenter.wallet.index') }}" class="nav-link" data-spa="true">
-                <span class="icon">💰</span> كشف حسابي
+                <span class="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px; vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m4 0h1m-7 4h12a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </span> كشف حسابي
             </a>
         </nav>
         <div class="sidebar-footer">
@@ -763,15 +868,22 @@
         <header class="topbar">
             <span class="topbar-title" id="spa-page-title">@yield('page-title', 'كول سنتر')</span>
             <div class="topbar-right">
+                <button id="cc-shift-btn" onclick="toggleCCShift()" class="btn" style="display:none;font-size:12px;padding:6px 14px;border-radius:20px;font-weight:700;border:none;cursor:pointer;transition:all .2s ease;"></button>
                 <div class="user-badge">
                     <span class="dot"></span>
                     <span>{{ auth()->user()->name }}</span>
                 </div>
             </div>
         </header>
-        <main class="page-content" id="page-content">
-            @yield('content')
-        </main>
+        <div style="position:relative; flex:1; display:flex; flex-direction:column;">
+            <div id="shift-gate-overlay" class="shift-overlay">
+                <h2>أنت غير نشط الآن</h2>
+                <p>يرجى التوجه إلى المديرين</p>
+            </div>
+            <main class="page-content" id="page-content">
+                @yield('content')
+            </main>
+        </div>
     </div>
 
     <script>
@@ -820,6 +932,54 @@
             html += `<a class="${current === lastPage ? 'disabled' : ''}" onclick="${callback}(${current + 1})">›</a></div>`;
             return html;
         }
+
+        async function fetchCCShiftStatus() {
+            try {
+                const { data } = await axios.get('{{ route("callcenter.shift.status") }}');
+                updateCCShiftBtn(data.is_active);
+            } catch(e) { console.error('shift status error', e); }
+        }
+
+        function updateCCShiftBtn(isActive) {
+            const btn = document.getElementById('cc-shift-btn');
+            const overlay = document.getElementById('shift-gate-overlay');
+            btn.style.display = 'inline-flex';
+            if (isActive) {
+                overlay.style.display = 'none';
+                btn.style.background = 'rgba(220,38,38,.12)';
+                btn.style.color = 'var(--red)';
+                btn.innerHTML = '⏸ إنهاء الوردية';
+            } else {
+                overlay.style.display = 'flex';
+                btn.style.background = 'rgba(34,197,94,.15)';
+                btn.style.color = 'var(--success)';
+                btn.innerHTML = '⏱ بدء الوردية';
+            }
+        }
+
+        window.toggleCCShift = async function() {
+            const btn = document.getElementById('cc-shift-btn');
+            btn.disabled = true;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'جاري...';
+            try {
+                const { data } = await axios.post('{{ route("callcenter.shift.toggle") }}');
+                if (data.success) {
+                    updateCCShiftBtn(data.is_active);
+                    if(typeof showSuccess === 'function') showSuccess(data.message);
+                } else {
+                    btn.innerHTML = originalText;
+                }
+            } catch(e) {
+                btn.innerHTML = originalText;
+                const err = e.response?.data?.message || 'حدث خطأ';
+                if(typeof showError === 'function') showError(err);
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', fetchCCShiftStatus);
     </script>
 
     {{-- ── SPA Navigation Engine ── --}}

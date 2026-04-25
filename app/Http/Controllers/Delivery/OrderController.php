@@ -277,4 +277,16 @@ class OrderController extends Controller
 
         return response()->json(['orders' => $orders]);
     }
+
+    public function downloadInvoice($id)
+    {
+        $delivery = auth()->user();
+        $order = Order::with(['items.shop', 'client'])
+            ->where('id', $id)
+            ->where('delivery_id', $delivery->id)
+            ->firstOrFail();
+
+        $pdf = \PDF::loadView('invoices.order', compact('order'));
+        return $pdf->download($order->order_number . '.pdf');
+    }
 }

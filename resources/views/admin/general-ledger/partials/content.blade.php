@@ -6,7 +6,7 @@ resources/views/admin/general-ledger/partials/content.blade.php
 
 {{-- ── Page header ──────────────────────────────────────────────── --}}
 <div class="section-header">
-    <h2>📊 كشف حساب عام</h2>
+    <h2>كشف حساب عام</h2>
 </div>
 
 {{-- ── Filter Bar ────────────────────────────────────────────────── --}}
@@ -21,8 +21,8 @@ resources/views/admin/general-ledger/partials/content.blade.php
             <input type="date" id="gl-filter-to" class="form-control">
         </div>
         <div style="display:flex;gap:8px;align-self:flex-end;">
-            <button class="btn btn-primary" onclick="glApplyFilters()">🔍 عرض</button>
-            <button class="btn btn-secondary" onclick="glResetFilters()" title="إعادة ضبط">↺</button>
+            <button class="btn btn-primary" onclick="glApplyFilters()">عرض</button>
+            <button class="btn btn-secondary" onclick="glResetFilters()" title="إعادة ضبط">اعادة ضبط</button>
         </div>
     </div>
 </div>
@@ -37,11 +37,11 @@ resources/views/admin/general-ledger/partials/content.blade.php
         <table>
             <thead>
                 <tr>
-                    <th>الاسم</th>
-                    <th>الدور</th>
-                    <th>إجمالي المدين</th>
-                    <th>إجمالي الدائن</th>
-                    <th>الرصيد الحالي</th>
+                    <th style="text-align:right;">الاسم</th>
+                    <th style="text-align:center;">الدور</th>
+                    <th style="text-align:center;">إجمالي المدين</th>
+                    <th style="text-align:center;">إجمالي الدائن</th>
+                    <th style="text-align:center;">الرصيد الحالي</th>
                     <th style="text-align:center;">الإجراءات</th>
                 </tr>
             </thead>
@@ -61,7 +61,7 @@ resources/views/admin/general-ledger/partials/content.blade.php
 <div class="modal-overlay" id="modal-user-statement">
     <div class="modal modal-xl">
         <div class="modal-header">
-            <h3>📋 كشف حساب — <span id="stmt-user-name"></span></h3>
+            <h3>كشف حساب — <span id="stmt-user-name"></span></h3>
             <button class="btn-close" onclick="closeModal('modal-user-statement')">✕</button>
         </div>
         <div class="modal-body" id="stmt-modal-body">
@@ -110,6 +110,7 @@ resources/views/admin/general-ledger/partials/content.blade.php
     // ── Render table ─────────────────────────────────────────────
     function roleBadge(role, label) {
         const colors = {
+            treasury:         'badge-blue',
             admin:            'badge-yellow',
             callcenter:       'badge-blue',
             delivery:         'badge-green',
@@ -128,18 +129,28 @@ resources/views/admin/general-ledger/partials/content.blade.php
             return;
         }
 
-        tbody.innerHTML = rows.map(r => `
-            <tr style="cursor:pointer;" onclick="openUserStatement(${r.user_id}, '${escAttr(r.name)}')">
-                <td><strong>${escHtml(r.name)}</strong></td>
-                <td>${roleBadge(r.role, r.role_label)}</td>
-                <td style="color:var(--success);font-weight:700;">${r.total_debit}</td>
-                <td style="color:var(--red);font-weight:700;">${r.total_credit}</td>
-                <td style="font-weight:700;color:var(--yellow);">${r.balance}</td>
+        tbody.innerHTML = rows.map(r => {
+            const clickFn = r.role === 'treasury'
+                ? `openTreasuryStatement()`
+                : `openUserStatement(${r.user_id}, '${escAttr(r.name)}')`;
+            const btnClickFn = r.role === 'treasury'
+                ? `event.stopPropagation();openTreasuryStatement()`
+                : `event.stopPropagation();openUserStatement(${r.user_id}, '${escAttr(r.name)}')`;
+            const rowStyle = r.role === 'treasury' ? 'cursor:pointer;background:rgba(59,130,246,0.05);border-bottom:2px solid var(--border);' : 'cursor:pointer;';
+
+            return `
+            <tr style="${rowStyle}" onclick="${clickFn}">
+                <td style="text-align:right; font-size: 16px;"><strong>${escHtml(r.name)}</strong></td>
+                <td style="text-align:center; font-size: 14px;">${roleBadge(r.role, r.role_label)}</td>
+                <td style="color:var(--success);font-weight:700;text-align:center; font-size: 16px;">${r.total_debit}</td>
+                <td style="color:var(--red);font-weight:700;text-align:center; font-size: 16px;">${r.total_credit}</td>
+                <td style="font-weight:700;color:var(--yellow);text-align:center; font-size: 16px;">${r.balance}</td>
                 <td style="text-align:center;">
-                    <button class="btn btn-sm btn-info" onclick="event.stopPropagation();openUserStatement(${r.user_id}, '${escAttr(r.name)}')" title="كشف حساب">📋 كشف</button>
+                    <button class="btn btn-sm btn-info" style="font-size: 14px;" onclick="${btnClickFn}" title="كشف حساب">كشف حساب</button>
                 </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
     }
 
     // ── User statement modal ─────────────────────────────────────
@@ -177,18 +188,18 @@ resources/views/admin/general-ledger/partials/content.blade.php
         } else {
             transactionsHtml = txs.map(tx => `
                 <tr>
-                    <td style="color:var(--text-muted);font-size:12px;">${tx.id}</td>
-                    <td>${formatDate(tx.transaction_date)}</td>
-                    <td style="font-size:12px;">${escHtml(tx.description)}</td>
-                    <td style="color:var(--success);font-weight:700;">${tx.debit || '—'}</td>
-                    <td style="color:var(--red);font-weight:700;">${tx.credit || '—'}</td>
-                    <td style="font-weight:700;color:var(--yellow);">${tx.balance_after}</td>
+                    <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.id}</td>
+                    <td style="text-align:center;">${formatDate(tx.transaction_date)}</td>
+                    <td style="font-size:12px; text-align:right;">${escHtml(tx.description)}</td>
+                    <td style="color:var(--success);font-weight:700; text-align:center;">${tx.debit || '—'}</td>
+                    <td style="color:var(--red);font-weight:700; text-align:center;">${tx.credit || '—'}</td>
+                    <td style="font-weight:700;color:var(--yellow); text-align:center;">${tx.balance_after}</td>
                 </tr>
             `).join('');
         }
 
         document.getElementById('stmt-modal-body').innerHTML = `
-            <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+            <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
                 <div class="kpi-card green">
                     <div class="kpi-label">إجمالي المدين</div>
                     <div class="kpi-value" style="font-size:20px;color:var(--success);">${s.total_debit}</div>
@@ -199,12 +210,7 @@ resources/views/admin/general-ledger/partials/content.blade.php
                     <div class="kpi-value" style="font-size:20px;color:var(--red);">${s.total_credit}</div>
                     <div class="kpi-sub">ج.م</div>
                 </div>
-                <div class="kpi-card blue">
-                    <div class="kpi-label">صافي الفترة</div>
-                    <div class="kpi-value" style="font-size:20px;">${s.period_balance}</div>
-                    <div class="kpi-sub">ج.م</div>
-                </div>
-                <div class="kpi-card">
+                <div class="kpi-card yellow">
                     <div class="kpi-label">الرصيد الحالي</div>
                     <div class="kpi-value" style="font-size:20px;color:var(--yellow);">${s.current_balance}</div>
                     <div class="kpi-sub">ج.م</div>
@@ -215,12 +221,12 @@ resources/views/admin/general-ledger/partials/content.blade.php
                 <table>
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>التاريخ</th>
-                            <th>التعريف / الملاحظة</th>
-                            <th>مدين</th>
-                            <th>دائن</th>
-                            <th>الرصيد</th>
+                            <th style="text-align:center;">رقم العملية</th>
+                            <th style="text-align:center;">التاريخ</th>
+                            <th style="text-align:right;">التعريف / الملاحظة</th>
+                            <th style="text-align:center;">مدين</th>
+                            <th style="text-align:center;">دائن</th>
+                            <th style="text-align:center;">الرصيد</th>
                         </tr>
                     </thead>
                     <tbody>${transactionsHtml}</tbody>
@@ -235,6 +241,31 @@ resources/views/admin/general-ledger/partials/content.blade.php
         document.getElementById('gl-filter-from').value = '';
         document.getElementById('gl-filter-to').value = '';
         fetchData();
+    };
+
+    // ── Treasury statement modal ────────────────────────────────────
+    window.openTreasuryStatement = async function () {
+        document.getElementById('stmt-user-name').textContent = 'الخزينة الرئيسية';
+        document.getElementById('stmt-modal-body').innerHTML = `
+            <div style="text-align:center;padding:40px;color:var(--text-muted);">
+                <div class="spin" style="width:30px;height:30px;border-width:3px;margin:0 auto 12px;"></div>
+                جاري التحميل...
+            </div>`;
+        openModal('modal-user-statement');
+
+        try {
+            const filters = getFilters();
+            const params = {};
+            if (filters.from) params.from = filters.from;
+            if (filters.to) params.to = filters.to;
+
+            const res = await axios.get('/admin/general-ledger/treasury', { params });
+            renderStatement(res.data);
+        } catch (e) {
+            document.getElementById('stmt-modal-body').innerHTML =
+                '<div style="color:var(--red);text-align:center;padding:30px;">حدث خطأ أثناء تحميل كشف حساب الخزينة</div>';
+            console.error('Treasury statement fetch error', e);
+        }
     };
 
     // ── Helpers ──────────────────────────────────────────────────

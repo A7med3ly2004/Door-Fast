@@ -12,6 +12,24 @@
 .btn-view { width:100%; padding:14px; background-color:var(--primary); color:white; border:none; border-radius:8px; font-size:16px; font-weight:700; cursor:pointer; transition:0.3s; margin-top:auto; }
 .btn-view:hover { background-color:#d97706; transform:translateY(-2px); }
 
+/* New Card Layout Styles */
+.two-party-info { display:flex; flex-direction:column; gap:8px; background:#f8fafc; border-radius:10px; padding:12px; margin-bottom:15px; border:1px solid #e2e8f0; }
+.party-label { font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600; }
+.party { display:flex; flex-direction:column; gap:4px; font-size:14px; }
+.party.sender { color:#475569; }
+.party.receiver { color:var(--text-dark); background:#ecfdf5; padding:12px; border-radius:8px; border:1px dashed #34d399; margin-top:4px; }
+.party a { color:#2563eb; text-decoration:none; font-weight:600; direction:ltr; display:inline-block; }
+.party-divider { display:flex; justify-content:center; color:#94a3b8; }
+.arrow-icon { width:20px; height:20px; }
+
+.single-party-info { display:flex; flex-direction:column; gap:10px; margin-bottom:15px; padding:5px 0; }
+.party-row { display:flex; align-items:flex-start; gap:8px; font-size:14.5px; color:var(--text-dark); line-height:1.4; }
+.party-row .icon { flex-shrink:0; width:22px; text-align:center; font-size:16px; }
+
+.total-row { display:flex; justify-content:space-between; align-items:center; background:#f0f9ff; padding:12px 15px; border-radius:10px; margin-bottom:15px; border:1px solid #bae6fd; }
+.total-label { font-weight:700; color:#0369a1; font-size:15px; }
+.total-amount { font-size:22px; font-weight:800; color:#0284c7; }
+
 /* Modal Styles */
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; }
 .modal-overlay.open { display:flex; }
@@ -22,8 +40,19 @@
 .btn-close-modal { background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted); transition:0.2s; }
 .btn-close-modal:hover { color:var(--secondary); }
 .modal-body { padding:20px; flex:1; }
-.items-list { background:#f9fafb; padding:15px; border-radius:8px; margin-bottom:20px; font-size:14px; border:1px solid var(--border-color); }
-.items-list strong { display:block; margin-bottom:10px; font-size:15px; color:var(--text-dark); }
+.items-list-container { border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px; overflow:hidden; }
+.items-list-header { background:#f1f5f9; padding:12px 15px; font-weight:700; color:#334155; font-size:15px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:8px; }
+.items-list-body { background:#ffffff; padding:10px 15px; display:flex; flex-direction:column; gap:10px; }
+.item-row { display:flex; align-items:center; justify-content:space-between; padding-bottom:10px; border-bottom:1px dashed #e2e8f0; }
+.item-row:last-child { border-bottom:none; padding-bottom:0; }
+.item-main { display:flex; align-items:center; gap:12px; flex:1; }
+.item-qty { background:#e0f2fe; color:#0369a1; font-weight:800; font-size:14px; padding:4px 8px; border-radius:6px; min-width:35px; text-align:center; flex-shrink:0; }
+.item-details { flex:1; }
+.item-name { font-size:15px; font-weight:700; color:#1e293b; margin-bottom:4px; line-height:1.3; }
+.item-shop { font-size:13px; color:#64748b; display:flex; align-items:center; gap:4px; }
+.item-pricing { text-align:left; flex-shrink:0; margin-right:10px; }
+.item-total { font-weight:800; font-size:15px; color:var(--primary); }
+.item-unit { font-size:12px; color:var(--text-muted); margin-top:2px; }
 .money-total { font-size:26px; font-weight:800; color:var(--success); text-align:center; padding:15px; background:#ecfdf5; border-radius:8px; border:1px dashed var(--success); margin-bottom:20px; }
 .modal-footer { padding:20px; border-top:1px solid var(--border-color); display:flex; gap:10px; background:white; position:sticky; bottom:0; border-radius:0 0 16px 16px; z-index:10; }
 .btn-deliver { flex:2; padding:14px; background-color:var(--success); color:white; border:none; border-radius:8px; font-size:18px; font-weight:700; cursor:pointer; justify-content:center; display:flex; align-items:center; gap:8px; transition:0.3s; }
@@ -73,13 +102,34 @@ function renderReceivedOrders() {
         var clientPhone = order.client?.phone ?? '';
         var minutesAgo = order.accepted_at ? Math.floor((new Date() - new Date(order.accepted_at)) / 60000) : 0;
         
-        var deliveryAddress = order.client_address || 'لم يتم تحديده';
+        var clientInfoHtml = '';
         if (order.send_to_phone) {
-            deliveryAddress = `
-                <div style="margin-bottom:6px;"><span style="color:var(--text-muted);font-size:12px">عنوان المالك:</span><br>${order.client_address || ''}</div>
-                <div style="color:var(--secondary);font-weight:bold;border-top:1px dashed var(--border-color);padding-top:6px;font-size:14px;">
-                    التوصيل لـ: ${order.send_to_phone} <br> ${order.send_to_address || ''}
-                </div>`;
+            clientInfoHtml = `
+                <div class="two-party-info">
+                    <div class="party sender">
+                        <div class="party-label">العميل المالك</div>
+                        <div class="party-row" style="gap:5px; margin-bottom:2px"><span class="icon" style="font-size:14px">👤</span> <strong>${clientName}</strong></div>
+                        <div class="party-row" style="gap:5px; margin-bottom:2px"><span class="icon" style="font-size:14px">📞</span> <a href="tel:${clientPhone}" onclick="event.stopPropagation()">${clientPhone}</a></div>
+                        <div class="party-row" style="gap:5px; color:var(--text-muted); font-size:13px"><span class="icon" style="font-size:14px">📍</span> <span>${order.client_address || 'بدون عنوان'}</span></div>
+                    </div>
+                    <div class="party-divider">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="arrow-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                    </div>
+                    <div class="party receiver">
+                        <div class="party-label" style="color:#059669">العميل المستلم (وجهة التوصيل)</div>
+                        <div class="party-row" style="gap:5px; margin-bottom:2px"><span class="icon" style="font-size:14px">📞</span> <a href="tel:${order.send_to_phone}" onclick="event.stopPropagation()">${order.send_to_phone}</a></div>
+                        <div class="party-row" style="gap:5px"><span class="icon" style="font-size:14px">📍</span> <strong>${order.send_to_address || 'بدون عنوان'}</strong></div>
+                    </div>
+                </div>
+            `;
+        } else {
+            clientInfoHtml = `
+                <div class="single-party-info">
+                    <div class="party-row"><span class="icon">👤</span> <strong>${clientName}</strong></div>
+                    <div class="party-row"><span class="icon">📞</span> <a href="tel:${clientPhone}" class="phone-link" onclick="event.stopPropagation()">${clientPhone}</a></div>
+                    <div class="party-row"><span class="icon">📍</span> <span>${order.client_address || 'لم يتم تحديده'}</span></div>
+                </div>
+            `;
         }
         
         var card = document.createElement('div');
@@ -89,20 +139,12 @@ function renderReceivedOrders() {
                 <div class="order-number">#${order.order_number}</div>
                 <div class="time-badge">منذ: ${minutesAgo} دقيقة</div>
             </div>
-            <div class="info-group">
-                <div class="info-label">العميل</div>
-                <div class="info-value">${clientName}</div>
-                <div class="info-value" style="margin-top:5px; font-size:14px;"><a href="tel:${clientPhone}" class="phone-link" onclick="event.stopPropagation()">📞 ${clientPhone}</a></div>
+            ${clientInfoHtml}
+            <div class="total-row">
+                <div class="total-label">الإجمالي المطلوب</div>
+                <div class="total-amount">${order.total} ج</div>
             </div>
-            <div class="info-group">
-                <div class="info-label">عنوان التوصيل</div>
-                <div class="info-value" style="line-height:1.5; font-size:15px;">${deliveryAddress}</div>
-            </div>
-            <div class="info-group">
-                <div class="info-label">الإجمالي النهائي</div>
-                <div class="info-value" style="color:var(--success); font-size:20px;">${order.total} ج</div>
-            </div>
-            <button class="btn-view" onclick="openReserveModal(${order.id})">📋 عرض الطلب بالكامل</button>
+            <button class="btn-view" onclick="openReserveModal(${order.id})">📋 عرض تفاصيل الطلب</button>
         `;
         grid.appendChild(card);
     });
@@ -119,19 +161,70 @@ function openReserveModal(orderId) {
         phoneHtml += ` | <a href="tel:${order.client.phone_secondary}" class="phone-link">📞 ${order.client.phone_secondary}</a>`;
     }
     
-    var deliveryAddressHtml = order.client_address || 'غير محدد';
+    var clientSectionHtml = '';
     if (order.send_to_phone) {
-        deliveryAddressHtml = `
-            <div style="margin-bottom:8px;"><span style="color:var(--text-muted);font-size:12px">العنوان الأساسي:</span><br>${order.client_address || ''}</div>
-            <div style="background:#fee2e2; border-radius:6px; padding:10px; border:1px solid #fca5a5;">
-                <div style="color:var(--secondary);font-weight:bold;margin-bottom:5px">وجهة التوصيل لعميل أخر: ${order.send_to_phone}</div>
-                <div style="font-size:15px">${order.send_to_address || ''}</div>
-            </div>`;
+        clientSectionHtml = `
+            <div class="two-party-info" style="margin-bottom:20px; font-size:15px">
+                <div class="party sender">
+                    <div class="party-label" style="font-size:13px">العميل المالك (المرسل)</div>
+                    <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon">👤</span> <strong>${clientName}</strong></div>
+                    <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon">📞</span> ${phoneHtml}</div>
+                    <div class="party-row" style="gap:8px; color:var(--text-muted)"><span class="icon">📍</span> <span>${order.client_address || 'بدون عنوان'}</span></div>
+                </div>
+                <div class="party-divider" style="margin:10px 0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="arrow-icon" style="width:24px;height:24px"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                </div>
+                <div class="party receiver" style="padding:15px">
+                    <div class="party-label" style="color:#059669; font-size:13px">العميل المستلم (وجهة التوصيل النهائية)</div>
+                    <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon">📞</span> <a href="tel:${order.send_to_phone}" style="font-size:16px">${order.send_to_phone}</a></div>
+                    <div class="party-row" style="gap:8px"><span class="icon">📍</span> <strong style="font-size:16px">${order.send_to_address || 'بدون عنوان'}</strong></div>
+                </div>
+            </div>
+        `;
+    } else {
+        clientSectionHtml = `
+            <div class="single-party-info" style="background:#f8fafc; padding:15px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:20px">
+                <div class="party-row" style="margin-bottom:8px"><span class="icon">👤</span> <strong style="font-size:16px">${clientName}</strong></div>
+                <div class="party-row" style="margin-bottom:8px"><span class="icon">📞</span> ${phoneHtml}</div>
+                <div class="party-row"><span class="icon">📍</span> <span style="font-size:15px">${order.client_address || 'لم يتم تحديده'}</span></div>
+            </div>
+        `;
     }
     
-    var itemsHtml = order.items?.length 
-        ? order.items.map(i => `<div style="margin-bottom:6px;">- ${i.item_name} (×${i.quantity}) &mdash; <small style="color:var(--primary)">${i.shop?.name ?? ''}</small></div>`).join('') 
-        : 'لا توجد أصناف';
+    var itemsHtml = '';
+    if (order.items && order.items.length > 0) {
+        var rows = order.items.map(i => {
+            var unitPrice = i.unit_price ? parseFloat(i.unit_price) : 0;
+            var totalPrice = i.total ? parseFloat(i.total) : (unitPrice * i.quantity);
+            return `
+            <div class="item-row">
+                <div class="item-main">
+                    <div class="item-qty">${i.quantity}×</div>
+                    <div class="item-details">
+                        <div class="item-name">${i.item_name}</div>
+                        <div class="item-shop">🏪 ${i.shop?.name ?? 'بدون متجر'}</div>
+                    </div>
+                </div>
+                <div class="item-pricing">
+                    <div class="item-total">${totalPrice} ج</div>
+                    <div class="item-unit">للوحدة: ${unitPrice} ج</div>
+                </div>
+            </div>
+        `}).join('');
+        itemsHtml = `
+            <div class="items-list-container">
+                <div class="items-list-header">🛒 قائمة المنتجات (${order.items.length})</div>
+                <div class="items-list-body">${rows}</div>
+            </div>
+        `;
+    } else {
+        itemsHtml = `
+            <div class="items-list-container">
+                <div class="items-list-header">🛒 قائمة المنتجات (0)</div>
+                <div class="items-list-body"><div style="text-align:center; padding:10px; color:var(--text-muted);">لا توجد أصناف</div></div>
+            </div>
+        `;
+    }
 
     const modalContent = document.getElementById('reserve-modal-content');
     modalContent.innerHTML = `
@@ -140,10 +233,9 @@ function openReserveModal(orderId) {
             <button class="btn-close-modal" onclick="closeReserveModal()">✕</button>
         </div>
         <div class="modal-body">
-            <div class="info-group"><div class="info-label">بيانات العميل</div><div class="info-value">${clientName}</div><div class="info-value" style="margin-top:5px">${phoneHtml}</div></div>
-            <div class="info-group"><div class="info-label">وجهة التوصيل</div><div class="info-value" style="line-height:1.5">${deliveryAddressHtml}</div></div>
-            <div class="info-group"><div class="info-label">ملاحظات الطلب</div><div class="info-value" style="color:var(--secondary);font-size:14px">${order.notes || '- لا توجد -'}</div></div>
-            <div class="items-list"><strong>المنتجات:</strong>${itemsHtml}</div>
+            ${clientSectionHtml}
+            <div class="info-group"><div class="info-label">ملاحظات الطلب</div><div class="info-value" style="color:var(--secondary);font-size:15px;background:#fffbeb;padding:12px;border-radius:8px;border:1px dashed #fcd34d">${order.notes || '- لا توجد ملاحظات -'}</div></div>
+            ${itemsHtml}
             <div class="money-total">
                 المطلوب تحصيله: ${order.total} ج
                 <div style="font-size:13px;color:var(--text-muted);font-weight:600;margin-top:8px;">( يشمل توصيل: ${order.delivery_fee} ج | خصم: ${order.discount} ج )</div>

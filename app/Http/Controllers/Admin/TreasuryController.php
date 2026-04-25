@@ -62,6 +62,7 @@ class TreasuryController extends Controller
             // Lists for the "Dain" modal
             'callcenters' => \App\Models\User::callcenters()->active()->get(['id', 'name']),
             'deliveries'  => \App\Models\User::whereIn('role', ['delivery', 'reserve_delivery'])->active()->get(['id', 'name']),
+            'admins'      => \App\Models\User::where('role', 'admin')->where('is_active', true)->where('id', '!=', auth()->id())->get(['id', 'name']),
         ];
 
         // ── SPA navigation request ────────────────────────────────
@@ -167,7 +168,7 @@ class TreasuryController extends Controller
                 'type_label' => $tx->type_label,        // accessor on model
                 'type_badge_class' => $tx->type_badge_class,  // accessor on model
                 'amount' => number_format((float) $tx->amount, 2),
-                'by_whom' => $tx->by_whom,
+                'by_whom' => $tx->recordedBy?->name ?? '—',
                 'note' => $tx->note ?? '—',
                 'is_settlement' => $tx->source_type === 'settlement',
                 'source_id' => $tx->source_id,
@@ -725,6 +726,7 @@ class TreasuryController extends Controller
         return TreasuryTransaction::query()
             ->withinDateRange($from, $to)  // scope on model
             ->ofType($type)                // scope on model
+            ->with('recordedBy:id,name')
             ->select([
                 'id',
                 'type',

@@ -10,7 +10,7 @@
 
 {{-- KPI Cards --}}
 <div class="kpi-grid" id="kpi-grid">
-    <div class="kpi-card" id="kpi-orders">
+    <div class="kpi-card blue" id="kpi-orders">
         <div class="kpi-label">إجمالي الطلبات اليوم</div>
         <div class="kpi-value" id="v-orders">—</div>
     </div>
@@ -18,7 +18,7 @@
         <div class="kpi-label">مُوصَّلة اليوم</div>
         <div class="kpi-value" id="v-completed">—</div>
     </div>
-    <div class="kpi-card" style="--kpi-color:var(--yellow)">
+    <div class="kpi-card yellow">
         <div class="kpi-label">معلقة اليوم</div>
         <div class="kpi-value" id="v-pending">—</div>
     </div>
@@ -26,17 +26,17 @@
         <div class="kpi-label">ملغاة اليوم</div>
         <div class="kpi-value" id="v-cancelled">—</div>
     </div>
-    <div class="kpi-card blue">
+    <div class="kpi-card green">
         <div class="kpi-label">إيرادات اليوم</div>
         <div class="kpi-value" id="v-daily">—</div>
         <div class="kpi-sub">ج.م</div>
     </div>
-    <div class="kpi-card blue">
+    <div class="kpi-card green">
         <div class="kpi-label">إيرادات الشهر</div>
         <div class="kpi-value" id="v-monthly">—</div>
         <div class="kpi-sub">ج.م</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card blue">
         <div class="kpi-label">إجمالي العملاء</div>
         <div class="kpi-value" id="v-clients">—</div>
     </div>
@@ -129,8 +129,10 @@
     var ordersChart = null;
 
     async function loadStats() {
+        if (!document.getElementById('v-orders')) return;
         try {
             const { data } = await axios.get('{{ route("admin.dashboard.stats") }}');
+            if (!document.getElementById('v-orders')) return; // double check after await
             var k = data.kpis;
             document.getElementById('v-orders').textContent = k.orders_today;
             document.getElementById('v-completed').textContent = k.completed_today;
@@ -170,9 +172,11 @@
     }
 
     async function loadRecentOrders() {
+        if (!document.getElementById('recent-orders-body')) return;
         try {
             const { data } = await axios.get('{{ route("admin.dashboard.recent-orders") }}');
             var body = document.getElementById('recent-orders-body');
+            if (!body) return;
             body.innerHTML = !data.orders.length
                 ? '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">لا طلبات</td></tr>'
                 : data.orders.map(o => `<tr>
@@ -186,9 +190,11 @@
     }
 
     async function loadActivity() {
+        if (!document.getElementById('activity-feed')) return;
         try {
             const { data } = await axios.get('{{ route("admin.dashboard.activity") }}');
             var feed = document.getElementById('activity-feed');
+            if (!feed) return;
             feed.innerHTML = !data.logs.length
                 ? '<div style="text-align:center;color:var(--text-muted);padding:16px">لا أنشطة</div>'
                 : data.logs.map(l => `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">

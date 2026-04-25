@@ -65,7 +65,8 @@ class ReportDiscountController extends Controller
 
         $query = Order::with(['client', 'callcenter', 'delivery', 'items'])
             ->whereBetween('created_at', [$from, $to])
-            ->where('discount', '>', 0);
+            ->where('discount', '>', 0)
+            ->where('status', 'delivered');
 
         if ($request->filled('client_id')) {
             $query->where('client_id', $request->client_id);

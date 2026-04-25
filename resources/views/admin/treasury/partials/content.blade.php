@@ -56,7 +56,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 
 {{-- ── KPI Cards ─────────────────────────────────────────────────── --}}
 <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
-    <div class="kpi-card red">
+    <div class="kpi-card cyan">
         <div class="kpi-label">إجمالي الدفع لموظف</div>
         <div class="kpi-value" id="kpi-payment-receipts" style="color: #0891b2">
             {{ $initialStats['payment_receipts'] }}
@@ -70,14 +70,14 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         </div>
         <div class="kpi-sub">ج.م</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card red">
         <div class="kpi-label">إجمالي المصروفات</div>
-        <div class="kpi-value" id="kpi-expenses" style="color:var(--yellow)">{{ $initialStats['total_expenses'] }}</div>
+        <div class="kpi-value" id="kpi-expenses" style="color:var(--red)">{{ $initialStats['total_expenses'] }}</div>
         <div class="kpi-sub">ج.م</div>
     </div>
-    <div class="kpi-card" style="border-left:4px solid #0891b2;">
+    <div class="kpi-card yellow">
         <div class="kpi-label">الرصيد الحالي للخزينة</div>
-        <div class="kpi-value" id="kpi-balance" style="color:#0891b2">{{ $initialStats['balance'] }}</div>
+        <div class="kpi-value" id="kpi-balance" style="color:var(--yellow)">{{ $initialStats['balance'] }}</div>
         <div class="kpi-sub">ج.م</div>
     </div>
 </div>
@@ -109,8 +109,8 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             </select>
         </div>
         <div style="display:flex;gap:8px;align-self:flex-end;">
-            <button class="btn btn-primary" onclick="applyFilters()">🔍 تصفية</button>
-            <button class="btn btn-secondary" onclick="resetFilters()" title="إعادة ضبط">↺</button>
+            <button class="btn btn-primary" onclick="applyFilters()">بحث</button>
+            <button class="btn btn-secondary" onclick="resetFilters()" title="إعادة ضبط">إعادة ضبط</button>
         </div>
     </div>
 </div>
@@ -126,27 +126,23 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         <table>
             <thead>
                 <tr>
-                    <th>رقم العملية</th>
-                    <th>التاريخ</th>
-                    <th>النوع</th>
-                    <th>المبلغ</th>
-                    <th>بواسطة</th>
-                    <th>ملاحظة</th>
+                    <th style="text-align:center;">رقم العملية</th>
+                    <th style="text-align:center;">التاريخ</th>
+                    <th style="text-align:center;">النوع</th>
+                    <th style="text-align:center;">المبلغ</th>
+                    <th style="text-align:right;">بواسطة</th>
+                    <th style="text-align:right;">ملاحظة</th>
                     <th style="text-align:center;">الإجراءات</th>
                 </tr>
             </thead>
             <tbody id="ledger-tbody">
                 @forelse($initialTransactions as $tx)
                     <tr>
-                        <td style="color:var(--text-muted);font-size:12px;">{{ $tx->id }}</td>
-                        <td>{{ $tx->transaction_date->format('d/m/Y') }}</td>
-                        <td>
-                            @if($tx->type === 'income')
-                                <span class="badge badge-green">إيراد</span>
-                            @elseif($tx->type === 'expense')
+                        <td style="color:var(--text-muted);font-size:12px; text-align:center;">{{ $tx->id }}</td>
+                        <td style="text-align:center;">{{ $tx->transaction_date->format('d/m/Y') }}</td>
+                        <td style="text-align:center;">
+                            @if($tx->type === 'expense')
                                 <span class="badge badge-red">مصروف</span>
-                            @elseif($tx->type === 'settlement')
-                                <span class="badge badge-yellow">تسوية</span>
                             @elseif($tx->type === 'discount')
                                 <span class="badge badge-red">خصم</span>
                             @elseif($tx->type === 'pay_to_user')
@@ -154,18 +150,18 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                             @elseif($tx->type === 'receive_from_user')
                                 <span class="badge badge-teal">استلام من موظف</span>
                             @else
-                                <span class="badge badge-indigo">صرف مديونية</span>
+                                <span class="badge">{{ $tx->type }}</span>
                             @endif
                         </td>
-                        <td style="font-weight:700;">{{ number_format((float) $tx->amount, 2) }}</td>
-                        <td>{{ $tx->by_whom }}</td>
-                        <td style="color:var(--text-muted);font-size:12px;">{{ Str::limit($tx->note ?? '—', 40) }}</td>
+                        <td style="font-weight:700;text-align:center;">{{ number_format((float) $tx->amount, 2) }}</td>
+                        <td style="text-align:right;">{{ $tx->recordedBy?->name ?? '—' }}</td>
+                        <td style="color:var(--text-muted);font-size:12px;text-align:right;">{{ Str::limit($tx->note ?? '—', 40) }}</td>
                         <td style="text-align:center;">
                             <div style="display:flex;gap:6px;justify-content:center;">
                                 <button class="btn btn-sm btn-info" onclick="showDetail({{ $tx->id }})"
-                                    title="عرض التفاصيل">👁</button>
+                                    title="عرض التفاصيل">عرض التفاصيل</button>
                                 <button class="btn btn-sm" style="background:var(--yellow);color:#000;"
-                                    onclick="editTransaction({{ $tx->id }})" title="تعديل">✏️ تعديل</button>
+                                    onclick="editTransaction({{ $tx->id }})" title="تعديل">تعديل</button>
                             </div>
                         </td>
                     </tr>
@@ -383,7 +379,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 <div class="modal-overlay" id="modal-discount">
     <div class="modal">
         <div class="modal-header" style="background:rgba(220,38,38,.08);border-bottom:0;">
-            <h3 style="color:var(--red);">✂️ إضافة خصم</h3>
+            <h3 style="color:var(--red);">إضافة خصم</h3>
             <button class="btn-close" onclick="closeModal('modal-discount')">✕</button>
         </div>
         <div class="modal-body">
@@ -456,7 +452,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 <div class="modal-overlay" id="modal-pay-to-user">
     <div class="modal">
         <div class="modal-header" style="background:rgba(8,145,178,.08);border-bottom:0;">
-            <h3 style="color:#0891b2;">💵 دفع نقدي لموظف</h3>
+            <h3 style="color:#0891b2;">دفع نقدي لموظف</h3>
             <button class="btn-close" onclick="closeModal('modal-pay-to-user')">✕</button>
         </div>
         <div class="modal-body">
@@ -478,6 +474,13 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                             <option value="{{ $d->id }}">{{ $d->name }}</option>
                         @endforeach
                     </optgroup>
+                    @if(isset($admins) && $admins->count())
+                    <optgroup label="مديرين">
+                        @foreach($admins as $adm)
+                            <option value="{{ $adm->id }}">{{ $adm->name }}</option>
+                        @endforeach
+                    </optgroup>
+                    @endif
                 </select>
                 <div class="error-text" id="pay-user-id-error"></div>
             </div>
@@ -523,7 +526,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 <div class="modal-overlay" id="modal-receive-from-user">
     <div class="modal">
         <div class="modal-header" style="background:rgba(5,150,105,.08);border-bottom:0;">
-            <h3 style="color:#059669;">💵 استلام نقدي من موظف</h3>
+            <h3 style="color:#059669;">استلام نقدي من موظف</h3>
             <button class="btn-close" onclick="closeModal('modal-receive-from-user')">✕</button>
         </div>
         <div class="modal-body">
@@ -545,6 +548,13 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                             <option value="{{ $d->id }}">{{ $d->name }}</option>
                         @endforeach
                     </optgroup>
+                    @if(isset($admins) && $admins->count())
+                    <optgroup label="مديرين">
+                        @foreach($admins as $adm)
+                            <option value="{{ $adm->id }}">{{ $adm->name }}</option>
+                        @endforeach
+                    </optgroup>
+                    @endif
                 </select>
                 <div class="error-text" id="receive-user-id-error"></div>
             </div>
@@ -718,13 +728,11 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 
         // ── Table renderer ───────────────────────────────────────────
         function typeBadge(type) {
-            if (type === 'income') return '<span class="badge badge-green">إيراد</span>';
             if (type === 'expense') return '<span class="badge badge-red">مصروف</span>';
-            if (type === 'settlement') return '<span class="badge badge-yellow">تسوية</span>';
             if (type === 'discount') return '<span class="badge badge-red">خصم</span>';
             if (type === 'pay_to_user') return '<span class="badge badge-cyan">دفع لموظف</span>';
             if (type === 'receive_from_user') return '<span class="badge badge-teal">استلام من موظف</span>';
-            return '<span class="badge badge-indigo">صرف مديونية</span>';
+            return `<span class="badge">${type}</span>`;
         }
 
         function renderTable(payload) {
@@ -740,16 +748,16 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 
             tbody.innerHTML = payload.data.map(tx => `
             <tr>
-                <td style="color:var(--text-muted);font-size:12px;">${tx.id}</td>
-                <td>${formatDate(tx.transaction_date)}</td>
-                <td>${typeBadge(tx.type)}</td>
-                <td style="font-weight:700;">${tx.amount}</td>
-                <td>${escHtml(tx.by_whom)}</td>
-                <td style="color:var(--text-muted);font-size:12px;">${truncate(escHtml(tx.note), 40)}</td>
+                <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.id}</td>
+                <td style="text-align:center;">${formatDate(tx.transaction_date)}</td>
+                <td style="text-align:center;">${typeBadge(tx.type)}</td>
+                <td style="font-weight:700;text-align:center;">${tx.amount}</td>
+                <td style="text-align:right;">${escHtml(tx.by_whom)}</td>
+                <td style="color:var(--text-muted);font-size:12px;text-align:right;">${truncate(escHtml(tx.note), 40)}</td>
                 <td style="text-align:center;">
                     <div style="display:flex;gap:6px;justify-content:center;">
-                        <button class="btn btn-sm btn-info" onclick="showDetail(${tx.id})" title="عرض التفاصيل">👁</button>
-                        <button class="btn btn-sm" style="background:var(--yellow);color:#000;" onclick="editTransaction(${tx.id})" title="تعديل">✏️ تعديل</button>
+                        <button class="btn btn-sm btn-info" onclick="showDetail(${tx.id})" title="عرض التفاصيل">عرض التفاصيل</button>
+                        <button class="btn btn-sm" style="background:var(--yellow);color:#000;" onclick="editTransaction(${tx.id})" title="تعديل">تعديل</button>
                     </div>
                 </td>
             </tr>
@@ -1023,42 +1031,130 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         };
 
         function buildDetailHtml(tx) {
-            const badgeHtml = tx.type === 'income'
-                ? '<span class="badge badge-green">إيراد</span>'
-                : tx.type === 'expense'
-                    ? '<span class="badge badge-red">مصروف</span>'
-                    : tx.type === 'settlement'
-                        ? '<span class="badge badge-yellow">تسوية</span>'
-                        : tx.type === 'discount'
-                            ? '<span class="badge badge-red">خصم</span>'
-                            : '<span class="badge badge-indigo">دائن</span>';
+            let badgeBg = 'var(--text-muted)';
+            let badgeText = 'var(--text-main)';
+            let badgeLabel = tx.type;
+
+            if (tx.type === 'income') { badgeBg = 'rgba(34,197,94,.15)'; badgeText = 'var(--success)'; badgeLabel = 'إيراد'; }
+            else if (tx.type === 'expense') { badgeBg = 'rgba(220,38,38,.12)'; badgeText = 'var(--red)'; badgeLabel = 'مصروف'; }
+            else if (tx.type === 'settlement') { badgeBg = 'rgba(245,158,11,.15)'; badgeText = 'var(--yellow)'; badgeLabel = 'تسوية'; }
+            else if (tx.type === 'discount') { badgeBg = 'rgba(220,38,38,.12)'; badgeText = 'var(--red)'; badgeLabel = 'خصم'; }
+            else if (tx.type === 'pay_to_user') { badgeBg = 'rgba(8,145,178,.15)'; badgeText = '#0891b2'; badgeLabel = 'دفع لموظف'; }
+            else if (tx.type === 'receive_from_user') { badgeBg = 'rgba(5,150,105,.15)'; badgeText = '#059669'; badgeLabel = 'استلام من موظف'; }
+            else if (tx.type === 'dain') { badgeBg = 'rgba(79,70,229,.15)'; badgeText = 'var(--indigo)'; badgeLabel = 'دائن'; }
+
+            const typeBadge = `<span style="background:${badgeBg};color:${badgeText};padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;">${badgeLabel}</span>`;
 
             let settlementSection = '';
             if (tx.is_settlement && tx.settlement) {
                 const s = tx.settlement;
                 settlementSection = `
-                <div class="divider"></div>
-                <div class="card-title" style="font-size:13px;margin-bottom:10px;">معلومات التسوية</div>
-                <div class="info-row"><span class="info-label">المحصل:</span><span>${escHtml(s.agent_name)}</span></div>
-                <div class="info-row"><span class="info-label">هاتف:</span><span>${escHtml(s.agent_phone)}</span></div>
-                <div class="info-row"><span class="info-label">بواسطة:</span><span>${escHtml(s.settled_by)}</span></div>
-                <div class="info-row"><span class="info-label">وقت التسوية:</span><span>${escHtml(s.settled_at)}</span></div>
-                <div class="info-row"><span class="info-label">ملاحظة التسوية:</span><span>${escHtml(s.note)}</span></div>`;
+                <div style="margin-top:20px;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:12px;">
+                    <div style="font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+                        <svg style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        معلومات التسوية
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">المحصل</div>
+                            <div style="font-weight:600;font-size:13px">${escHtml(s.agent_name)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">الهاتف</div>
+                            <div style="font-weight:600;font-size:13px">${escHtml(s.agent_phone)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">بواسطة</div>
+                            <div style="font-weight:600;font-size:13px">${escHtml(s.settled_by)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">وقت التسوية</div>
+                            <div style="font-weight:600;font-size:13px;font-family:monospace">${escHtml(s.settled_at)}</div>
+                        </div>
+                    </div>
+                    ${s.note ? `
+                    <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)">
+                        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">ملاحظة التسوية</div>
+                        <div style="font-size:13px;line-height:1.5">${escHtml(s.note)}</div>
+                    </div>` : ''}
+                </div>`;
             }
 
             return `
-            <div class="info-row"><span class="info-label">رقم المعاملة : </span><strong>#${tx.id}</strong></div>
-            <div class="info-row"><span class="info-label">التاريخ: </span><span>${escHtml(tx.transaction_date)}</span></div>
-            <div class="info-row"><span class="info-label">النوع: </span>${badgeHtml}</div>
-            <div class="info-row"><span class="info-label">المبلغ: </span><strong style="font-size:16px;color:var(--yellow)">${tx.amount} ج.م</strong></div>
-            <div class="info-row"><span class="info-label">بواسطة: </span><span>${escHtml(tx.by_whom)}</span></div>
-            <div class="info-row"><span class="info-label">سُجِّل بواسطة: </span><span>${escHtml(tx.recorded_by)}</span></div>
-            <div class="info-row"><span class="info-label">ملاحظة: </span><span>${escHtml(tx.note)}</span></div>
-            <div class="info-row" style="font-size:11px;color:var(--text-muted);"><span class="info-label">أُنشئ في: </span><span>${escHtml(tx.created_at)}</span></div>
+            <!-- Top Summary Card -->
+            <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+                <div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">رقم المعاملة</div>
+                    <code style="background:rgba(245,158,11,.12);color:var(--yellow);padding:4px 10px;border-radius:6px;font-size:15px;font-weight:700;letter-spacing:1px">#${tx.id}</code>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">القيمة</div>
+                    <div style="font-size:24px;font-weight:800;color:var(--yellow);line-height:1">${tx.amount} <span style="font-size:14px;color:var(--text-muted);font-weight:600">ج.م</span></div>
+                </div>
+                <div style="text-align:left;">
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">النوع</div>
+                    ${typeBadge}
+                </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <div style="font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+                        <svg style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        أطراف المعاملة
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:16px;">
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">تمت بواسطة (العميل / المستفيد / المندوب)</div>
+                            <div style="font-weight:600;font-size:14px">${escHtml(tx.by_whom)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">مُنشئ المعاملة (الموظف)</div>
+                            <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px">
+                                <span style="width:20px;height:20px;background:var(--border);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${(tx.recorded_by||'').charAt(0)}</span>
+                                ${escHtml(tx.recorded_by)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <div style="font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+                        <svg style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        التواريخ
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:16px;">
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">تاريخ المعاملة (الاستحقاق)</div>
+                            <div style="font-weight:600;font-size:14px">${escHtml(tx.transaction_date)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">وقت الإنشاء الفعلي بالنظام</div>
+                            <div style="font-size:13px;font-family:monospace;color:var(--text-main)">${escHtml(tx.created_at)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div style="margin-top:20px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:16px;">
+                <div style="font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+                    <svg style="width:14px;height:14px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    ملاحظات المعاملة
+                </div>
+                <div style="font-size:14px;line-height:1.6">${tx.note ? escHtml(tx.note) : '<span style="color:var(--text-muted)">لا توجد ملاحظات.</span>'}</div>
+            </div>
+
             ${settlementSection}
-            <div style="margin-top:14px;">
-                <button class="btn btn-danger btn-sm" onclick="exportTransactionPdf(${tx.id})">📄 تصدير PDF</button>
-            </div>`;
+
+            <!-- Footer Actions -->
+            <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;display:flex;justify-content:center;">
+                <button class="btn btn-danger" onclick="exportTransactionPdf(${tx.id})" style="display:flex;align-items:center;gap:8px;border-radius:8px">
+                    <svg style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    تصدير إيصال PDF
+                </button>
+            </div>
+        `;
         }
 
         // ── Edit Transaction ──────────────────────────────────────────

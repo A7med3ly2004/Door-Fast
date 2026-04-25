@@ -15,8 +15,8 @@ class ShopController extends Controller
     public function index(Request $request)
     {
         $query = Shop::with('category')
-            ->withCount(['orderItems as orders_count' => fn($q) => $q->whereHas('order')])
-            ->withSum('orderItems', 'total')
+            ->withCount(['orderItems as orders_count' => fn($q) => $q->whereHas('order', fn($o) => $o->where('status', 'delivered'))])
+            ->withSum(['orderItems' => fn($q) => $q->whereHas('order', fn($o) => $o->where('status', 'delivered'))], 'total')
             ->latest();
 
         if ($request->filled('search')) {

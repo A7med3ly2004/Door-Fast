@@ -77,6 +77,12 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/callcenter', [AdminCallCenter::class, 'store'])->name('callcenter.store');
         Route::put('/callcenter/{id}', [AdminCallCenter::class, 'update'])->name('callcenter.update');
         Route::get('/callcenter/{id}/performance', [AdminCallCenter::class, 'performance'])->name('callcenter.performance');
+        Route::patch('/callcenter/{id}/toggle-shift', [AdminCallCenter::class, 'toggleShift'])->name('callcenter.toggle-shift');
+
+        // Admin Management (المديرين)
+        Route::get('/admin-management', [\App\Http\Controllers\Admin\AdminManagementController::class, 'index'])->name('admin-management.index');
+        Route::post('/admin-management', [\App\Http\Controllers\Admin\AdminManagementController::class, 'store'])->name('admin-management.store');
+        Route::put('/admin-management/{id}', [\App\Http\Controllers\Admin\AdminManagementController::class, 'update'])->name('admin-management.update');
 
         // Reports
         Route::get('/reports/data', [AdminReports::class, 'data'])->name('reports.data');
@@ -124,6 +130,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/general-ledger', [App\Http\Controllers\Admin\GeneralLedgerController::class, 'index'])->name('general-ledger.index');
         Route::get('/general-ledger/data', [App\Http\Controllers\Admin\GeneralLedgerController::class, 'data'])->name('general-ledger.data');
         Route::get('/general-ledger/user/{userId}', [App\Http\Controllers\Admin\GeneralLedgerController::class, 'userStatement'])->name('general-ledger.user');
+        Route::get('/general-ledger/treasury', [App\Http\Controllers\Admin\GeneralLedgerController::class, 'treasuryStatement'])->name('general-ledger.treasury');
 
         // Activity Log (العمليات)
         Route::get('/activity-log/data', [AdminActivityLog::class, 'data'])->name('activity-log.data');
@@ -145,6 +152,10 @@ Route::middleware(['auth', 'role:callcenter'])
     ->name('callcenter.')
     ->group(function () {
         Route::get('/dashboard', [CCDashboard::class, 'index'])->name('dashboard');
+
+        // Shift
+        Route::post('/shift/toggle', [\App\Http\Controllers\CallCenter\ShiftController::class, 'toggle'])->name('shift.toggle');
+        Route::get('/shift/status', [\App\Http\Controllers\CallCenter\ShiftController::class, 'status'])->name('shift.status');
 
         // Orders
         Route::get('/orders/create', [CCOrders::class, 'create'])->name('orders.create');
@@ -175,6 +186,7 @@ Route::middleware(['auth', 'role:callcenter'])
         Route::get('/delivery/active', [CCDelivery::class, 'active'])->name('delivery.active');
         Route::get('/delivery/all', [CCDelivery::class, 'allForCC'])->name('delivery.all');
         Route::patch('/delivery/{id}/toggle', [CCDelivery::class, 'toggleShift'])->name('delivery.toggle');
+        Route::get('/delivery/{id}/statement', [CCDelivery::class, 'statement'])->name('delivery.statement');
         Route::get('/delivery', [CCDelivery::class, 'index'])->name('delivery.index');
 
         // Stats
@@ -216,6 +228,7 @@ Route::middleware(['auth', 'role:delivery'])
         // Delivered Orders
         Route::get('/orders/delivered', [\App\Http\Controllers\Delivery\OrderController::class, 'delivered'])->name('orders.delivered');
         Route::get('/orders/delivered-data', [\App\Http\Controllers\Delivery\OrderController::class, 'deliveredData'])->name('orders.delivered-data');
+        Route::get('/orders/{id}/invoice/download', [\App\Http\Controllers\Delivery\OrderController::class, 'downloadInvoice'])->name('orders.invoice.download');
 
         // Wallet (كشف حسابي)
         Route::get('/wallet', [\App\Http\Controllers\Delivery\WalletController::class, 'index'])->name('wallet.index');
@@ -250,6 +263,7 @@ Route::middleware(['auth', 'role:reserve_delivery'])
         // Delivered Orders
         Route::get('/orders/delivered', [\App\Http\Controllers\ReserveDelivery\OrderController::class, 'delivered'])->name('orders.delivered');
         Route::get('/orders/delivered-data', [\App\Http\Controllers\ReserveDelivery\OrderController::class, 'deliveredData'])->name('orders.delivered-data');
+        Route::get('/orders/{id}/invoice/download', [\App\Http\Controllers\ReserveDelivery\OrderController::class, 'downloadInvoice'])->name('orders.invoice.download');
 
         // Wallet (كشف حسابي)
         Route::get('/wallet', [\App\Http\Controllers\ReserveDelivery\WalletController::class, 'index'])->name('wallet.index');

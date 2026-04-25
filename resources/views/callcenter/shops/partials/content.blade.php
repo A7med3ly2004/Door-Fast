@@ -1,5 +1,5 @@
 {{-- Callcenter Shops SPA partial --}}
-<div class="section-header"><h2>🏪 المتاجر النشطة</h2></div>
+<div class="section-header"><h2>المتاجر النشطة</h2></div>
 <div class="card" style="padding:12px 16px;margin-bottom:14px">
     <div class="filter-bar">
         <input type="text" id="f-search" class="form-control" placeholder="بحث بالاسم أو الكود" style="min-width:200px">
@@ -9,16 +9,16 @@
                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
             @endforeach
         </select>
-        <button class="btn btn-primary" onclick="loadShops(1)">🔍 بحث</button>
-        <button class="btn btn-success" onclick="openModal('modal-add-shop')" style="margin-right:auto">➕ إضافة متجر</button>
-        <button class="btn btn-secondary" onclick="openModal('modal-add-category')">📁 إضافة فئة</button>
+        <button class="btn btn-primary" onclick="loadShops(1)">بحث</button>
+        <button class="btn btn-success" onclick="openModal('modal-add-shop')" style="margin-right:auto">إضافة متجر</button>
+        <button class="btn btn-secondary" onclick="openModal('modal-add-category')">إضافة فئة</button>
     </div>
 </div>
 <div class="card" style="padding:0;position:relative">
     <div class="loading-overlay" id="tbl-loading"><div class="spin"></div></div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>الكود</th><th>الاسم</th><th>الهاتف</th><th>العنوان</th><th>فئة المتجر</th></tr></thead>
+            <thead><tr><th style="text-align: center;">الكود</th><th style="text-align: center;">الاسم</th><th style="text-align: center;">الهاتف</th><th style="text-align: center;">العنوان</th><th style="text-align: center;">فئة المتجر</th></tr></thead>
             <tbody id="shops-body"><tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">جاري التحميل...</td></tr></tbody>
         </table>
     </div>
@@ -29,7 +29,7 @@
 <div class="modal-overlay" id="modal-add-shop">
     <div class="modal">
         <div class="modal-header">
-            <h3>🏪 إضافة متجر جديد</h3><button class="btn-close" onclick="closeModal('modal-add-shop')">✕</button>
+            <h3>إضافة متجر جديد</h3><button class="btn-close" onclick="closeModal('modal-add-shop')">✕</button>
         </div>
         <div class="modal-body">
             <div class="form-row">
@@ -56,7 +56,7 @@
 <div class="modal-overlay" id="modal-add-category">
     <div class="modal" style="max-width:400px">
         <div class="modal-header">
-            <h3>📁 إضافة فئة جديدة</h3><button class="btn-close" onclick="closeModal('modal-add-category')">✕</button>
+            <h3>إضافة فئة جديدة</h3><button class="btn-close" onclick="closeModal('modal-add-category')">✕</button>
         </div>
         <div class="modal-body">
             <div class="form-group"><label class="form-label">اسم الفئة *</label><input type="text" id="cat-name" class="form-control" placeholder="مثلاً: مطاعم"></div>
@@ -78,7 +78,7 @@ async function loadShops(page = 1) {
         });
         var body = document.getElementById('shops-body');
         if (!data.data.length) { body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد متاجر</td></tr>'; document.getElementById('pg-wrap').innerHTML = ''; return; }
-        body.innerHTML = data.data.map(s => `<tr><td><code style="color:var(--yellow)">${s.code ?? '—'}</code></td><td><strong>${s.name}</strong></td><td>${s.phone ?? '—'}</td><td>${s.address ?? '—'}</td><td>${s.category?.name ?? '—'}</td></tr>`).join('');
+        body.innerHTML = data.data.map(s => `<tr><td style="text-align: center;"><code style="color:var(--yellow)">${s.code ?? '—'}</code></td><td style="text-align: center;"><strong>${s.name}</strong></td><td style="text-align: center;">${s.phone ?? '—'}</td><td style="text-align: center;">${s.address ?? '—'}</td><td style="text-align: center;">${s.category?.name ?? '—'}</td></tr>`).join('');
         document.getElementById('pg-wrap').innerHTML = renderPagination(data.last_page, data.current_page, 'loadShops');
     } catch(e) { console.error(e); } finally { document.getElementById('tbl-loading').classList.remove('show'); }
 }

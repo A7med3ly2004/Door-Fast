@@ -13,7 +13,7 @@ class ClientController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Client::withCount('orders')
+        $query = Client::withCount(['orders', 'addresses'])
             ->withSum(['orders' => fn($q) => $q->where('status', 'delivered')], 'total')
             ->with(['orders' => fn($q) => $q->latest()->take(1)])
             ->latest();

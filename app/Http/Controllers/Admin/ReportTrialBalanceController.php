@@ -41,8 +41,8 @@ class ReportTrialBalanceController extends Controller
         
         $safeRows = $safeQuery->selectRaw('type, SUM(amount) as total')->groupBy('type')->pluck('total', 'type');
         
-        $mainSafe = ($safeRows['income'] ?? 0) + ($safeRows['settlement'] ?? 0)
-                  - ($safeRows['expense'] ?? 0) - ($safeRows['dain'] ?? 0) - ($safeRows['discount'] ?? 0);
+        $mainSafe = ($safeRows['income'] ?? 0) + ($safeRows['settlement'] ?? 0) + ($safeRows['receive_from_user'] ?? 0)
+                  - ($safeRows['expense'] ?? 0) - ($safeRows['dain'] ?? 0) - ($safeRows['discount'] ?? 0) - ($safeRows['pay_to_user'] ?? 0);
 
         $totalExpenses = $safeRows['expense'] ?? 0;
 
@@ -110,7 +110,37 @@ class ReportTrialBalanceController extends Controller
             ];
         });
 
-        // 4. TOTAL DISCOUNTS (إجمالي الخصومات)
+        // 4. ADMIN ROWS (المديرين)
+        $adminUsers = User::with('wallet')->where('role', 'admin')->get(['id', 'name', 'code']);
+
+        $adminWalletIds = $adminUsers->pluck('wallet.id')->filter();
+
+        $adminPeriodNet = [];
+        if (!$isAlways && $adminWalletIds->isNotEmpty()) {
+            $adminPeriodNet = \App\Models\WalletTransaction::whereIn('wallet_id', $adminWalletIds)
+                ->whereBetween('transaction_date', [$from->toDateString(), $to->toDateString()])
+                ->selectRaw("wallet_id, SUM(CASE WHEN direction='debit' THEN amount ELSE -amount END) as net")
+                ->groupBy('wallet_id')
+                ->pluck('net', 'wallet_id');
+        }
+
+        $adminRows = $adminUsers->map(function ($a) use ($isAlways, $adminPeriodNet) {
+            if ($isAlways) {
+                $balance = $a->wallet ? $a->wallet->balance : 0;
+            } else {
+                $walletId = $a->wallet ? $a->wallet->id : 0;
+                $balance = $adminPeriodNet[$walletId] ?? 0;
+            }
+
+            return [
+                'id' => $a->id,
+                'name' => $a->name,
+                'code' => $a->code,
+                'balance' => round($balance, 2),
+            ];
+        });
+
+        // 5. TOTAL DISCOUNTS (إجمالي الخصومات)
         $discountsQuery = Order::where('status', 'delivered');
         if (!$isAlways) $discountsQuery->whereBetween('created_at', [$from, $to]);
         $totalDiscounts = $discountsQuery->sum('discount');
@@ -120,6 +150,7 @@ class ReportTrialBalanceController extends Controller
             'total_expenses' => round($totalExpenses, 2),
             'callcenter_rows' => $ccRows->values(),
             'delivery_rows' => $deliveryRows->values(),
+            'admin_rows' => $adminRows->values(),
             'total_discounts' => round($totalDiscounts, 2),
             'period' => [
                 'from' => $isAlways ? '' : $from->format('Y-m-d'),

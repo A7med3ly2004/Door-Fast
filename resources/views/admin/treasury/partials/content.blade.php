@@ -48,6 +48,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         <button class="btn" onclick="openReceiveFromUserModal()" style="background:#059669;color:#fff;">
             ايصال استلام نقدي
         </button>
+        <button class="btn btn-success btn-sm" onclick="exportTreasuryExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
     </div>
 </div>
 
@@ -1202,6 +1203,33 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             addPolling(setInterval(fetchStats, 30000));
             addPolling(setInterval(() => fetchLedger(currentPage), 30000));
         }
+
+        window.exportTreasuryExcel = async function () {
+            try {
+                const from = document.getElementById('filter-from')?.value || '';
+                const to   = document.getElementById('filter-to')?.value   || '';
+                const type = document.getElementById('filter-type')?.value || '';
+
+                const { data } = await axios.get('/admin/treasury/data', {
+                    params: { from, to, type, per_page: 9999 }
+                });
+
+                const columns = [
+                    { header: 'رقم العملية', key: 'id',               width: 12 },
+                    { header: 'التاريخ',     key: 'transaction_date', width: 14 },
+                    { header: 'النوع',       key: 'type_label',       width: 16 },
+                    { header: 'المبلغ',      key: 'amount',           width: 14 },
+                    { header: 'بواسطة',     key: 'by_whom',          width: 22 },
+                    { header: 'ملاحظة',     key: 'note',             width: 30 },
+                ];
+
+                exportToExcel(data.data, columns, 'treasury-' + new Date().toISOString().slice(0, 10), 'الخزينة');
+                if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+            } catch (e) {
+                if (typeof showError === 'function') showError('حدث خطأ');
+                console.error(e);
+            }
+        };
 
     })();
 </script>

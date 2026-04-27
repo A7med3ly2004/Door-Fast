@@ -49,6 +49,7 @@
             <div style="color:var(--text-muted);font-size:13px" id="detail-shop-info"></div>
         </div>
         <a id="shop-pdf-btn" href="#" target="_blank" class="btn btn-danger" data-no-spa>📄 تصدير PDF</a>
+        <button id="shop-excel-btn" onclick="exportShopReportExcel()" class="btn btn-success" style="display:none;background:#217346;color:#fff;">تصدير Excel</button>
     </div>
     <div class="kpi-grid" style="margin-bottom:20px">
         <div class="kpi-card blue">
@@ -200,6 +201,7 @@
         document.getElementById('shop-orders').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">جاري التحميل...</td></tr>';
         var params = new URLSearchParams(Object.fromEntries(Object.entries(getFilters()).filter(([, v]) => v)));
         document.getElementById('shop-pdf-btn').href = `/admin/report-hops/${id}/pdf` + (params.toString() ? '?' + params.toString() : '');
+        document.getElementById('shop-excel-btn').style.display = 'inline-flex';
         try {
             const { data } = await axios.get('{{ route("admin.report-hops.data") }}', { params: { ...getFilters(), shop_id: id } });
             var s = data.shop; const k = data.shop_kpis;
@@ -221,6 +223,36 @@
         } catch (e) { console.error(e); showError('حدث خطأ'); }
     }
     loadGlobal();
+
+    window.exportShopReportExcel = async function () {
+        if (!currentShopId) return;
+        try {
+            const { data } = await axios.get('{{ route("admin.report-hops.data") }}', {
+                params: { ...getFilters(), shop_id: currentShopId }
+            });
+            const columns = [
+                { header: 'رقم الطلب',   key: 'order_number', width: 18 },
+                { header: 'التاريخ',      key: 'created_at',   width: 20 },
+                { header: 'العميل',       key: 'client',       width: 22 },
+                { header: 'المندوب',      key: 'delivery',     width: 18 },
+                { header: 'كول سنتر',   key: 'callcenter',   width: 18 },
+                { header: 'عدد الأصناف', key: 'items_count',  width: 14 },
+                { header: 'الإجمالي',     key: 'total',        width: 14 },
+                { header: 'الحالة',       key: 'status',       width: 14 },
+            ];
+            const statusMap = { pending: 'باقي', received: 'مُسلَّم', delivered: 'مُوصَّل', cancelled: 'ملغي' };
+            const rows = data.orders.map(o => ({
+                ...o,
+                created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',
+                status: statusMap[o.status] || o.status,
+            }));
+            exportToExcel(rows, columns, 'shop-report-' + data.shop.name + '-' + new Date().toISOString().slice(0, 10), 'تقرير المتجر');
+            if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+        } catch (e) {
+            if (typeof showError === 'function') showError('حدث خطأ');
+            console.error(e);
+        }
+    };
 </script>
 
 @include('admin.orders.partials.view_modal')

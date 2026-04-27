@@ -334,7 +334,12 @@
             .sidebar { display: none; }
             .bottom-nav { display: flex; }
             .main-content { padding-bottom: 60px; }
-            .content-area { padding: 15px; }
+
+            /* MOBILE: reduce content area padding + add bottom nav clearance */
+            .content-area {
+                padding: 14px;
+                padding-bottom: 110px;
+            }
 
             /* New Topbar Mobile Fixes */
             .topbar {
@@ -565,6 +570,9 @@
             axios.get('{{ route("reserve.shift.status") }}').then(res => {
                 isShiftActive = res.data.is_active;
                 updateShiftUI();
+                if (isShiftActive && typeof window.onShiftStarted === 'function') {
+                    window.onShiftStarted();
+                }
             });
         }
 

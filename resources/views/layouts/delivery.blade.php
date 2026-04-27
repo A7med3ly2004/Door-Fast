@@ -395,7 +395,7 @@
             /* MOBILE: reduce content area padding + add bottom nav clearance */
             .content-area {
                 padding: 14px;
-                padding-bottom: 74px;
+                padding-bottom: 110px;
             }
 
             /* MOBILE: compact shift overlay */
@@ -658,6 +658,9 @@
             axios.get('{{ route("delivery.shift.status") }}').then(res => {
                 isShiftActive = res.data.is_active;
                 updateShiftUI();
+                if (isShiftActive && typeof window.onShiftStarted === 'function') {
+                    window.onShiftStarted();
+                }
             });
         }
 

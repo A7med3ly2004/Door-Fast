@@ -95,9 +95,9 @@ class ReportController extends Controller
             ];
         })->values();
 
-        // Paginated orders table
+        // Paginated orders table (per_page=9999 → export all, default 20 for UI)
         $page    = $request->get('page', 1);
-        $perPage = 20;
+        $perPage = min((int) $request->get('per_page', 20), 5000);
         $sliced  = $orders->forPage($page, $perPage)->values();
         $mapped  = $sliced->map(fn($o) => [
             'id'           => $o->id,

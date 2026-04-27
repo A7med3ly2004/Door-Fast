@@ -40,10 +40,10 @@
 
 /* Desktop Elements */
 .desktop-only { display: block; }
-.mobile-only { display: none; }
+.mobile-only { display: none !important; }
 
 /* Mobile Cards List */
-.delivered-mobile-list { display: flex; flex-direction: column; gap: 12px; }
+.delivered-mobile-list { flex-direction: column; gap: 12px; }
 .delivered-mobile-card { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 .dmc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 10px; }
 .dmc-order-num { font-size: 18px; font-weight: 800; color: var(--primary); }
@@ -63,7 +63,7 @@
     .summary-bar > div:last-child { border-bottom: none !important; }
     
     .desktop-only { display: none !important; }
-    .mobile-only { display: block !important; }
+    .mobile-only { display: flex !important; }
 
     .modal-overlay { padding: 0; }
     .modal-content { max-width: 100%; max-height: 100vh; border-radius: 0; height: 100vh; }

@@ -23,6 +23,7 @@
         style="padding: 6px 24px;border-radius:8px;background:var(--yellow);border:none;color:#000;font-weight:700;cursor:pointer;">
         بحث
     </button>
+    <button class="btn btn-success" onclick="exportTrialBalanceExcel()" style="background:#217346;color:#fff;padding:6px 24px;border-radius:8px;border:none;font-weight:700;cursor:pointer;">تصدير Excel</button>
 </div>
 
 <div class="kpi-grid" id="rtb-kpis" style="margin-top: 10px; grid-template-columns: repeat(5, 1fr);">
@@ -216,4 +217,36 @@
 
     // Auto load on init
     setTimeout(loadTrialBalance, 100);
+
+    window.exportTrialBalanceExcel = function () {
+        if (!rtbCurrentData) { if (typeof showError === 'function') showError('يرجى تحميل البيانات أولاً'); return; }
+
+        const allRows = [];
+        allRows.push({ name: 'الخزينة الرئيسية', code: '',  role: 'خزينة', balance: rtbCurrentData.main_safe });
+        allRows.push({ name: 'إجمالي المصروفات', code: '',  role: 'مصروف', balance: rtbCurrentData.total_expenses });
+        allRows.push({ name: 'إجمالي الخصومات', code: '',  role: 'خصم',   balance: rtbCurrentData.total_discounts });
+        rtbCurrentData.callcenter_rows.forEach(r => allRows.push({ ...r, role: 'كول سنتر' }));
+        rtbCurrentData.delivery_rows.forEach(r   => allRows.push({ ...r, role: 'مندوب' }));
+        if (rtbCurrentData.admin_rows) {
+            rtbCurrentData.admin_rows.forEach(r  => allRows.push({ ...r, role: 'مدير' }));
+        }
+
+        const from = document.getElementById('rtb-from').value;
+        const to   = document.getElementById('rtb-to').value;
+
+        const columns = [
+            { header: 'الاسم',   key: 'name',    width: 24 },
+            { header: 'الكود',   key: 'code',    width: 12 },
+            { header: 'الدور',   key: 'role',    width: 16 },
+            { header: 'الرصيد', key: 'balance', width: 16 },
+        ];
+
+        const filename = 'trial-balance'
+            + (from ? '-' + from : '')
+            + (to   ? '-to-' + to : '')
+            + '-' + new Date().toISOString().slice(0, 10);
+
+        exportToExcel(allRows, columns, filename, 'ميزان المراجعة');
+        if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+    };
 </script>

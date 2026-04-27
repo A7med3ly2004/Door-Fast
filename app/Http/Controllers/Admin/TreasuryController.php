@@ -152,10 +152,11 @@ class TreasuryController extends Controller
         $to = $request->input('to');
         $type = $request->input('type');
 
+        $perPage = min((int) $request->get('per_page', 15), 5000);
         $paginator = $this->buildLedgerQuery($from, $to, $type)
             ->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc')
-            ->paginate(15);
+            ->paginate($perPage);
 
         // Transform each row into the shape the JS table renderer expects.
         // Using a manual map keeps this lean — no API resources needed for

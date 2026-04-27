@@ -15,6 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
         :root {
@@ -1269,6 +1270,28 @@
 
         // Initial badge count
         axios.get('/admin/notifications/count').then(function (r) { _notifCount = r.data.count; updateNotifBadge(); }).catch(e => console.error(e));
+    </script>
+
+    {{-- ── Shared Excel Export Utility ── --}}
+    <script>
+        window.exportToExcel = function(data, columns, filename, sheetName) {
+            // columns = [{header: 'اسم العمود', key: 'مفتاح البيانات', width: 20}]
+            const wb = XLSX.utils.book_new();
+            const wsData = [columns.map(c => c.header)];
+            data.forEach(row => {
+                wsData.push(columns.map(c => {
+                    const val = c.key.split('.').reduce((o, k) => o?.[k], row);
+                    return val ?? '—';
+                }));
+            });
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            columns.forEach((col, i) => {
+                if (!ws['!cols']) ws['!cols'] = [];
+                ws['!cols'][i] = { wch: col.width || 20 };
+            });
+            XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1');
+            XLSX.writeFile(wb, filename + '.xlsx');
+        };
     </script>
 
     @stack('scripts')

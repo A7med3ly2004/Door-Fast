@@ -47,6 +47,7 @@
         <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:0">
             <button class="btn btn-primary" onclick="dcLoad()">عرض</button>
             <button class="btn btn-secondary" onclick="dcReset()">إعادة</button>
+            <button class="btn btn-success" onclick="exportDiscountsExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
         </div>
     </div>
 </div>
@@ -352,6 +353,36 @@
 
         // ─── Boot ─────────────────────────────────────────────────
         dcLoad(1);
+
+        window.exportDiscountsExcel = async function () {
+            try {
+                var filters = getFilters();
+                const resp = await axios.get('{{ route("admin.report-discounts.data") }}', {
+                    params: { ...filters, page: 1, per_page: 9999 }
+                });
+                const columns = [
+                    { header: 'رقم الطلب',  key: 'order_number',  width: 18 },
+                    { header: 'التاريخ',     key: 'created_at',    width: 20 },
+                    { header: 'العميل',      key: 'client',        width: 22 },
+                    { header: 'كود العميل', key: 'client_code',   width: 12 },
+                    { header: 'كول سنتر',  key: 'callcenter',    width: 18 },
+                    { header: 'المندوب',     key: 'delivery',      width: 18 },
+                    { header: 'الخصم',       key: 'discount',      width: 12 },
+                    { header: 'نوع الخصم',  key: 'discount_type', width: 12 },
+                    { header: 'الإجمالي',    key: 'total',         width: 14 },
+                ];
+                const rows = resp.data.orders.map(o => ({
+                    ...o,
+                    created_at:    o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',
+                    discount_type: o.discount_type === 'percent' ? '%' : 'ج',
+                }));
+                exportToExcel(rows, columns, 'discounts-' + new Date().toISOString().slice(0, 10), 'الخصومات');
+                if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+            } catch (e) {
+                if (typeof showError === 'function') showError('حدث خطأ');
+                console.error(e);
+            }
+        };
 
     })();
 </script>

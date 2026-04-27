@@ -1,6 +1,9 @@
 <div class="section-header">
     <h2>إدارة الكول سنتر</h2>
-    <button class="btn btn-primary" onclick="openModal('modal-add-cc')">إضافة موظف</button>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-success" onclick="exportCCExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
+        <button class="btn btn-primary" onclick="openModal('modal-add-cc')">إضافة موظف</button>
+    </div>
 </div>
 
 <div class="card" style="padding:0">
@@ -247,6 +250,28 @@
                 btn.textContent = '⏸ متوقفة';
             }
         }
+
+        window.exportCCExcel = function () {
+            const rows = @json($agents);
+            const columns = [
+                { header: 'الاسم',        key: 'name',         width: 22 },
+                { header: 'الكود',        key: 'code',         width: 12 },
+                { header: 'اسم المستخدم', key: 'username',     width: 16 },
+                { header: 'الهاتف',       key: 'phone',        width: 16 },
+                { header: 'حالة الحساب',  key: 'is_active',    width: 14 },
+                { header: 'حالة الوردية',  key: 'shift_active', width: 14 },
+                { header: 'أنشأ اليوم',   key: 'created',      width: 14 },
+                { header: 'إيراد اليوم',  key: 'revenue',      width: 16 },
+            ];
+            const mapped = rows.map(cc => ({
+                ...cc,
+                is_active:    cc.is_active    ? 'نشط'    : 'غير نشط',
+                shift_active: cc.shift_active ? 'نشطة'   : 'متوقفة',
+                revenue:      parseFloat(cc.revenue || 0).toFixed(2),
+            }));
+            exportToExcel(mapped, columns, 'callcenter-' + new Date().toISOString().slice(0, 10), 'الكول سنتر');
+            if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+        };
 
     })();
 </script>

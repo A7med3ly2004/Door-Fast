@@ -145,12 +145,13 @@ class ReportDeliveryController extends Controller
         $tierAmount = $matchedSlice['amount'] ?? 0;
         $totalProfits = $deliveredCount * $tierAmount;
 
-        // ── 5. Datatable (Paginated, Eager Loaded)
+        // ── 5. Datatable (per_page=9999 → export all, default 15 for UI)
+        $perPage = min((int) $request->get('per_page', 15), 5000);
         $orders = Order::with(['client:id,name', 'callcenter:id,name'])
             ->where('delivery_id', $deliveryId)
             ->whereBetween('created_at', [$from, $to])
             ->latest()
-            ->paginate(15);
+            ->paginate($perPage);
 
         return response()->json([
             'kpis' => [

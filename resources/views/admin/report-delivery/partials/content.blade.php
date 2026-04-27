@@ -23,6 +23,7 @@
         </div>
         <div style="display:flex;gap:8px;align-self:flex-end;">
             <button class="btn btn-primary" id="search-btn" onclick="loadReport(1)">عرض التقرير</button>
+            <button class="btn btn-success" id="export-delivery-excel-btn" onclick="exportDeliveryReportExcel()" style="background:#217346;color:#fff;display:none;">تصدير Excel</button>
             <span id="report-spinner" class="spin" style="display:none;align-self:center;margin-right:10px;"></span>
         </div>
     </div>
@@ -163,6 +164,7 @@
             .then(function (res) {
                 var data = res.data;
                 document.getElementById('report-results').style.display = 'block';
+                document.getElementById('export-delivery-excel-btn').style.display = 'inline-flex';
                 document.getElementById('report-delivery-name').textContent = 'تقارير الأداء: ' + data.delivery_name;
 
                 fillKpis(data.kpis);
@@ -316,6 +318,41 @@
         }, 60000));
     }
 })();
+
+window.exportDeliveryReportExcel = async function () {
+    var deliveryId = document.getElementById('filter-delivery-id').value;
+    if (!deliveryId) return;
+    try {
+        var params = {
+            delivery_id: deliveryId,
+            from:     document.getElementById('filter-from').value || null,
+            to:       document.getElementById('filter-to').value   || null,
+            per_page: 9999,
+        };
+        const res = await axios.get('{{ route("admin.report-delivery.data") }}', { params });
+        const columns = [
+            { header: 'رقم الطلب',   key: 'order_number',   width: 18 },
+            { header: 'التاريخ',      key: 'created_at',     width: 20 },
+            { header: 'العميل',       key: 'client.name',    width: 22 },
+            { header: 'كول سنتر',   key: 'callcenter.name', width: 18 },
+            { header: 'رسوم التوصيل', key: 'delivery_fee',   width: 16 },
+            { header: 'الخصم',        key: 'discount',       width: 12 },
+            { header: 'الإجمالي',     key: 'total',          width: 14 },
+            { header: 'الحالة',       key: 'status',         width: 14 },
+        ];
+        const statusMap = { pending: 'باقي', received: 'مُسلَّم', delivered: 'مُوصَّل', cancelled: 'ملغي' };
+        const rows = res.data.orders.data.map(o => ({
+            ...o,
+            created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',
+            status: statusMap[o.status] || o.status,
+        }));
+        exportToExcel(rows, columns, 'delivery-report-' + res.data.delivery_name + '-' + new Date().toISOString().slice(0, 10), 'تقرير المندوب');
+        if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+    } catch (e) {
+        if (typeof showError === 'function') showError('حدث خطأ');
+        console.error(e);
+    }
+};
 </script>
 
 @include('admin.orders.partials.view_modal')

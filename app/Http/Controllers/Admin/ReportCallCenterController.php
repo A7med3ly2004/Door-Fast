@@ -119,12 +119,13 @@ class ReportCallCenterController extends Controller
             ->distinct('date')
             ->count('date');
 
-        // ── 5. Datatable (Paginated, Eager Loaded)
+        // ── 5. Datatable (per_page=9999 → export all, default 15 for UI)
+        $perPage = min((int) $request->get('per_page', 15), 5000);
         $orders = Order::with(['client:id,name', 'callcenter:id,name'])
             ->where('callcenter_id', $callcenterId)
             ->whereBetween('created_at', [$from, $to])
             ->latest()
-            ->paginate(15);
+            ->paginate($perPage);
 
         return response()->json([
             'kpis' => [

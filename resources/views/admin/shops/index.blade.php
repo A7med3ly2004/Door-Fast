@@ -8,6 +8,7 @@
     <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="openModal('modal-add-category')">إضافة فئة</button>
         <button class="btn btn-primary" onclick="openModal('modal-add-shop')">إضافة متجر</button>
+        <button class="btn btn-success" onclick="exportShopsExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
     </div>
 </div>
 
@@ -262,5 +263,38 @@ function applyStatusBtn(btn, active) {
 
 
 loadShops(1);
+
+async function exportShopsExcel() {
+    try {
+        const { data } = await axios.get('{{ route("admin.shops.index") }}', {
+            params: {
+                search:      document.getElementById('filter-search').value,
+                category_id: document.getElementById('filter-category').value,
+                per_page:    9999
+            },
+            headers: { 'Accept': 'application/json' }
+        });
+        const columns = [
+            { header: 'الاسم',             key: 'name',                    width: 22 },
+            { header: 'الكود',             key: 'code',                    width: 12 },
+            { header: 'الفئة',             key: 'category.name',           width: 18 },
+            { header: 'الهاتف',            key: 'phone',                   width: 16 },
+            { header: 'العنوان',           key: 'address',                 width: 28 },
+            { header: 'عدد الطلبات',     key: 'orders_count',            width: 14 },
+            { header: 'إجمالي المبيعات', key: 'order_items_sum_total',   width: 18 },
+            { header: 'الحالة',            key: 'is_active',               width: 12 },
+        ];
+        const rows = data.data.map(s => ({
+            ...s,
+            is_active: s.is_active ? 'نشط' : 'متوقف',
+            order_items_sum_total: parseFloat(s.order_items_sum_total || 0).toFixed(2),
+        }));
+        exportToExcel(rows, columns, 'shops-' + new Date().toISOString().slice(0, 10), 'المتاجر');
+        showSuccess('تم التصدير');
+    } catch (e) {
+        showError('حدث خطأ');
+        console.error(e);
+    }
+}
 </script>
 @endpush

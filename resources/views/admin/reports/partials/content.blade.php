@@ -1,8 +1,11 @@
 {{-- Admin Reports SPA partial --}}
 <div class="section-header">
     <h2>التقارير</h2>
-    <a id="export-pdf-btn" href="{{ route('admin.reports.export-pdf') }}" target="_blank" class="btn btn-danger"
-        data-no-spa>📄 تصدير PDF</a>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <a id="export-pdf-btn" href="{{ route('admin.reports.export-pdf') }}" target="_blank" class="btn btn-danger"
+            data-no-spa>📄 تصدير PDF</a>
+        <button class="btn btn-success btn-sm" id="export-excel-btn" onclick="exportReportExcel()" style="background:#217346;color:#fff;" data-no-spa>تصدير Excel</button>
+    </div>
 </div>
 <div class="card" style="margin-bottom:20px">
     <div class="filter-bar">
@@ -146,6 +149,45 @@
         } catch (e) { console.error(e); showError('حدث خطأ'); }
     }
     loadReport();
+
+    window.exportReportExcel = async function () {
+        try {
+            const filters = {
+                from:          document.getElementById('filter-from').value,
+                to:            document.getElementById('filter-to').value,
+                delivery_id:   document.getElementById('filter-delivery').value,
+                callcenter_id: document.getElementById('filter-callcenter').value,
+                page:          1,
+                per_page:      9999,
+            };
+            const { data } = await axios.get('{{ route("admin.reports.data") }}', { params: filters });
+
+            const columns = [
+                { header: 'رقم الطلب',   key: 'order_number', width: 18 },
+                { header: 'التاريخ',      key: 'created_at',   width: 20 },
+                { header: 'العميل',       key: 'client',       width: 22 },
+                { header: 'كول سنتر',   key: 'callcenter',   width: 18 },
+                { header: 'المندوب',      key: 'delivery',     width: 18 },
+                { header: 'رسوم التوصيل', key: 'delivery_fee', width: 16 },
+                { header: 'الخصم',        key: 'discount',     width: 12 },
+                { header: 'الإجمالي',     key: 'total',        width: 14 },
+                { header: 'الحالة',       key: 'status',       width: 14 },
+            ];
+
+            const statusMap = { pending: 'باقي', received: 'مُسلَّم', delivered: 'مُوصَّل', cancelled: 'ملغي' };
+            const rows = data.orders.map(o => ({
+                ...o,
+                created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',
+                status: statusMap[o.status] || o.status,
+            }));
+
+            exportToExcel(rows, columns, 'report-' + new Date().toISOString().slice(0, 10), 'التقارير');
+            if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+        } catch (e) {
+            if (typeof showError === 'function') showError('حدث خطأ');
+            console.error(e);
+        }
+    };
 </script>
 
 @include('admin.orders.partials.view_modal')

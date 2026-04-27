@@ -52,7 +52,8 @@ class OrderController extends Controller
                 });
             }
 
-            $orders = $query->paginate(15);
+            $perPage = min((int) $request->get('per_page', 15), 5000);
+            $orders = $query->paginate($perPage);
             return response()->json($orders);
         }
 

@@ -5,10 +5,15 @@
 @section('content')
 <div class="section-header">
     <h2> إدارة الطلبات</h2>
-    <a href="{{ route('admin.orders.export-pdf') }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}"
-       id="export-pdf-btn" class="btn btn-danger" target="_blank">
-        تصدير PDF
-    </a>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <a href="{{ route('admin.orders.export-pdf') }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}"
+           id="export-pdf-btn" class="btn btn-danger" target="_blank">
+            تصدير PDF
+        </a>
+        <button class="btn btn-success" onclick="exportOrdersExcel()" style="background:#217346;color:#fff;">
+            تصدير Excel
+        </button>
+    </div>
 </div>
 
 {{-- Filters --}}
@@ -261,5 +266,53 @@ document.getElementById('modal-cancel-order').addEventListener('click', function
 });
 
 loadOrders(1);
+
+async function exportOrdersExcel() {
+    try {
+        // جلب كل البيانات مع نفس الفلاتر الحالية بدون pagination
+        const filters = {
+            search:        document.getElementById('filter-search').value,
+            status:        document.getElementById('filter-status').value,
+            callcenter_id: document.getElementById('filter-callcenter').value,
+            delivery_id:   document.getElementById('filter-delivery').value,
+            from:          document.getElementById('filter-from').value,
+            to:            document.getElementById('filter-to').value,
+            per_page:      9999
+        };
+
+        const { data } = await axios.get('{{ route("admin.orders.index") }}', {
+            params: filters,
+            headers: { 'Accept': 'application/json' }
+        });
+
+        const columns = [
+            { header: 'رقم الطلب',    key: 'order_number',  width: 18 },
+            { header: 'التاريخ',       key: 'created_at',    width: 20 },
+            { header: 'العميل',        key: 'client.name',   width: 22 },
+            { header: 'هاتف العميل',   key: 'client.phone',  width: 16 },
+            { header: 'كول سنتر',      key: 'callcenter.name', width: 18 },
+            { header: 'المندوب',       key: 'delivery.name', width: 18 },
+            { header: 'عدد الأصناف',   key: 'items_count',   width: 14 },
+            { header: 'رسوم التوصيل', key: 'delivery_fee',  width: 16 },
+            { header: 'الخصم',         key: 'discount',      width: 12 },
+            { header: 'الإجمالي',      key: 'total',         width: 14 },
+            { header: 'الحالة',        key: 'status',        width: 14 },
+        ];
+
+        // تحويل التواريخ والحالات
+        const statusMap = { pending: 'باقي', received: 'مُسلَّم', delivered: 'مُوصَّل', cancelled: 'ملغي' };
+        const rows = data.data.map(o => ({
+            ...o,
+            created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',
+            status: statusMap[o.status] || o.status
+        }));
+
+        exportToExcel(rows, columns, 'orders-' + new Date().toISOString().slice(0, 10), 'الطلبات');
+        if (typeof showSuccess === 'function') showSuccess('تم تصدير الطلبات بنجاح');
+    } catch (e) {
+        if (typeof showError === 'function') showError('حدث خطأ أثناء التصدير');
+        console.error(e);
+    }
+}
 </script>
 @endpush

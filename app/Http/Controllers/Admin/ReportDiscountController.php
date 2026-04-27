@@ -82,9 +82,9 @@ class ReportDiscountController extends Controller
             'total_discounts' => $orders->sum('discount'),
         ];
 
-        // Paginate in-memory
+        // Paginate in-memory (per_page=9999 → export all, default 25 for UI)
         $page    = (int) $request->get('page', 1);
-        $perPage = 25;
+        $perPage = min((int) $request->get('per_page', 25), 5000);
         $sliced  = $orders->forPage($page, $perPage)->values();
 
         $mapped = $sliced->map(fn($o) => [

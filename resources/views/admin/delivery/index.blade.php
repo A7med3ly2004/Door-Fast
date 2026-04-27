@@ -4,6 +4,7 @@
 
 @section('content')
     <div class="section-header" style="justify-content: flex-end;margin-bottom: 0;">
+        <button class="btn btn-success" onclick="exportDeliveryExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
         <button class="btn btn-primary" onclick="openModal('modal-add-delivery')">إضافة مندوب</button>
     </div>
 
@@ -425,6 +426,34 @@
                 btn.style.color = 'var(--red)';
                 btn.textContent = '⏸ متوقفة';
             }
+        }
+
+        function exportDeliveryExcel() {
+            // البيانات موجودة مسبقاً في الصفحة
+            const rows = [
+                ...@json($deliveries),
+                ...@json($reserveDeliveries)
+            ];
+            const columns = [
+                { header: 'الاسم',        key: 'name',         width: 22 },
+                { header: 'الكود',        key: 'code',         width: 12 },
+                { header: 'اسم المستخدم', key: 'username',     width: 16 },
+                { header: 'الهاتف',       key: 'phone',        width: 16 },
+                { header: 'النوع',        key: 'role',         width: 16 },
+                { header: 'حالة الحساب',  key: 'is_active',    width: 14 },
+                { header: 'حالة الوردية',  key: 'shift_active', width: 14 },
+                { header: 'موصلة اليوم',  key: 'completed',    width: 14 },
+                { header: 'إيراد اليوم',  key: 'revenue',      width: 16 },
+            ];
+            const mapped = rows.map(d => ({
+                ...d,
+                role:         d.role === 'delivery' ? 'أساسي' : 'احتياطي',
+                is_active:    d.is_active    ? 'نشط'    : 'غير نشط',
+                shift_active: d.shift_active ? 'نشطة'   : 'متوقفة',
+                revenue:      parseFloat(d.revenue || 0).toFixed(2),
+            }));
+            exportToExcel(mapped, columns, 'delivery-' + new Date().toISOString().slice(0, 10), 'المناديب');
+            showSuccess('تم التصدير');
         }
 
     </script>

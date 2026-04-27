@@ -69,32 +69,6 @@ class Order extends Model
         return $this->hasMany(\App\Models\AdminNotification::class);
     }
 
-    // Scopes
-    public function scopePending($query)
-    {
-        return $query->where('status', 'pending');
-    }
-
-    public function scopeReceived($query)
-    {
-        return $query->where('status', 'received');
-    }
-
-    public function scopeDelivered($query)
-    {
-        return $query->where('status', 'delivered');
-    }
-
-    public function scopeCancelled($query)
-    {
-        return $query->where('status', 'cancelled');
-    }
-
-    public function scopeToday($query)
-    {
-        return $query->whereDate('created_at', today());
-    }
-
     // توليد رقم الأوردر تلقائياً
     public static function generateNumber(): string
     {

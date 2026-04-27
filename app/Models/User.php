@@ -96,10 +96,6 @@ class User extends Authenticatable
     }
 
     // Scopes
-    public function scopeAdmins($query)
-    {
-        return $query->where('role', 'admin');
-    }
 
     public function scopeCallcenters($query)
     {
@@ -111,35 +107,12 @@ class User extends Authenticatable
         return $query->where('role', 'delivery');
     }
 
-    public function scopeReserveDeliveries($query)
-    {
-        return $query->where('role', 'reserve_delivery');
-    }
-
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin';
-    }
 
-    public function isCallcenter(): bool
-    {
-        return $this->role === 'callcenter';
-    }
-
-    public function isDelivery(): bool
-    {
-        return $this->role === 'delivery';
-    }
-
-    public function isReserveDelivery(): bool
-    {
-        return $this->role === 'reserve_delivery';
-    }
 
     // ─── الخزينة (Wallet) ─────────────────────────────────────
 

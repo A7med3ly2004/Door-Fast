@@ -7,6 +7,7 @@ resources/views/admin/general-ledger/partials/content.blade.php
 {{-- ── Page header ──────────────────────────────────────────────── --}}
 <div class="section-header">
     <h2>كشف حساب عام</h2>
+    <button class="btn btn-success btn-sm" onclick="glExportExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
 </div>
 
 {{-- ── Filter Bar ────────────────────────────────────────────────── --}}
@@ -232,7 +233,11 @@ resources/views/admin/general-ledger/partials/content.blade.php
                     <tbody>${transactionsHtml}</tbody>
                 </table>
             </div>
+            <div style="text-align:left;margin-top:12px;">
+                <button class="btn btn-success btn-sm" onclick="exportStatementExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
+            </div>
         `;
+        window._lastStatementData = data;
     }
 
     // ── Filter actions ───────────────────────────────────────────
@@ -286,6 +291,52 @@ resources/views/admin/general-ledger/partials/content.blade.php
 
     // ── Boot ─────────────────────────────────────────────────────
     fetchData();
+
+    window._lastStatementData = null;
+
+    window.glExportExcel = async function () {
+        try {
+            const filters = getFilters();
+            const params = {};
+            if (filters.from) params.from = filters.from;
+            if (filters.to)   params.to   = filters.to;
+
+            const res = await axios.get('/admin/general-ledger/data', { params });
+            const columns = [
+                { header: 'الاسم',          key: 'name',          width: 22 },
+                { header: 'الدور',          key: 'role_label',    width: 16 },
+                { header: 'إجمالي المدين',  key: 'total_debit',   width: 16 },
+                { header: 'إجمالي الدائن',  key: 'total_credit',  width: 16 },
+                { header: 'الرصيد الحالي',  key: 'balance',       width: 16 },
+            ];
+            exportToExcel(res.data.data, columns, 'general-ledger-' + new Date().toISOString().slice(0, 10), 'كشف الحساب');
+            if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+        } catch (e) {
+            if (typeof showError === 'function') showError('حدث خطأ');
+            console.error(e);
+        }
+    };
+
+    window.exportStatementExcel = function () {
+        if (!window._lastStatementData) return;
+        const data = window._lastStatementData;
+        const columns = [
+            { header: 'رقم العملية', key: 'id',               width: 12 },
+            { header: 'التاريخ',     key: 'transaction_date', width: 14 },
+            { header: 'التعريف',     key: 'description',      width: 30 },
+            { header: 'مدين',       key: 'debit',            width: 14 },
+            { header: 'دائن',      key: 'credit',           width: 14 },
+            { header: 'الرصيد',     key: 'balance_after',    width: 14 },
+        ];
+        const name = data.user?.name || 'statement';
+        exportToExcel(
+            data.transactions,
+            columns,
+            'statement-' + name + '-' + new Date().toISOString().slice(0, 10),
+            'كشف الحساب'
+        );
+        if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+    };
 
 })();
 </script>

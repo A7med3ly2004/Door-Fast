@@ -80,7 +80,6 @@ class ReportController extends Controller
                 'total'       => $total,
                 'completed'   => $completed,
                 'cancelled'   => $group->where('status', 'cancelled')->count(),
-                'rate'        => $total > 0 ? round($completed / $total * 100, 1) : 0,
                 'revenue'     => $group->where('status', 'delivered')->sum('total'),
             ];
         })->values();
@@ -101,6 +100,7 @@ class ReportController extends Controller
         $perPage = 20;
         $sliced  = $orders->forPage($page, $perPage)->values();
         $mapped  = $sliced->map(fn($o) => [
+            'id'           => $o->id,
             'order_number' => $o->order_number,
             'created_at'   => $o->created_at->toIso8601String(),
             'client'       => $o->client?->name ?? '—',

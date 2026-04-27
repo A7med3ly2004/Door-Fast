@@ -363,23 +363,17 @@ async function updateClient(e) {
     
     // Prepare data
     const formData = new FormData(form);
-    const data = {};
-    
-    // Manual parsing for radio buttons and nested addresses
-    formData.forEach((value, key) => {
-        if (key === 'default_addr_index') {
-            const idx = value;
-            data[`addresses[${idx}][is_default]`] = 1;
-        } else {
-            data[key] = value;
-        }
-    });
+    const defaultIdx = formData.get('default_addr_index');
+    if (defaultIdx !== null) {
+        formData.append(`addresses[${defaultIdx}][is_default]`, '1');
+    }
+    formData.append('_method', 'PUT');
 
     btn.disabled = true;
     btn.innerHTML = '<div class="spin" style="width:14px;height:14px;border-width:2px"></div> جاري الحفظ...';
 
     try {
-        const res = await axios.put(`/callcenter/clients/${id}`, data);
+        const res = await axios.post(`/callcenter/clients/${id}`, formData);
         if (res.data.success) {
             showSuccess(res.data.message);
             closeModal('modal-edit-client');

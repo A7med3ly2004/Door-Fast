@@ -32,13 +32,13 @@ class OrderController extends Controller
     {
         $reserveDelay = (int) Setting::get('reserve_delay_minutes', 5);
         $visibleFrom = now()->subMinutes($reserveDelay);
-        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
+        // Show ALL pending unassigned orders regardless of shift or business day
+        // Orders stay visible until accepted by any delivery agent
         $orders = Order::with(['items.shop', 'client'])
             ->where('status', 'pending')
             ->whereNull('delivery_id')
             ->where('sent_to_delivery_at', '<=', $visibleFrom)
-            ->whereBetween('created_at', [$startOfToday, $endOfToday])
             ->orderBy('sent_to_delivery_at')
             ->get();
 
@@ -97,12 +97,13 @@ class OrderController extends Controller
     public function receivedData()
     {
         $delivery = auth()->user();
-        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
+        // Show ALL received orders for this agent regardless of date/shift
+        // An order stays visible until it is delivered or cancelled
         $orders = Order::with(['items.shop', 'client'])
             ->where('delivery_id', $delivery->id)
             ->where('status', 'received')
-            ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
+            ->orderBy('accepted_at')
             ->get();
 
         return response()->json(['orders' => $orders]);

@@ -75,7 +75,7 @@
 <div class="modal-overlay" id="modal-view-client">
     <div class="modal modal-xl">
         <div class="modal-header">
-            <h3>👁 بيانات العميل</h3><button class="btn-close" onclick="closeModal('modal-view-client')">✕</button>
+            <h3>بيانات العميل</h3><button class="btn-close" onclick="closeModal('modal-view-client')">✕</button>
         </div>
         <div class="modal-body" id="view-client-body">
             <div style="text-align:center;padding:40px;color:var(--text-muted)">جاري التحميل...</div>
@@ -86,8 +86,7 @@
 <div class="modal-overlay" id="modal-edit-client">
     <div class="modal modal-lg">
         <div class="modal-header">
-            <h3>✏️ تعديل بيانات العميل</h3><button class="btn-close"
-                onclick="closeModal('modal-edit-client')">✕</button>
+            <h3>تعديل بيانات العميل</h3><button class="btn-close" onclick="closeModal('modal-edit-client')">✕</button>
         </div>
         <div class="modal-body" id="edit-client-body">
             <div style="text-align:center;padding:40px;color:var(--text-muted)">جاري التحميل...</div>
@@ -192,7 +191,6 @@
             var c = data.client;
             document.getElementById('view-client-body').innerHTML = `
             <div style="display:flex;align-items:center;gap:16px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px">
-                <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--yellow),#f97316);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#1e293b;flex-shrink:0">${c.name.charAt(0)}</div>
                 <div style="flex:1"><div style="font-size:17px;font-weight:700">${c.name}</div><div style="font-size:12px;color:var(--text-muted);margin-top:3px">منذ ${formatDate(c.created_at)}</div></div>
                 <code style="background:rgba(245,158,11,.12);color:var(--yellow);padding:5px 12px;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:1px">${c.code}</code>
             </div>

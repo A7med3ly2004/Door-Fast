@@ -74,6 +74,7 @@
                 <label class="form-label">نسبة الخصم (%)</label>
                 <input type="number" id="shop-discount-percent" class="form-control" value="0" min="0" max="100"
                     oninput="updateFinalAmount()">
+                <button class="btn btn-primary" style="margin-top:12px; width:100%" onclick="printDueInvoice()">طباعة فاتورة مستحق</button>
             </div>
 
             <div class="kpi-card blue"
@@ -133,6 +134,7 @@
                         <th style="text-align: center;">عدد الأصناف</th>
                         <th style="text-align: center;">الإجمالي</th>
                         <th style="text-align: center;">الحالة</th>
+                        <th style="text-align: center;">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="shop-orders"></tbody>
@@ -164,6 +166,14 @@
         var finalAmount = currentShopRevenue - discountAmount;
         document.getElementById('sk-discount').textContent = discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 });
         document.getElementById('sk-final').textContent = finalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 });
+    }
+
+    function printDueInvoice() {
+        if (!currentShopId) return;
+        var discountPercent = parseFloat(document.getElementById('shop-discount-percent').value) || 0;
+        var params = new URLSearchParams(Object.fromEntries(Object.entries(getFilters()).filter(([, v]) => v)));
+        params.append('discount_percent', discountPercent);
+        window.open(`/admin/report-hops/${currentShopId}/due-invoice?` + params.toString(), '_blank');
     }
 
     function handleShopSelection(input) {
@@ -207,8 +217,10 @@
             shopChart = new Chart(ctx, { type: 'bar', data: { labels: data.chart.map(d => d.label), datasets: [{ label: 'الطلبات', data: data.chart.map(d => d.count), backgroundColor: '#f59e0b', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' }, beginAtZero: true } } } });
             document.getElementById('top-clients').innerHTML = data.top_clients.length ? data.top_clients.map(c => `<tr><td style="text-align:right">${c.name}</td><td style="text-align:center">${c.orders}</td><td style="text-align:center">${parseFloat(c.spend).toFixed(2)} ج</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">لا بيانات</td></tr>';
 
-            document.getElementById('shop-orders').innerHTML = data.orders.length ? data.orders.map(o => `<tr><td style="color:var(--yellow); text-align:center">${o.order_number}</td><td style="font-size:12px; text-align:center">${formatDate(o.created_at)}</td><td style="text-align:right">${o.client}</td><td style="text-align:center">${o.delivery}</td><td style="text-align:center">${o.callcenter}</td><td style="text-align:center">${o.items_count}</td><td style="text-align:center">${parseFloat(o.total).toFixed(2)} ج</td><td style="text-align:center">${statusBadge(o.status)}</td></tr>`).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">لا طلبات</td></tr>';
+            document.getElementById('shop-orders').innerHTML = data.orders.length ? data.orders.map(o => `<tr><td style="color:var(--yellow); text-align:center">${o.order_number}</td><td style="font-size:12px; text-align:center">${formatDate(o.created_at)}</td><td style="text-align:right">${o.client}</td><td style="text-align:center">${o.delivery}</td><td style="text-align:center">${o.callcenter}</td><td style="text-align:center">${o.items_count}</td><td style="text-align:center">${parseFloat(o.total).toFixed(2)} ج</td><td style="text-align:center">${statusBadge(o.status)}</td><td style="text-align:center;"><button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">عرض</button></td></tr>`).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--text-muted)">لا طلبات</td></tr>';
         } catch (e) { console.error(e); showError('حدث خطأ'); }
     }
     loadGlobal();
 </script>
+
+@include('admin.orders.partials.view_modal')

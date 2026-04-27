@@ -32,8 +32,9 @@ class OrderController extends Controller
     public function newData()
     {
         $delivery = auth()->user();
-        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
+        // Show ALL pending orders for this agent (assigned or unassigned)
+        // Orders stay visible until accepted, regardless of shift or business day
         $orders = Order::with(['items.shop', 'client'])
             ->where('status', 'pending')
             ->where(function($q) use ($delivery) {
@@ -41,10 +42,7 @@ class OrderController extends Controller
                   ->orWhere('delivery_id', $delivery->id);
             })
             ->where('sent_to_delivery_at', '<=', Carbon::now())
-            ->where(function($q) use ($startOfToday, $endOfToday) {
-                $q->whereBetween('sent_to_delivery_at', [$startOfToday, $endOfToday])
-                  ->orWhereBetween('created_at', [$startOfToday, $endOfToday]);
-            })
+            ->orderBy('sent_to_delivery_at')
             ->get();
 
         return response()->json(['orders' => $orders]);
@@ -127,12 +125,13 @@ class OrderController extends Controller
     public function receivedData()
     {
         $delivery = auth()->user();
-        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
+        // Show ALL received orders for this agent regardless of date/shift
+        // An order stays visible until it is delivered or cancelled
         $orders = Order::with(['items.shop', 'client'])
             ->where('delivery_id', $delivery->id)
             ->where('status', 'received')
-            ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
+            ->orderBy('accepted_at')
             ->get();
 
         return response()->json(['orders' => $orders]);

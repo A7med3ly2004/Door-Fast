@@ -202,10 +202,14 @@
 
     async function loadActiveDeliveries() {
         try { const { data } = await axios.get('{{ route("callcenter.delivery.active") }}'); activeDeliveries = data; } catch (e) { }
+    }
+
+    async function initPage() {
+        await loadActiveDeliveries();
         var stored = sessionStorage.getItem(DRAFTS_KEY);
         if (stored) { try { const drafts = JSON.parse(stored); if (drafts.length) drafts.forEach(d => addCard(d)); else addCard(); } catch (e) { addCard(); } } else { addCard(); }
     }
-    loadActiveDeliveries();
+    initPage();
 
     document.getElementById('cards-wrapper').addEventListener('input', () => setTimeout(saveDrafts, 100));
     document.getElementById('cards-wrapper').addEventListener('change', () => setTimeout(saveDrafts, 100));
@@ -289,7 +293,23 @@
 
     function resetAddressSection(cardId, hasAddresses, addresses = []) {
         var sel = document.getElementById(cardId + '-address-sel'); const txt = document.getElementById(cardId + '-address-txt'); const isNew = document.getElementById(cardId + '-is-new-addr');
-        if (hasAddresses && addresses.length) { sel.style.display = ''; txt.style.display = 'none'; isNew.value = '0'; sel.innerHTML = '<option value="">— اختر العنوان —</option>'; addresses.slice(0, 5).forEach(a => { const opt = document.createElement('option'); opt.value = a.address; opt.textContent = a.address + (a.is_default ? ' (افتراضي)' : ''); if (a.is_default) opt.selected = true; sel.appendChild(opt); }); sel.innerHTML += '<option value="__new__">＋ إضافة عنوان جديد</option>'; txt.value = ''; }
+        if (hasAddresses && addresses.length) { 
+            sel.style.display = ''; txt.style.display = 'none'; isNew.value = '0'; 
+            sel.innerHTML = '<option value="">— اختر العنوان —</option>'; 
+            let hasDefault = false;
+            addresses.slice(0, 5).forEach(a => { 
+                const opt = document.createElement('option'); 
+                opt.value = a.address; 
+                opt.textContent = a.address + (a.is_default ? ' (افتراضي)' : ''); 
+                if (a.is_default) { opt.selected = true; hasDefault = true; } 
+                sel.appendChild(opt); 
+            }); 
+            if (!hasDefault && addresses.length > 0) sel.options[1].selected = true;
+            const newOpt = document.createElement('option');
+            newOpt.value = '__new__'; newOpt.textContent = '＋ إضافة عنوان جديد';
+            sel.appendChild(newOpt);
+            txt.value = ''; 
+        }
         else { sel.style.display = 'none'; txt.style.display = ''; isNew.value = '1'; txt.value = ''; }
     }
 
@@ -347,7 +367,7 @@
         var payload = { phone, phone2, code, name, client_address: clientAddress, is_new_address: isNewAddr, delivery_id: deliveryId || null, send_to_phone: sendToPhone || null, send_to_address: sendToAddr || null, send_to_code: sendToCode || null, send_to_name: sendToName || null, send_to_client_id: sendToClientId || null, notes, delivery_fee: fee, discount: disc, discount_type: discType, items };
         try {
             var data; if (editId) { const res = await axios.put('/callcenter/orders/' + editId, payload); data = res.data; } else { const res = await axios.post(STORE_URL, payload); data = res.data; }
-            showSuccess(editId ? data.message : 'تم حفظ الطلب ' + data.order_number); if (data.warning) showWarning(data.warning); document.getElementById(cardId)?.remove(); cardCount--; saveDrafts(); loadActiveDeliveries().then(refreshDeliveryDropdowns);
+            showSuccess(editId ? data.message : 'تم حفظ الطلب ' + data.order_number); if (data.warning) showWarning(data.warning); document.getElementById(cardId)?.remove(); cardCount--; saveDrafts(); await loadActiveDeliveries(); refreshDeliveryDropdowns();
         } catch (e) { const errors = e.response?.data?.errors; if (errors) showError(Object.values(errors).flat().join(' | ')); else showError(e.response?.data?.message ?? 'حدث خطأ'); } finally { btn.disabled = false; btn.textContent = 'حفظ الطلب ✔'; }
     }
 </script>

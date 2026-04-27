@@ -22,6 +22,7 @@ class WalletController extends Controller
     {
         $deliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->active()
+            ->with('wallet')
             ->get(['id', 'name']);
 
         $data = compact('deliveries');

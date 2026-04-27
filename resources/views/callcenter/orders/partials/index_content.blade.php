@@ -12,7 +12,7 @@
     <div id="pg-wrap" style="padding:14px"></div>
 </div>
 
-<div class="modal-overlay" id="modal-view"><div class="modal modal-lg"><div class="modal-header"><h3>تفاصيل الطلب — <span id="view-num"></span></h3><button class="btn-close" onclick="closeModal('modal-view')">✕</button></div><div class="modal-body" id="view-body"></div></div></div>
+<div class="modal-overlay" id="modal-view"><div class="modal modal-lg"><div class="modal-header"><div style="display:flex;align-items:center;gap:12px;"><h3>تفاصيل الطلب — <span id="view-num"></span></h3><a id="modal-pdf-btn" href="#" target="_blank" class="btn btn-sm btn-secondary" onclick="if(this.href==='#'){event.preventDefault();}">إنشاء PDF</a></div><button class="btn-close" onclick="closeModal('modal-view')">✕</button></div><div class="modal-body" id="view-body"></div></div></div>
 <div class="modal-overlay" id="modal-cancel"><div class="modal"><div class="modal-header"><h3>إلغاء الطلب</h3><button class="btn-close" onclick="closeModal('modal-cancel')">✕</button></div><div class="modal-body"><input type="hidden" id="cancel-id"><div class="form-group"><label class="form-label">سبب الإلغاء (اختياري)</label><textarea class="form-control" id="cancel-reason" rows="3" placeholder="اكتب سبب الإلغاء..."></textarea></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-cancel')">تراجع</button><button class="btn btn-danger" onclick="doCancel()">إلغاء الطلب</button></div></div></div></div>
 <div class="modal-overlay" id="modal-edit"><div class="modal modal-lg" style="max-width:800px"><div class="modal-header"><h3>تعديل الطلب — <span id="edit-num"></span></h3><button class="btn-close" onclick="closeModal('modal-edit')">✕</button></div><div class="modal-body" id="edit-body"><input type="hidden" id="edit-id"><div class="grid-2" style="margin-bottom:12px"><div class="form-group"><label class="form-label">المندوب (تلقائي إن تُرك فارغاً)</label><select class="form-select" id="edit-delivery"></select></div><div class="form-group"><label class="form-label">عنوان العميل *</label><input type="text" class="form-control" id="edit-address"></div></div><div style="background:rgba(255,255,255,0.02);border-radius:8px;padding:12px;margin-bottom:12px;border:1px dashed var(--border)"><div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--text-muted)">↗ إرسال إلى عميل آخر (اختياري)</div><div class="grid-2"><div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="edit-send-to-phone" placeholder="01xxxxxxxxx"></div><div class="form-group"><label class="form-label">عنوان المستلم</label><input type="text" class="form-control" id="edit-send-to-address" placeholder="العنوان"></div></div></div><div class="form-group"><label class="form-label">ملاحظات</label><textarea class="form-control" id="edit-notes" rows="2" placeholder="ملاحظات اختيارية..."></textarea></div><div style="font-weight:700;margin-top:16px;margin-bottom:8px">الأصناف</div><div class="table-wrap" style="margin-bottom:12px;overflow:visible"><table class="items-table" style="width:100%;border-collapse:collapse"><thead><tr style="border-bottom:1px solid var(--border)"><th style="padding:4px;text-align:right">الصنف</th><th style="padding:4px;text-align:right;width:130px">المتجر</th><th style="padding:4px;text-align:right;width:65px">الكمية</th><th style="padding:4px;text-align:right;width:80px">السعر</th><th style="padding:4px;text-align:right;width:80px">الإجمالي</th><th style="padding:4px;width:30px"></th></tr></thead><tbody id="edit-items"></tbody></table></div><button class="btn btn-secondary btn-sm" onclick="addEditRow()">＋ إضافة صنف</button><div class="grid-2" style="margin-top:16px"><div class="form-group"><label class="form-label">رسوم التوصيل</label><input type="number" class="form-control" id="edit-fee" min="0" step="0.5" oninput="calcEditTotals()"></div><div class="form-group"><label class="form-label">الخصم</label><div style="display:flex;gap:5px"><input type="number" class="form-control" id="edit-disc" min="0" step="0.5" oninput="calcEditTotals()"><select class="form-select" id="edit-disc-type" style="width:70px" onchange="calcEditTotals()"><option value="amount">ج</option><option value="percent">%</option></select></div></div></div><div style="background:var(--bg);padding:12px;margin-top:16px;border-radius:8px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px">إجمالي الأصناف:</span> <strong id="edit-items-total" style="font-size:14px">0 ج</strong></div><div style="display:flex;justify-content:space-between;font-size:18px;color:var(--yellow);font-weight:800;border-top:1px solid var(--border);padding-top:6px"><span>الإجمالي النهائي:</span> <span id="edit-grand-total">0 ج</span></div></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-edit')">تراجع</button><button class="btn btn-primary" id="btn-save-edit" onclick="saveEdit()">حفظ التعديلات ✔</button></div></div></div>
 
@@ -31,14 +31,10 @@ async function loadList(page = 1) {
     try {
         const filters = getFilters();
         const globalSearchNav = document.getElementById('nav-global-search');
-        if (globalSearchNav) {
-            if (filters.search && filters.search.trim() !== '') {
-                globalSearchNav.style.display = 'flex';
-                globalSearchNav.href = `{{ route('callcenter.orders.global-search') }}?q=${encodeURIComponent(filters.search)}`;
-            } else {
-                globalSearchNav.style.display = 'none';
-            }
+        if (globalSearchNav && filters.search && filters.search.trim() !== '') {
+            globalSearchNav.href = `{{ route('callcenter.orders.global-search') }}?q=${encodeURIComponent(filters.search)}`;
         }
+
         
         const { data } = await axios.get('{{ route("callcenter.orders.list-data") }}', { params: { ...filters, page } });
         var body = document.getElementById('orders-body');
@@ -64,6 +60,7 @@ async function viewOrder(id) {
     try {
         const { data } = await axios.get(`/callcenter/orders/${id}`); const o = data.order;
         document.getElementById('view-num').textContent = o.order_number;
+        document.getElementById('modal-pdf-btn').href = '/callcenter/orders/' + o.id + '/pdf';
         const itemsTotal = o.items.reduce((sum, item) => sum + parseFloat(item.total), 0);
         let html = `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin-bottom: 20px;">`;
         html += `<div style="background:var(--bg); border-radius:12px; padding:16px; border:1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">

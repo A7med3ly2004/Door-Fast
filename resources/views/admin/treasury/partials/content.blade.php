@@ -42,9 +42,6 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         <button class="btn btn-danger" onclick="openModal('modal-expense')">
             صرف مصروف
         </button>
-        <button class="btn btn-danger" onclick="openDiscountModal()" style="background:var(--red);color:#fff;">
-            خصم
-        </button>
         <button class="btn" onclick="openPayToUserModal()" style="background:#0891b2;color:#fff;">
            ايصال دفع نقدي   
         </button>
@@ -56,18 +53,9 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 
 {{-- ── KPI Cards ─────────────────────────────────────────────────── --}}
 <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
-    <div class="kpi-card cyan">
-        <div class="kpi-label">إجمالي الدفع لموظف</div>
-        <div class="kpi-value" id="kpi-payment-receipts" style="color: #0891b2">
-            {{ $initialStats['payment_receipts'] }}
-        </div>
-        <div class="kpi-sub">ج.م</div>
-    </div>
-    <div class="kpi-card green">
-        <div class="kpi-label">إجمالي الاستلام من موظف</div>
-        <div class="kpi-value" id="kpi-receiving-receipts" style="color:var(--success)">
-            {{ $initialStats['receiving_receipts'] }}
-        </div>
+    <div class="kpi-card yellow">
+        <div class="kpi-label">الرصيد الحالي للخزينة</div>
+        <div class="kpi-value" id="kpi-balance" style="color:var(--yellow)">{{ $initialStats['balance'] }}</div>
         <div class="kpi-sub">ج.م</div>
     </div>
     <div class="kpi-card red">
@@ -75,11 +63,22 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         <div class="kpi-value" id="kpi-expenses" style="color:var(--red)">{{ $initialStats['total_expenses'] }}</div>
         <div class="kpi-sub">ج.م</div>
     </div>
-    <div class="kpi-card yellow">
-        <div class="kpi-label">الرصيد الحالي للخزينة</div>
-        <div class="kpi-value" id="kpi-balance" style="color:var(--yellow)">{{ $initialStats['balance'] }}</div>
+    <div class="kpi-card cyan">
+        <div class="kpi-label">اجمالي ايصالات الدفع</div>
+        <div class="kpi-value" id="kpi-payment-receipts" style="color: #0891b2">
+            {{ $initialStats['payment_receipts'] }}
+        </div>
         <div class="kpi-sub">ج.م</div>
     </div>
+    <div class="kpi-card green">
+        <div class="kpi-label">اجمالي ايصالات الاستلام</div>
+        <div class="kpi-value" id="kpi-receiving-receipts" style="color:var(--success)">
+            {{ $initialStats['receiving_receipts'] }}
+        </div>
+        <div class="kpi-sub">ج.م</div>
+    </div>
+    
+    
 </div>
 
 {{-- ── Filter Bar ────────────────────────────────────────────────── --}}
@@ -97,15 +96,9 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             <div class="form-label" style="margin-bottom:4px;">نوع المعاملة</div>
             <select id="filter-type" class="form-select">
                 <option value="">الكل</option>
-                <option value="income" {{ ($filters['type'] ?? '') === 'income' ? 'selected' : '' }}>إيراد</option>
                 <option value="expense" {{ ($filters['type'] ?? '') === 'expense' ? 'selected' : '' }}>مصروف</option>
-                <option value="settlement" {{ ($filters['type'] ?? '') === 'settlement' ? 'selected' : '' }}>تسوية
-                </option>
-                <option value="dain" {{ ($filters['type'] ?? '') === 'dain' ? 'selected' : '' }}>صرف مديونية</option>
-                <option value="discount" {{ ($filters['type'] ?? '') === 'discount' ? 'selected' : '' }}>خصم</option>
-                <option value="pay_to_user" {{ ($filters['type'] ?? '') === 'pay_to_user' ? 'selected' : '' }}>دفع لموظف
-                </option>
-                <option value="receive_from_user" {{ ($filters['type'] ?? '') === 'receive_from_user' ? 'selected' : '' }}>استلام من موظف</option>
+                <option value="pay_to_user" {{ ($filters['type'] ?? '') === 'pay_to_user' ? 'selected' : '' }}>ايصال دفع</option>
+                <option value="receive_from_user" {{ ($filters['type'] ?? '') === 'receive_from_user' ? 'selected' : '' }}>ايصال استلام </option>
             </select>
         </div>
         <div style="display:flex;gap:8px;align-self:flex-end;">
@@ -143,12 +136,10 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                         <td style="text-align:center;">
                             @if($tx->type === 'expense')
                                 <span class="badge badge-red">مصروف</span>
-                            @elseif($tx->type === 'discount')
-                                <span class="badge badge-red">خصم</span>
                             @elseif($tx->type === 'pay_to_user')
-                                <span class="badge badge-cyan">دفع لموظف</span>
+                                <span class="badge badge-cyan">ايصال دفع</span>
                             @elseif($tx->type === 'receive_from_user')
-                                <span class="badge badge-teal">استلام من موظف</span>
+                                <span class="badge badge-teal">ايصال استلام</span>
                             @else
                                 <span class="badge">{{ $tx->type }}</span>
                             @endif
@@ -375,79 +366,6 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
     </div>
 </div>
 
-{{-- ── Discount Modal ────────────────────────────────────────────── --}}
-<div class="modal-overlay" id="modal-discount">
-    <div class="modal">
-        <div class="modal-header" style="background:rgba(220,38,38,.08);border-bottom:0;">
-            <h3 style="color:var(--red);">إضافة خصم</h3>
-            <button class="btn-close" onclick="closeModal('modal-discount')">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="error-text" id="discount-global-error"
-                style="background:var(--red-light);color:var(--red-dark);padding:10px;border-radius:8px;margin-bottom:12px;display:none;">
-            </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-                <div class="form-group" style="margin-bottom:0;">
-                    <label for="discount-callcenter-id" class="form-label">كول سينتر</label>
-                    <select id="discount-callcenter-id" class="form-select" onchange="onDiscountSelectChange('cc')">
-                        <option value="">اختر كول سينتر...</option>
-                        @foreach($callcenters as $cc)
-                            <option value="{{ $cc->id }}">{{ $cc->name }}</option>
-                        @endforeach
-                    </select>
-                    <div class="error-text" id="discount-callcenter-id-error"></div>
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
-                    <label for="discount-delivery-id" class="form-label">مندوب</label>
-                    <select id="discount-delivery-id" class="form-select" onchange="onDiscountSelectChange('delivery')">
-                        <option value="">اختر مندوب...</option>
-                        @foreach($deliveries as $d)
-                            <option value="{{ $d->id }}">{{ $d->name }}</option>
-                        @endforeach
-                    </select>
-                    <div class="error-text" id="discount-delivery-id-error"></div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="discount-amount" class="form-label">المبلغ <span style="color:var(--red)">*</span></label>
-                <div style="display:flex;">
-                    <input type="number" id="discount-amount" class="form-control" placeholder="0.00" min="0.01"
-                        step="0.01" max="9999999.99" style="border-radius:0 8px 8px 0;flex:1;">
-                    <span
-                        style="background:var(--input-bg);padding:9px 12px;border-radius:8px 0 0 8px;font-size:13px;color:var(--text-muted);border:1px solid var(--border);border-right:none;">ج.م</span>
-                </div>
-                <div class="error-text" id="discount-amount-error"></div>
-            </div>
-
-            <div class="form-group">
-                <label for="discount-date" class="form-label">التاريخ <span
-                        style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري — اليوم)</span></label>
-                <input type="date" id="discount-date" class="form-control" max="{{ now()->toDateString() }}">
-                <div class="error-text" id="discount-date-error"></div>
-            </div>
-
-            <div class="form-group">
-                <label for="discount-note" class="form-label">ملاحظة <span
-                        style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري)</span></label>
-                <textarea id="discount-note" class="form-control" rows="2" maxlength="500"
-                    placeholder="وصف مختصر..."></textarea>
-                <div class="error-text" id="discount-note-error"></div>
-            </div>
-        </div>
-        <div class="modal-footer" style="border-top:0;">
-            <button class="btn btn-secondary" onclick="closeModal('modal-discount')">إلغاء</button>
-            <button class="btn btn-danger" id="discount-submit-btn" onclick="submitDiscount()"
-                style="background:var(--red);color:#fff;">
-                <span id="discount-submit-spinner" class="spin"
-                    style="display:none;width:14px;height:14px;margin-left:6px;border-width:2px;border-color:rgba(255,255,255,.3);border-top-color:#fff;"></span>
-                حفظ الخصم
-            </button>
-        </div>
-    </div>
-</div>
-
 {{-- ── Pay To User Modal ──────────────────────────────────────────── --}}
 <div class="modal-overlay" id="modal-pay-to-user">
     <div class="modal">
@@ -535,23 +453,24 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             </div>
 
             <div class="form-group">
-                <label for="receive-user-id" class="form-label">الموظف <span style="color:var(--red)">*</span></label>
-                <select id="receive-user-id" class="form-select">
-                    <option value="">اختر موظف...</option>
+                <label for="receive-user-id" class="form-label">الموظف <span
+                        style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري)</span></label>
+                <select id="receive-user-id" class="form-select" onchange="autoFillReceiveAmount()">
+                    <option value="" data-balance="0">بدون موظف (لحساب الإدارة)...</option>
                     <optgroup label="كول سينتر">
                         @foreach($callcenters as $cc)
-                            <option value="{{ $cc->id }}">{{ $cc->name }}</option>
+                            <option value="{{ $cc->id }}" data-balance="{{ $cc->wallet->balance ?? 0 }}">{{ $cc->name }}</option>
                         @endforeach
                     </optgroup>
                     <optgroup label="مناديب">
                         @foreach($deliveries as $d)
-                            <option value="{{ $d->id }}">{{ $d->name }}</option>
+                            <option value="{{ $d->id }}" data-balance="{{ $d->wallet->balance ?? 0 }}">{{ $d->name }}</option>
                         @endforeach
                     </optgroup>
                     @if(isset($admins) && $admins->count())
                     <optgroup label="مديرين">
                         @foreach($admins as $adm)
-                            <option value="{{ $adm->id }}">{{ $adm->name }}</option>
+                            <option value="{{ $adm->id }}" data-balance="{{ $adm->wallet->balance ?? 0 }}">{{ $adm->name }}</option>
                         @endforeach
                     </optgroup>
                     @endif
@@ -633,9 +552,9 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             </div>
 
             <div class="form-group">
-                <label for="edit-tx-by-whom" class="form-label">بواسطة <span style="color:var(--red)">*</span></label>
+                <label for="edit-tx-by-whom" class="form-label">بواسطة</label>
                 <input type="text" id="edit-tx-by-whom" class="form-control" placeholder="اسم الشخص أو الجهة"
-                    maxlength="100" autocomplete="off">
+                    maxlength="100" autocomplete="off" disabled style="background:var(--input-bg);cursor:not-allowed;">
             </div>
 
             <div class="form-group">
@@ -729,9 +648,8 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         // ── Table renderer ───────────────────────────────────────────
         function typeBadge(type) {
             if (type === 'expense') return '<span class="badge badge-red">مصروف</span>';
-            if (type === 'discount') return '<span class="badge badge-red">خصم</span>';
-            if (type === 'pay_to_user') return '<span class="badge badge-cyan">دفع لموظف</span>';
-            if (type === 'receive_from_user') return '<span class="badge badge-teal">استلام من موظف</span>';
+            if (type === 'pay_to_user') return '<span class="badge badge-cyan">ايصال دفع</span>';
+            if (type === 'receive_from_user') return '<span class="badge badge-teal">ايصال استلام</span>';
             return `<span class="badge">${type}</span>`;
         }
 
@@ -949,61 +867,6 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             }
         };
 
-        // ── Public: Discount handlers ───────────────────────────────────
-        window.openDiscountModal = function () {
-            resetDiscountFields();
-            openModal('modal-discount');
-        };
-
-        window.onDiscountSelectChange = function (source) {
-            if (source === 'cc') {
-                document.getElementById('discount-delivery-id').value = '';
-            } else {
-                document.getElementById('discount-callcenter-id').value = '';
-            }
-        };
-
-        function resetDiscountFields() {
-            document.getElementById('discount-callcenter-id').value = '';
-            document.getElementById('discount-delivery-id').value = '';
-            document.getElementById('discount-amount').value = '';
-            document.getElementById('discount-date').value = '';
-            document.getElementById('discount-note').value = '';
-            clearModalErrors('discount');
-        }
-
-        window.submitDiscount = async function () {
-            const prefix = 'discount';
-            clearModalErrors(prefix);
-            setModalLoading(prefix, true);
-
-            const payload = {
-                callcenter_id: document.getElementById('discount-callcenter-id').value || null,
-                delivery_id: document.getElementById('discount-delivery-id').value || null,
-                amount: document.getElementById('discount-amount').value,
-                date: document.getElementById('discount-date').value || null,
-                note: document.getElementById('discount-note').value.trim() || null,
-            };
-
-            try {
-                await axios.post('/admin/treasury/discount', payload);
-                resetDiscountFields();
-                closeModal('modal-discount');
-                if (typeof showSuccess === 'function') showSuccess('تم إضافة الخصم بنجاح ✓');
-                else if (typeof showToast === 'function') showToast('تم إضافة الخصم بنجاح ✓', 'success');
-                await refreshAll();
-            } catch (error) {
-                if (error.response?.status === 422) {
-                    setModalErrors(prefix, error.response.data.errors);
-                } else {
-                    setGlobalModalError(prefix, 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.');
-                    console.error('Discount submit error', error);
-                }
-            } finally {
-                setModalLoading(prefix, false);
-            }
-        };
-
         // ── Public: pagination ────────────────────────────────────────
         window.goToPage = function (page) { fetchLedger(page); };
 
@@ -1038,7 +901,6 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             if (tx.type === 'income') { badgeBg = 'rgba(34,197,94,.15)'; badgeText = 'var(--success)'; badgeLabel = 'إيراد'; }
             else if (tx.type === 'expense') { badgeBg = 'rgba(220,38,38,.12)'; badgeText = 'var(--red)'; badgeLabel = 'مصروف'; }
             else if (tx.type === 'settlement') { badgeBg = 'rgba(245,158,11,.15)'; badgeText = 'var(--yellow)'; badgeLabel = 'تسوية'; }
-            else if (tx.type === 'discount') { badgeBg = 'rgba(220,38,38,.12)'; badgeText = 'var(--red)'; badgeLabel = 'خصم'; }
             else if (tx.type === 'pay_to_user') { badgeBg = 'rgba(8,145,178,.15)'; badgeText = '#0891b2'; badgeLabel = 'دفع لموظف'; }
             else if (tx.type === 'receive_from_user') { badgeBg = 'rgba(5,150,105,.15)'; badgeText = '#059669'; badgeLabel = 'استلام من موظف'; }
             else if (tx.type === 'dain') { badgeBg = 'rgba(79,70,229,.15)'; badgeText = 'var(--indigo)'; badgeLabel = 'دائن'; }
@@ -1252,6 +1114,18 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             resetWalletModalFields('receive');
             openModal('modal-receive-from-user');
             setTimeout(() => { const el = document.getElementById('receive-user-id'); if (el) el.focus(); }, 250);
+        };
+
+        window.autoFillReceiveAmount = function () {
+            var select = document.getElementById('receive-user-id');
+            var selectedOption = select.options[select.selectedIndex];
+            var balance = selectedOption.getAttribute('data-balance');
+            
+            if (balance && parseFloat(balance) > 0) {
+                document.getElementById('receive-amount').value = parseFloat(balance);
+            } else {
+                document.getElementById('receive-amount').value = '';
+            }
         };
 
         window.submitReceiveFromUser = async function () {

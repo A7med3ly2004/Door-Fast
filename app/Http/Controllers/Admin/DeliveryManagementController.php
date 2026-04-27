@@ -35,6 +35,7 @@ class DeliveryManagementController extends Controller
                     'completed'  => $d->deliveryOrders->where('status', 'delivered')->count(),
                     'revenue'    => $d->deliveryOrders->where('status', 'delivered')->sum('total'),
                     'code'       => $d->code,
+                    'shift_active' => $d->activeShift !== null,
                     'incentive_slices' => $d->incentive_slices,
                 ]);
 
@@ -66,6 +67,7 @@ class DeliveryManagementController extends Controller
                 'completed'  => $d->deliveryOrders->where('status', 'delivered')->count(),
                 'revenue'    => $d->deliveryOrders->where('status', 'delivered')->sum('total'),
                 'code'       => $d->code,
+                'shift_active' => $d->activeShift !== null,
                 'incentive_slices' => $d->incentive_slices,
             ]);
 
@@ -153,6 +155,44 @@ class DeliveryManagementController extends Controller
 
 
         return response()->json(['success' => true, 'message' => 'تم تحديث المندوب']);
+    }
+
+    public function toggleShift(Request $request, $id)
+    {
+        $delivery = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        $businessDate = $startOfToday->toDateString();
+
+        $activeShift = \App\Models\Shift::where('delivery_id', $delivery->id)
+            ->where('date', $businessDate)
+            ->where('is_active', true)
+            ->first();
+
+        if ($activeShift) {
+            $activeShift->update([
+                'ended_at' => Carbon::now(),
+                'is_active' => false,
+            ]);
+            $msg = 'تم إنهاء الوردية للمندوب بنجاح';
+        } else {
+            \App\Models\Shift::create([
+                'delivery_id' => $delivery->id,
+                'date' => $businessDate,
+                'started_at' => Carbon::now(),
+                'is_active' => true,
+            ]);
+            $msg = 'تم بدء وردية جديدة للمندوب بنجاح';
+        }
+
+        ActivityLog::log(
+            event: 'delivery.shift_toggled',
+            description: $msg . ' — ' . $delivery->name,
+            subjectType: 'user',
+            subjectId: $delivery->id,
+            subjectLabel: $delivery->name
+        );
+
+        return response()->json(['success' => true, 'message' => $msg]);
     }
 
 }

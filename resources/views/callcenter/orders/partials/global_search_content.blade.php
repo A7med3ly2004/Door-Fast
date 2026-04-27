@@ -15,7 +15,7 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="modal-view"><div class="modal modal-lg"><div class="modal-header"><h3>تفاصيل الطلب — <span id="view-num"></span></h3><button class="btn-close" onclick="closeModal('modal-view')">✕</button></div><div class="modal-body" id="view-body"></div></div></div>
+<div class="modal-overlay" id="modal-view"><div class="modal modal-lg"><div class="modal-header"><div style="display:flex;align-items:center;gap:12px;"><h3>تفاصيل الطلب — <span id="view-num"></span></h3><a id="modal-pdf-btn" href="#" target="_blank" class="btn btn-sm btn-secondary" onclick="if(this.href==='#'){event.preventDefault();}">إنشاء PDF</a></div><button class="btn-close" onclick="closeModal('modal-view')">✕</button></div><div class="modal-body" id="view-body"></div></div></div>
 
 <script>
 async function loadGlobalList() {
@@ -40,6 +40,7 @@ async function viewOrder(id) {
     try {
         const { data } = await axios.get(`/callcenter/orders/global-search/${id}`); const o = data.order;
         document.getElementById('view-num').textContent = o.order_number;
+        document.getElementById('modal-pdf-btn').href = '/callcenter/orders/' + o.id + '/pdf';
         const itemsTotal = o.items.reduce((sum, item) => sum + parseFloat(item.total), 0);
         
         let html = `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin-bottom: 20px;">`;

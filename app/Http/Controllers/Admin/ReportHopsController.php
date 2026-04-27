@@ -111,6 +111,7 @@ class ReportHopsController extends Controller
 
             // Orders table
             $ordersTable = $shopOrders->map(fn($o) => [
+                'id'           => $o->id,
                 'order_number' => $o->order_number,
                 'created_at'   => $o->created_at->toIso8601String(),
                 'client'       => $o->client?->name ?? '—',
@@ -166,5 +167,34 @@ class ReportHopsController extends Controller
         $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
 
         return $pdf->download('shop-report-' . $shop->name . '-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    public function dueInvoicePdf(Request $request, $shopId)
+    {
+        $shop = Shop::findOrFail($shopId);
+
+        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
+        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
+
+        // Only delivered orders
+        $items = OrderItem::where('shop_id', $shopId)
+            ->whereHas('order', fn($q) => $q->whereBetween('created_at', [$from, $to])->where('status', 'delivered'))
+            ->selectRaw('item_name, shop_id, unit_price, SUM(quantity) as total_qty, SUM(total) as total_value')
+            ->groupBy('item_name', 'shop_id', 'unit_price')
+            ->with('shop:id,name')
+            ->get();
+
+        $revenue = $items->sum('total_value');
+        $discountPercent = (float) $request->input('discount_percent', 0);
+        $discountValue = $revenue * ($discountPercent / 100);
+        $finalAmount = $revenue - $discountValue;
+
+        $filters = ['from' => $from->format('Y-m-d'), 'to' => $to->format('Y-m-d')];
+
+        $pdf = Pdf::loadView('admin.pdf.shop_due_invoice', compact(
+            'shop', 'items', 'revenue', 'discountPercent', 'discountValue', 'finalAmount', 'filters'
+        ))->setPaper('a4', 'portrait');
+
+        return $pdf->download('due-invoice-' . $shop->name . '-' . now()->format('Y-m-d') . '.pdf');
     }
 }

@@ -1,81 +1,202 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="ltr">
+
 <head>
-<meta charset="UTF-8">
-<style>
-    body { font-family: 'DejaVu Sans', sans-serif; direction: rtl; text-align: right; font-size: 12px; color: #1e293b; margin: 30px; }
-    h1   { font-size: 20px; color: #f59e0b; margin-bottom: 4px; }
-    .meta { color: #64748b; font-size: 10px; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
-    .section-title { font-size: 13px; font-weight: bold; color: #1e293b; border-bottom: 2px solid #f59e0b; padding-bottom: 4px; margin: 20px 0 12px; }
-    .info-table { width: 100%; border-collapse: collapse; }
-    .info-table tr td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
-    .info-table tr td:first-child { color: #64748b; width: 40%; font-weight: bold; }
-    .badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; }
-    .badge-income     { background: #dcfce7; color: #166534; }
-    .badge-expense    { background: #fee2e2; color: #991b1b; }
-    .badge-settlement { background: #fef9c3; color: #854d0e; }
-    .badge-dain       { background: #e0e7ff; color: #3730a3; }
-    .badge-discount   { background: #fee2e2; color: #991b1b; }
-    .amount-value { font-size: 22px; font-weight: bold; color: #f59e0b; }
-    .footer { margin-top: 40px; text-align: center; color: #94a3b8; font-size: 9px; border-top: 1px solid #e2e8f0; padding-top: 8px; }
-</style>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>إيصال معاملة مالية #{{ $transaction->id }}</title>
+    <style>
+        body {
+            font-family: 'XBRiyaz', 'DejaVu Sans', sans-serif;
+            direction: ltr;
+            text-align: right;
+            padding: 20px;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #a10303ff;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .info-section {
+            margin-bottom: 25px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-table td {
+            padding: 5px;
+            vertical-align: top;
+            text-align: right;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #475569;
+            width: 150px;
+            white-space: nowrap;
+        }
+
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 40px;
+        }
+
+        .totals-table td {
+            padding: 8px;
+            text-align: right;
+        }
+
+        .totals-table .label {
+            font-weight: bold;
+            color: #000000ff;
+            width: 60%;
+        }
+
+        .totals-table .value {
+            font-weight: bold;
+            width: 40%;
+        }
+
+        .totals-table .grand-total .label,
+        .totals-table .grand-total .value {
+            font-size: 20px;
+            color: #a10303ff;
+            border-top: 2px solid #a10303ff;
+            padding-top: 15px;
+        }
+
+        .signatures {
+            width: 100%;
+            margin-top: 80px;
+            text-align: center;
+            direction: ltr;
+        }
+
+        .signatures td {
+            width: 50%;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .signatures .lines td {
+            padding-top: 40px;
+            color: #94a3b8;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #000000ff;
+            font-size: 12px;
+            border-top: 1px solid #f0cacaff;
+            padding-top: 10px;
+        }
+    </style>
 </head>
+
 <body>
 
-<h1>دور فاست — إيصال معاملة مالية</h1>
-<div class="meta">
-    رقم العملية: #{{ $transaction->id }}
-    | تاريخ التصدير: {{ now()->format('Y-m-d H:i') }}
-</div>
+    <table style="width: 100%; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+        <tr>
+            <td style="width: 30%; text-align: left; vertical-align: top;">
+                @php
+                    $logoPath = public_path('DF_logo_2026.PNG');
+                    if (file_exists($logoPath)) {
+                        $logoData = base64_encode(file_get_contents($logoPath));
+                        $logoSrc = 'data:image/png;base64,' . $logoData;
+                    } else {
+                        $logoSrc = '';
+                    }
+                @endphp
+                @if($logoSrc)
+                    <img src="{{ $logoSrc }}" style="max-height: 80px; max-width: 120px;" />
+                @endif
+            </td>
+            <td style="width: 40%; text-align: center;">
+                <h1 style="color: #a10303ff; margin: 0; font-size: 28px;">DoorFast</h1>
+                <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 16px; font-weight: bold;">
+                    إيصال معاملة مالية
+                </p>
+                <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 12px;">
+                    {{ now()->format('Y-m-d H:i') }} التاريخ:
+                </p>
+            </td>
+            <td style="width: 30%; text-align: right; vertical-align: top;">
+            </td>
+        </tr>
+    </table>
 
-<div class="section-title">تفاصيل المعاملة</div>
-<table class="info-table">
-    <tr>
-        <td>رقم العملية</td>
-        <td><strong>#{{ $transaction->id }}</strong></td>
-    </tr>
-    <tr>
-        <td>التاريخ</td>
-        <td>{{ $transaction->transaction_date->format('d/m/Y') }}</td>
-    </tr>
-    <tr>
-        <td>نوع المعاملة</td>
-        <td>
-            @php
-                $badgeClass = match($transaction->type) {
-                    'income'     => 'badge-income',
-                    'expense'    => 'badge-expense',
-                    'settlement' => 'badge-settlement',
-                    'dain'       => 'badge-dain',
-                    'discount'   => 'badge-discount',
-                    default      => 'badge-expense',
-                };
-            @endphp
-            <span class="badge {{ $badgeClass }}">{{ $transaction->type_label }}</span>
-        </td>
-    </tr>
-    <tr>
-        <td>المبلغ</td>
-        <td><span class="amount-value">{{ number_format((float) $transaction->amount, 2) }}</span> ج.م</td>
-    </tr>
-    <tr>
-        <td>بواسطة</td>
-        <td>{{ $transaction->by_whom }}</td>
-    </tr>
-    <tr>
-        <td>سُجِّل بواسطة</td>
-        <td>{{ $transaction->recordedBy?->name ?? '—' }}</td>
-    </tr>
-    <tr>
-        <td>ملاحظة</td>
-        <td>{{ $transaction->note ?? '—' }}</td>
-    </tr>
-    <tr>
-        <td>تاريخ الإنشاء</td>
-        <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
-    </tr>
-</table>
+    <div class="info-section">
+        <table class="info-table">
+            <tr>
+                <td style="font-weight: bold; color: #a10303ff; font-size: 16px;">#{{ $transaction->id }}</td>
+                <td class="info-label">رقم العملية:</td>
+            </tr>
+            <tr>
+                <td>{{ $transaction->transaction_date->format('Y-m-d') }}</td>
+                <td class="info-label">تاريخ المعاملة:</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold; color: #1e293b;">{{ $transaction->type_label }}</td>
+                <td class="info-label">نوع المعاملة:</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">{{ $transaction->by_whom }}</td>
+                <td class="info-label">الطرف الثاني (المستفيد / الدافع):</td>
+            </tr>
+            <tr>
+                <td style="color: #3b82f6;">{{ $transaction->note ?? 'لا توجد ملاحظات' }}</td>
+                <td class="info-label">ملاحظات:</td>
+            </tr>
+            <tr>
+                <td>{{ $transaction->recordedBy?->name ?? '—' }}</td>
+                <td class="info-label">سُجِّلت بواسطة:</td>
+            </tr>
+        </table>
+    </div>
 
-<div class="footer">تم إنشاؤه بواسطة دور فاست — {{ now()->format('Y-m-d H:i:s') }}</div>
+    <table class="totals-table">
+        <tr class="grand-total">
+            <td class="value">
+                ج.م {{ number_format((float) $transaction->amount, 2) }}
+            </td>
+            <td class="label">قيمة المعاملة</td>
+        </tr>
+    </table>
+
+    <table class="signatures">
+        <tr>
+            <td>توقيع الموظف (المحاسب)</td>
+            <td>توقيع الطرف الثاني</td>
+        </tr>
+        <tr class="lines">
+            <td>_______________________</td>
+            <td>_______________________</td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        تم إنشاؤه بواسطة نظام دور فاست — {{ now()->format('Y-m-d H:i:s') }}
+    </div>
+
 </body>
 </html>

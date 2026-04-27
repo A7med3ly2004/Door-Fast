@@ -117,6 +117,7 @@
                         <th style="text-align:center;">الخصم</th>
                         <th style="text-align:center;">الإجمالي</th>
                         <th style="text-align:center;">الحالة</th>
+                        <th style="text-align:center;">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="datatable-tbody">
@@ -237,6 +238,7 @@
                   + '<td style="text-align:center;">' + (order.discount || 0) + ' ج.م</td>'
                   + '<td style="font-weight:700;text-align:center;">' + (order.total || 0) + ' ج.م</td>'
                   + '<td style="text-align:center;">' + statusBadge(order.status) + '</td>'
+                  + '<td style="text-align:center;"><button class="btn btn-sm btn-info" onclick="viewOrder(' + order.id + ')">عرض</button></td>'
                   + '</tr>';
         }
         tbody.innerHTML = rows;
@@ -311,3 +313,5 @@
     }
 })();
 </script>
+
+@include('admin.orders.partials.view_modal')

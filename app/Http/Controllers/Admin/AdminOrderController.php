@@ -65,9 +65,10 @@ class AdminOrderController extends Controller
      *
      * Differences from CC store:
      *  - callcenter_id = null  (marks as admin order)
-     *  - status = 'received'   (sent directly to delivery)
-     *  - sent_to_delivery_at = now()  (no hold period)
-     *  - delivery_id is REQUIRED
+     *  - sent_to_delivery_at = now()  (no hold period — admin order)
+     *  - delivery_id is OPTIONAL:
+     *      * with delivery → status='received', goes to received orders
+     *      * without delivery → status='pending', goes to new orders for all
      */
     public function store(Request $request)
     {
@@ -76,7 +77,7 @@ class AdminOrderController extends Controller
             'code'              => 'required|string',
             'name'              => 'required|string',
             'client_address'    => 'required|string',
-            'delivery_id'       => 'required|exists:users,id',
+            'delivery_id'       => 'nullable|exists:users,id',
             'items'             => 'required|array|min:1',
             'items.*.item_name' => 'required|string',
             'items.*.quantity'  => 'required|numeric|min:0.01',
@@ -86,10 +87,12 @@ class AdminOrderController extends Controller
             'code.required'       => 'الكود مطلوب',
             'name.required'       => 'اسم العميل مطلوب',
             'client_address.required' => 'العنوان مطلوب',
-            'delivery_id.required'=> 'يجب تحديد المندوب',
             'delivery_id.exists'  => 'المندوب غير موجود',
             'items.required'      => 'يجب إضافة صنف واحد على الأقل',
         ]);
+
+        // Determine if a delivery agent was chosen
+        $deliveryId = $request->filled('delivery_id') ? $request->delivery_id : null;
 
         // 1. Find or create client
         $client = Client::where('phone', $request->phone)->first();
@@ -149,12 +152,17 @@ class AdminOrderController extends Controller
         $deliveryFee = (float) ($request->delivery_fee ?? 0);
         $total       = $itemsTotal + $deliveryFee - $discountAmt;
 
-        // 4. Create order — sent directly to delivery
+        // 4. Create order
+        // If delivery chosen → received immediately (goes to their received orders)
+        // If no delivery   → pending (goes to new orders pool for all agents)
+        $orderStatus    = $deliveryId ? 'received' : 'pending';
+        $acceptedAt     = $deliveryId ? now() : null;
+
         $order = Order::create([
             'order_number'       => Order::generateNumber(),
-            'callcenter_id'      => null,       // ← admin order marker
-            'delivery_id'        => $request->delivery_id,
-            'is_delivery_chosen' => true,
+            'callcenter_id'      => null,           // ← admin order marker
+            'delivery_id'        => $deliveryId,
+            'is_delivery_chosen' => (bool) $deliveryId,
             'client_id'          => $client->id,
             'client_address'     => $request->client_address,
             'send_to_phone'      => $request->send_to_phone ?: null,
@@ -164,9 +172,9 @@ class AdminOrderController extends Controller
             'discount'           => $discount,
             'discount_type'      => $discountType,
             'total'              => $total,
-            'status'             => 'received',  // ← direct to delivery
-            'sent_to_delivery_at'=> now(),
-            'accepted_at'        => now(),
+            'status'             => $orderStatus,
+            'sent_to_delivery_at'=> now(),          // ← always now (admin = no hold)
+            'accepted_at'        => $acceptedAt,
         ]);
 
         // Handle send-to customer creation
@@ -208,16 +216,20 @@ class AdminOrderController extends Controller
         }
 
         // 6. Log
+        $logAction = $deliveryId
+            ? 'إنشاء طلب مباشر من الأدمن — تم تحديد مندوب'
+            : 'إنشاء طلب من الأدمن — بدون مندوب (طلبات جديدة)';
+
         OrderLog::create([
             'order_id' => $order->id,
             'user_id'  => auth()->id(),
-            'action'   => 'إنشاء طلب مباشر من الأدمن',
+            'action'   => $logAction,
             'notes'    => 'بواسطة: ' . auth()->user()->name,
         ]);
 
         ActivityLog::log(
             event: 'order.created_admin',
-            description: 'تم إنشاء طلب جديد من الأدمن',
+            description: $deliveryId ? 'تم إنشاء طلب من الأدمن مع تحديد مندوب' : 'تم إنشاء طلب من الأدمن بدون مندوب',
             subjectType: 'order',
             subjectId: $order->id,
             subjectLabel: $order->order_number,
@@ -230,19 +242,27 @@ class AdminOrderController extends Controller
             ]
         );
 
-        // 7. Broadcast to delivery agent
+        // 7. Broadcast
+        // - With delivery: notify that specific agent (received)
+        // - Without delivery: broadcast as pending so all agents' new-orders pages refresh
         try {
             event(new OrderStatusUpdated([
                 'order_id'     => $order->id,
-                'status'       => 'received',
+                'status'       => $orderStatus,
                 'order_number' => $order->order_number,
                 'delivery_id'  => $order->delivery_id,
             ]));
         } catch (\Throwable) {}
 
+        $successMsg = $deliveryId
+            ? 'تم إرسال الطلب مباشرة للمندوب المحدد'
+            : 'تم إرسال الطلب إلى قائمة الطلبات الجديدة';
+
         return response()->json([
             'success'      => true,
             'order_number' => $order->order_number,
+            'message'      => $successMsg,
+            'has_delivery' => (bool) $deliveryId,
             'warning'      => $addressWarning,
         ]);
     }

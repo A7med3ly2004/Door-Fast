@@ -22,6 +22,7 @@
                         <th style="text-align: center;">الهاتف</th>
                         <th style="text-align: center;">النوع</th>
                         <th style="text-align: center;">حالة المندوب</th>
+                        <th style="text-align: center;">حالة الوردية</th>
                         <th style="text-align: center;">مُوصَّلة اليوم</th>
                         <th style="text-align: center;">إيراد اليوم</th>
                         <th style="text-align: center;">إجراءات</th>
@@ -42,6 +43,15 @@
                                     {{ $d['is_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
                                     data-active="{{ $d['is_active'] ? '1' : '0' }}">
                                     {{ $d['is_active'] ? '✓ نشط' : '✗ غير نشط' }}
+                                </button>
+                            </td>
+                            <td style="text-align: center;">
+                                <button id="shift-btn-{{ $d['id'] }}"
+                                    onclick="toggleShiftDelivery({{ $d['id'] }}, this)"
+                                    style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
+                                    {{ $d['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                    data-active="{{ $d['shift_active'] ? '1' : '0' }}">
+                                    {{ $d['shift_active'] ? '⏱ تعمل الآن' : '⏸ متوقفة' }}
                                 </button>
                             </td>
                             <td style="text-align: center;"><span class="badge badge-green">{{ $d['completed'] }}</span></td>
@@ -78,6 +88,7 @@
                         <th style="text-align: center;">الهاتف</th>
                         <th style="text-align: center;">النوع</th>
                         <th style="text-align: center;">حالة المندوب</th>
+                        <th style="text-align: center;">حالة الوردية</th>
                         <th style="text-align: center;">مُوصَّلة اليوم</th>
                         <th style="text-align: center;">إيراد اليوم</th>
                         <th style="text-align: center;">إجراءات</th>
@@ -98,6 +109,15 @@
                                     {{ $d['is_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
                                     data-active="{{ $d['is_active'] ? '1' : '0' }}">
                                     {{ $d['is_active'] ? '✓ نشط' : '✗ غير نشط' }}
+                                </button>
+                            </td>
+                            <td style="text-align: center;">
+                                <button id="shift-btn-{{ $d['id'] }}"
+                                    onclick="toggleShiftDelivery({{ $d['id'] }}, this)"
+                                    style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
+                                    {{ $d['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                    data-active="{{ $d['shift_active'] ? '1' : '0' }}">
+                                    {{ $d['shift_active'] ? '⏱ تعمل الآن' : '⏸ متوقفة' }}
                                 </button>
                             </td>
                             <td style="text-align: center;"><span class="badge badge-green">{{ $d['completed'] }}</span></td>
@@ -376,6 +396,34 @@
                 btn.style.background = 'rgba(220,38,38,.12)';
                 btn.style.color = 'var(--red)';
                 btn.textContent = '✗ غير نشط';
+            }
+        }
+
+        window.toggleShiftDelivery = async function (id, btn) {
+            const isCurrentlyActive = btn.dataset.active === '1';
+            const newState = isCurrentlyActive ? 0 : 1;
+            applyShiftBtn(btn, newState);
+            try {
+                const { data } = await axios.patch(`/admin/delivery/${id}/toggle-shift`);
+                if (typeof showSuccess === 'function') showSuccess(data.message);
+                else if (typeof showToast === 'function') showToast(data.message, 'success');
+            } catch (e) {
+                applyShiftBtn(btn, isCurrentlyActive ? 1 : 0);
+                if (typeof showError === 'function') showError('حدث خطأ');
+                else if (typeof showToast === 'function') showToast('حدث خطأ', 'error');
+            }
+        };
+
+        function applyShiftBtn(btn, active) {
+            btn.dataset.active = active ? '1' : '0';
+            if (active) {
+                btn.style.background = 'rgba(34,197,94,.15)';
+                btn.style.color = 'var(--success)';
+                btn.textContent = '⏱ تعمل الآن';
+            } else {
+                btn.style.background = 'rgba(220,38,38,.12)';
+                btn.style.color = 'var(--red)';
+                btn.textContent = '⏸ متوقفة';
             }
         }
 

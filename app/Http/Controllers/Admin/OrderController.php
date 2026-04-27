@@ -102,6 +102,12 @@ class OrderController extends Controller
 
     public function cancel(Request $request, $id)
     {
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ], [
+            'reason.required' => 'يجب كتابة سبب الإلغاء',
+        ]);
+
         $order = Order::findOrFail($id);
 
         if ($order->status === 'cancelled') {
@@ -125,7 +131,7 @@ class OrderController extends Controller
             'order_id' => $order->id,
             'user_id'  => auth()->id(),
             'action'   => 'إلغاء الطلب',
-            'notes'    => 'تم الإلغاء بواسطة الأدمن',
+            'notes'    => 'سبب الإلغاء: ' . $request->reason . ' — بواسطة الأدمن: ' . auth()->user()->name,
         ]);
 
         return response()->json(['success' => true, 'message' => 'تم إلغاء الطلب']);
@@ -133,8 +139,7 @@ class OrderController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $query = Order::with(['client', 'callcenter', 'delivery'])
-            ->latest();
+        $query = Order::with(['client', 'callcenter', 'delivery'])->latest();
 
         if ($request->filled('status'))       $query->where('status', $request->status);
         if ($request->filled('from'))          $query->whereDate('created_at', '>=', $request->from);
@@ -162,5 +167,15 @@ class OrderController extends Controller
         $pdf = Pdf::loadHTML($html)->setPaper('a4', 'landscape');
 
         return $pdf->download('orders-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    public function downloadPdf($id)
+    {
+        $order = Order::with(['client', 'callcenter', 'delivery', 'items.shop', 'logs.user'])
+            ->findOrFail($id);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.order_single', compact('order'))->setPaper('a4', 'portrait');
+
+        return $pdf->download($order->order_number . '.pdf');
     }
 }

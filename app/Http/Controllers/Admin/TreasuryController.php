@@ -20,7 +20,7 @@ class TreasuryController extends Controller
         return [
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
-            'type' => ['nullable', 'in:income,expense,settlement,dain,discount,pay_to_user,receive_from_user'],
+            'type' => ['nullable', 'in:income,expense,settlement,dain,pay_to_user,receive_from_user'],
         ];
     }
 
@@ -60,9 +60,9 @@ class TreasuryController extends Controller
             'initialTransactions' => $initialTransactions,
             'filters' => compact('from', 'to', 'type'),
             // Lists for the "Dain" modal
-            'callcenters' => \App\Models\User::callcenters()->active()->get(['id', 'name']),
-            'deliveries'  => \App\Models\User::whereIn('role', ['delivery', 'reserve_delivery'])->active()->get(['id', 'name']),
-            'admins'      => \App\Models\User::where('role', 'admin')->where('is_active', true)->where('id', '!=', auth()->id())->get(['id', 'name']),
+            'callcenters' => \App\Models\User::callcenters()->active()->with('wallet')->get(['id', 'name']),
+            'deliveries'  => \App\Models\User::whereIn('role', ['delivery', 'reserve_delivery'])->active()->with('wallet')->get(['id', 'name']),
+            'admins'      => \App\Models\User::where('role', 'admin')->where('is_active', true)->where('id', '!=', auth()->id())->with('wallet')->get(['id', 'name']),
         ];
 
         // ── SPA navigation request ────────────────────────────────
@@ -406,74 +406,7 @@ class TreasuryController extends Controller
         ], 201);
     }
 
-    /**
-     * Store a manual "Discount" entry in the treasury ledger.
-     */
-    public function addDiscount(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
-    {
-        $validated = $request->validate([
-            'callcenter_id' => ['nullable', 'exists:users,id'],
-            'delivery_id'   => ['nullable', 'exists:users,id'],
-            'amount'        => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
-            'note'          => ['nullable', 'string', 'max:500'],
-            'date'          => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
-        ], $this->validationMessages());
 
-        // Ensure exactly one is selected
-        if (($validated['callcenter_id'] && $validated['delivery_id']) || (!$validated['callcenter_id'] && !$validated['delivery_id'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'يجب اختيار كول سينتر أو مندوب فقط.',
-                'errors' => [
-                    'callcenter_id' => ['يجب اختيار واحد فقط.'],
-                    'delivery_id'   => ['يجب اختيار واحد فقط.'],
-                ]
-            ], 422);
-        }
-
-        $userId = $validated['callcenter_id'] ?? $validated['delivery_id'];
-        $user = \App\Models\User::find($userId);
-
-        $transaction = \App\Models\TreasuryTransaction::create([
-            'type'             => 'discount',
-            'source_type'      => 'manual',
-            'source_id'        => $user->id,
-            'amount'           => (float) $validated['amount'],
-            'by_whom'          => $user->name,
-            'note'             => $validated['note'] ?? null,
-            'recorded_by'      => auth()->id(),
-            'transaction_date' => $validated['date'] ?? now()->toDateString(),
-        ]);
-
-        \App\Models\ActivityLog::log(
-            event: 'treasury.discount',
-            description: 'تم إضافة خصم في الخزينة — ' . $user->name,
-            subjectType: 'treasury',
-            subjectId: $transaction->id,
-            subjectLabel: number_format((float) $validated['amount'], 2) . ' ج',
-            properties: [
-                'user_id' => $user->id,
-                'role' => $user->role,
-                'amount' => $validated['amount'],
-                'note' => $validated['note'] ?? null
-            ]
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'تم إضافة الخصم بنجاح.',
-            'transaction' => [
-                'id' => $transaction->id,
-                'transaction_date' => $transaction->transaction_date->format('d/m/Y'),
-                'type' => $transaction->type,
-                'type_label' => $transaction->type_label,
-                'type_badge_class' => $transaction->type_badge_class,
-                'amount' => number_format((float) $transaction->amount, 2),
-                'by_whom' => $transaction->by_whom,
-                'note' => $transaction->note ?? '—',
-            ],
-        ], 201);
-    }
 
     /**
      * Arabic validation error messages shared by addIncome / addExpense.
@@ -586,55 +519,59 @@ class TreasuryController extends Controller
     public function receiveFromUser(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'user_id'     => ['required', 'exists:users,id'],
+            'user_id'     => ['nullable', 'exists:users,id'],
             'amount'      => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
             'description' => ['nullable', 'string', 'max:500'],
             'date'        => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
         ], $this->validationMessages());
 
         $admin = auth()->user();
-        $targetUser = \App\Models\User::findOrFail($validated['user_id']);
+        $targetUser = isset($validated['user_id']) ? \App\Models\User::find($validated['user_id']) : null;
         $walletService = app(\App\Services\WalletService::class);
         $date = $validated['date'] ?? now()->toDateString();
-        $description = $validated['description'] ?? ('استلام نقدي من ' . $targetUser->name);
+        
+        $defaultDesc = $targetUser ? ('استلام نقدي من ' . $targetUser->name) : 'استلام نقدي لحساب الإدارة';
+        $description = $validated['description'] ?? $defaultDesc;
 
         \Illuminate\Support\Facades\DB::transaction(function () use (
-            $admin, $targetUser, $walletService, $validated, $date, $description
+            $admin, $targetUser, $walletService, $validated, $date, $description, $defaultDesc
         ) {
             $adminWallet  = $admin->getOrCreateWallet();
-            $targetWallet = $targetUser->getOrCreateWallet();
 
             // إضافة لخزينة الأدمن
             $walletService->credit(
                 wallet:          $adminWallet,
                 amount:          (float) $validated['amount'],
                 type:            'cash_received',
-                description:     'استلام نقدي من ' . $targetUser->name . ($description !== ('استلام نقدي من ' . $targetUser->name) ? ' — ' . $description : ''),
+                description:     $defaultDesc . ($description !== $defaultDesc ? ' — ' . $description : ''),
                 createdBy:       $admin->id,
-                relatedWalletId: $targetWallet->id,
+                relatedWalletId: $targetUser ? $targetUser->getOrCreateWallet()->id : null,
                 date:            $date
             );
 
-            // خصم من خزينة الموظف
-            $walletService->debit(
-                wallet:          $targetWallet,
-                amount:          (float) $validated['amount'],
-                type:            'cash_paid',
-                description:     'دفع نقدي للإدارة' . ($description ? ' — ' . $description : ''),
-                createdBy:       $admin->id,
-                relatedWalletId: $adminWallet->id,
-                date:            $date
-            );
+            if ($targetUser) {
+                // خصم من خزينة الموظف
+                $targetWallet = $targetUser->getOrCreateWallet();
+                $walletService->debit(
+                    wallet:          $targetWallet,
+                    amount:          (float) $validated['amount'],
+                    type:            'cash_paid',
+                    description:     'دفع نقدي للإدارة' . ($description ? ' — ' . $description : ''),
+                    createdBy:       $admin->id,
+                    relatedWalletId: $adminWallet->id,
+                    date:            $date
+                );
+            }
         });
 
         ActivityLog::log(
             event: 'wallet.receive_from_user',
-            description: 'استلام نقدي من ' . $targetUser->name . ' — ' . number_format((float) $validated['amount'], 2) . ' ج',
+            description: $targetUser ? ('استلام نقدي من ' . $targetUser->name . ' — ' . number_format((float) $validated['amount'], 2) . ' ج') : ('استلام نقدي (بدون موظف) — ' . number_format((float) $validated['amount'], 2) . ' ج'),
             subjectType: 'wallet',
-            subjectId: $targetUser->id,
-            subjectLabel: $targetUser->name,
+            subjectId: $targetUser ? $targetUser->id : $admin->id,
+            subjectLabel: $targetUser ? $targetUser->name : 'الإدارة',
             properties: [
-                'user_id' => $targetUser->id,
+                'user_id' => $targetUser ? $targetUser->id : null,
                 'amount'  => $validated['amount'],
                 'note'    => $validated['description'] ?? null,
             ]
@@ -644,17 +581,17 @@ class TreasuryController extends Controller
         TreasuryTransaction::create([
             'type'             => 'receive_from_user',
             'source_type'      => 'manual',
-            'source_id'        => $targetUser->id,
+            'source_id'        => $targetUser ? $targetUser->id : null,
             'amount'           => (float) $validated['amount'],
-            'by_whom'          => $targetUser->name,
-            'note'             => $validated['description'] ?? ('استلام نقدي من ' . $targetUser->name),
+            'by_whom'          => $targetUser ? $targetUser->name : 'حساب الإدارة (بدون موظف)',
+            'note'             => $description,
             'recorded_by'      => auth()->id(),
             'transaction_date' => $date,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'تم استلام ' . number_format((float) $validated['amount'], 2) . ' ج من ' . $targetUser->name . ' بنجاح.',
+            'message' => 'تم استلام ' . number_format((float) $validated['amount'], 2) . ' ج ' . ($targetUser ? 'من ' . $targetUser->name : '(لحساب الإدارة)') . ' بنجاح.',
         ], 201);
     }
 
@@ -665,14 +602,12 @@ class TreasuryController extends Controller
     public function update(Request $request, TreasuryTransaction $transaction): JsonResponse
     {
         $validated = $request->validate([
-            'by_whom' => ['required', 'string', 'max:100'],
             'amount'  => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
             'note'    => ['nullable', 'string', 'max:500'],
             'date'    => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
         ], $this->validationMessages());
 
         $transaction->update([
-            'by_whom'          => $validated['by_whom'],
             'amount'           => $validated['amount'],
             'note'             => $validated['note'] ?? $transaction->note,
             'transaction_date' => $validated['date'] ?? $transaction->transaction_date,

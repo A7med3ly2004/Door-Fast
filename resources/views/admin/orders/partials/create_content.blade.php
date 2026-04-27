@@ -32,7 +32,7 @@
     <h2>➕ إنشاء طلب — <span style="color:var(--yellow)">أدمن</span></h2>
 </div>
 <div class="admin-order-badge">
-    ⚡ الطلب يُرسَل مباشرةً للمندوب بدون فترة انتظار — المندوب إلزامي
+    ⚡ الطلب يُرسَل فوراً
 </div>
 <div class="cards-wrapper" id="adm-cards-wrapper">
     <div class="add-card-btn" id="adm-add-btn" onclick="admAddCard()" title="إضافة فاتورة جديدة">
@@ -98,12 +98,11 @@
             <input type="hidden" id="${id}-is-new-addr" value="0">
 
             <div class="form-group" style="margin-bottom:10px">
-                <label class="form-label">🚴 المندوب <span style="color:var(--red)">*</span></label>
-                <select class="form-select" id="${id}-delivery" required>
-                    <option value="">— اختر المندوب —</option>
+                <label class="form-label">المندوب <span style="font-size:10px;color:var(--text-muted);font-weight:400">(اختياري)</span></label>
+                <select class="form-select" id="${id}-delivery" onchange="admUpdateSubmitBtn('${id}')">
+                    <option value="">بدون مندوب</option>
                     ${delivOpts}
                 </select>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">⚠️ يجب تحديد مندوب — الطلب يُرسَل فوراً</div>
             </div>
 
             <button class="btn btn-secondary btn-sm" style="margin-bottom:8px" onclick="admToggleSendTo('${id}')">↗ إرسال إلى عميل آخر</button>
@@ -114,14 +113,14 @@
             <input type="hidden" id="${id}-st-client-id" value="">
             <input type="hidden" id="${id}-st-client-found" value="0">
 
-            <div class="section-label">📦 الأصناف</div>
+            <div class="section-label">الأصناف</div>
             <table class="items-table">
                 <thead><tr><th style="min-width:130px">الصنف</th><th style="width:55px">الكمية</th><th style="width:70px">السعر</th><th style="width:65px">الإجمالي</th><th style="min-width:100px">المتجر</th><th style="width:30px"></th></tr></thead>
                 <tbody id="${id}-items"></tbody>
             </table>
             <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="admAddItemRow('${id}')">＋ إضافة صنف</button>
 
-            <div class="section-label">📝 ملاحظات</div>
+            <div class="section-label">ملاحظات</div>
             <textarea class="form-control" id="${id}-notes" rows="2" placeholder="ملاحظات اختيارية..."></textarea>
         </div>
         <div class="order-card-footer">
@@ -144,7 +143,7 @@
             <div class="pricing-row total"><span>الإجمالي النهائي</span><span id="${id}-grand-total">0.00 ج</span></div>
             <div style="display:flex;gap:8px;margin-top:12px">
                 <button class="btn btn-secondary" style="flex:1" onclick="admClearCard('${id}')">مسح</button>
-                <button class="btn btn-primary" style="flex:2" id="${id}-save-btn" onclick="admSaveCard('${id}')">⚡ إرسال فوري للمندوب</button>
+                <button class="btn btn-primary" style="flex:2" id="${id}-save-btn" onclick="admSaveCard('${id}')">⚡ إرسال للطلبات الجديدة</button>
             </div>
         </div>`;
 
@@ -196,13 +195,17 @@
         if (hasAddresses && addresses && addresses.length) {
             sel.style.display = ''; txt.style.display = 'none'; isNew.value = '0';
             sel.innerHTML = '<option value="">— اختر العنوان —</option>';
+            let hasDefault = false;
             addresses.slice(0,5).forEach(function (a) {
                 var opt = document.createElement('option');
                 opt.value = a.address; opt.textContent = a.address + (a.is_default ? ' (افتراضي)' : '');
-                if (a.is_default) opt.selected = true;
+                if (a.is_default) { opt.selected = true; hasDefault = true; }
                 sel.appendChild(opt);
             });
-            sel.innerHTML += '<option value="__new__">＋ إضافة عنوان جديد</option>';
+            if (!hasDefault && addresses.length > 0) sel.options[1].selected = true;
+            var newOpt = document.createElement('option');
+            newOpt.value = '__new__'; newOpt.textContent = '＋ إضافة عنوان جديد';
+            sel.appendChild(newOpt);
             txt.value = '';
         } else {
             sel.style.display = 'none'; txt.style.display = ''; isNew.value = '1'; txt.value = '';
@@ -284,6 +287,20 @@
         admCalcTotals(cardId);
     };
 
+    // ─── Update Submit Button & Hint based on delivery selection ──
+    window.admUpdateSubmitBtn = function (cardId) {
+        var delivery = document.getElementById(cardId+'-delivery')?.value;
+        var btn  = document.getElementById(cardId+'-save-btn');
+        var hint = document.getElementById(cardId+'-delivery-hint');
+        if (delivery) {
+            if (btn)  { btn.textContent  = '⚡ إرسال مباشر للمندوب المحدد'; btn.style.background = ''; }
+            if (hint) { hint.textContent = '✅ الطلب سيذهب مباشرة إلى قائمة الطلبات المستلمة للمندوب المحدد'; hint.style.color = 'var(--green, #10b981)'; }
+        } else {
+            if (btn)  { btn.textContent  = '⚡ إرسال للطلبات الجديدة'; btn.style.background = ''; }
+            if (hint) { hint.textContent = '💡 اتركه فارغاً ليظهر في قائمة الطلبات الجديدة لجميع المناديب'; hint.style.color = 'var(--text-muted)'; }
+        }
+    };
+
     // ─── Clear Card ───────────────────────────────────────────
     window.admClearCard = function (cardId) {
         ['phone','phone2','code','name','notes'].forEach(function (f) {
@@ -348,7 +365,7 @@
         if (!code)           { if(typeof showError==='function') showError('الكود مطلوب'); return; }
         if (!name)           { if(typeof showError==='function') showError('اسم العميل مطلوب'); return; }
         if (!clientAddress)  { if(typeof showError==='function') showError('العنوان مطلوب'); return; }
-        if (!delivery)       { if(typeof showError==='function') showError('يجب تحديد المندوب — الطلب مباشر'); return; }
+        // delivery is optional — no validation required
         if (!items.length)   { if(typeof showError==='function') showError('يجب إضافة صنف واحد على الأقل'); return; }
 
         var btn = document.getElementById(cardId+'-save-btn');
@@ -359,7 +376,7 @@
                 phone, phone2, code, name,
                 client_address: clientAddress,
                 is_new_address: isNewAddr,
-                delivery_id: delivery,
+                delivery_id: delivery || null,
                 send_to_phone: sendToPhone || null,
                 send_to_address: sendToAddr || null,
                 send_to_code: sendToCode || null,
@@ -367,7 +384,10 @@
                 send_to_client_id: sendToClientId || null,
                 notes, delivery_fee: fee, discount: disc, discount_type: discType, items
             });
-            if (typeof showSuccess === 'function') showSuccess('✅ تم إرسال الطلب ' + data.order_number + ' للمندوب فوراً');
+            var successLabel = data.has_delivery
+                ? '✅ تم إرسال الطلب ' + data.order_number + ' مباشرةً للمندوب'
+                : '✅ تم إرسال الطلب ' + data.order_number + ' إلى قائمة الطلبات الجديدة';
+            if (typeof showSuccess === 'function') showSuccess(successLabel);
             if (data.warning && typeof showWarning === 'function') showWarning(data.warning);
             document.getElementById(cardId)?.remove();
             cardCount--;
@@ -377,7 +397,8 @@
             if (typeof showError === 'function') showError(msg);
         } finally {
             if (document.getElementById(cardId+'-save-btn')) {
-                btn.disabled = false; btn.textContent = '⚡ إرسال فوري للمندوب';
+                btn.disabled = false;
+                admUpdateSubmitBtn(cardId);
             }
         }
     };

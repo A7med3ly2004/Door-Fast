@@ -494,4 +494,14 @@ class OrderController extends Controller
 
         return response()->json(['success' => true, 'message' => 'تم إرسال الطلب للدلفري الآن']);
     }
+
+    public function downloadPdf($id)
+    {
+        $order = Order::with(['client', 'callcenter', 'delivery', 'items.shop', 'logs.user'])
+            ->findOrFail($id);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.order_single', compact('order'))->setPaper('a4', 'portrait');
+
+        return $pdf->download($order->order_number . '.pdf');
+    }
 }

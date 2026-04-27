@@ -143,10 +143,10 @@ resources/views/callcenter/wallet/partials/content.blade.php
             <div id="rcv-global-error" style="background:var(--red-light);color:var(--red-dark);padding:10px;border-radius:8px;margin-bottom:12px;display:none;font-size:12px;"></div>
             <div class="form-group">
                 <label for="rcv-delivery-id" class="form-label">المندوب <span style="color:var(--red)">*</span></label>
-                <select id="rcv-delivery-id" class="form-select">
-                    <option value="">اختر مندوب...</option>
+                <select id="rcv-delivery-id" class="form-select" onchange="autoFillReceiveAmountCC()">
+                    <option value="" data-balance="0">اختر مندوب...</option>
                     @foreach($deliveries as $d)
-                        <option value="{{ $d->id }}">{{ $d->name }}</option>
+                        <option value="{{ $d->id }}" data-balance="{{ $d->wallet->balance ?? 0 }}">{{ $d->name }}</option>
                     @endforeach
                 </select>
                 <div class="error-text" id="rcv-delivery-id-error" style="color:var(--red);font-size:11px;margin-top:4px;"></div>
@@ -250,6 +250,18 @@ resources/views/callcenter/wallet/partials/content.blade.php
     // ── Modals ───────────────────────────────────────────────
     window.openPayModal = function () { resetFields('pay'); openModal('modal-cc-pay'); };
     window.openReceiveModal = function () { resetFields('rcv'); openModal('modal-cc-receive'); };
+
+    window.autoFillReceiveAmountCC = function () {
+        var select = document.getElementById('rcv-delivery-id');
+        var selectedOption = select.options[select.selectedIndex];
+        var balance = selectedOption.getAttribute('data-balance');
+        
+        if (balance && parseFloat(balance) > 0) {
+            document.getElementById('rcv-amount').value = parseFloat(balance);
+        } else {
+            document.getElementById('rcv-amount').value = '';
+        }
+    };
 
     function resetFields(prefix) {
         ['delivery-id', 'amount', 'date', 'description'].forEach(f => {

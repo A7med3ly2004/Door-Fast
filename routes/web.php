@@ -48,6 +48,7 @@ Route::middleware(['auth', 'role:admin'])
         // Orders
         Route::get('/orders/export-pdf', [AdminOrders::class, 'exportPdf'])->name('orders.export-pdf');
         Route::get('/orders', [AdminOrders::class, 'index'])->name('orders.index');
+        Route::get('/orders/{id}/pdf', [AdminOrders::class, 'downloadPdf'])->name('orders.pdf');
         Route::get('/orders/{id}', [AdminOrders::class, 'show'])->name('orders.show');
         Route::patch('/orders/{id}/cancel', [AdminOrders::class, 'cancel'])->name('orders.cancel');
 
@@ -71,6 +72,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/delivery', [AdminDelivery::class, 'store'])->name('delivery.store');
         Route::put('/delivery/{id}', [AdminDelivery::class, 'update'])->name('delivery.update');
         Route::get('/delivery/{id}/performance', [AdminDelivery::class, 'performance'])->name('delivery.performance');
+        Route::patch('/delivery/{id}/toggle-shift', [AdminDelivery::class, 'toggleShift'])->name('delivery.toggle-shift');
 
         // Call Center
         Route::get('/callcenter', [AdminCallCenter::class, 'index'])->name('callcenter.index');
@@ -100,6 +102,7 @@ Route::middleware(['auth', 'role:admin'])
         // Report Hops
         Route::get('/report-hops/data', [AdminReportHops::class, 'data'])->name('report-hops.data');
         Route::get('/report-hops/{shopId}/pdf', [AdminReportHops::class, 'exportPdf'])->name('report-hops.pdf');
+        Route::get('/report-hops/{shopId}/due-invoice', [AdminReportHops::class, 'dueInvoicePdf'])->name('report-hops.due-invoice');
         Route::get('/report-hops', [AdminReportHops::class, 'index'])->name('report-hops.index');
 
         // Discount Reports
@@ -115,7 +118,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/treasury/income', [TreasuryController::class, 'addIncome'])->name('treasury.income.store');
         Route::post('/treasury/expense', [TreasuryController::class, 'addExpense'])->name('treasury.expense.store');
         Route::post('/treasury/dain', [TreasuryController::class, 'addDain'])->name('treasury.dain.store');
-        Route::post('/treasury/discount', [TreasuryController::class, 'addDiscount'])->name('treasury.discount.store');
+
         Route::post('/treasury/pay-to-user', [TreasuryController::class, 'payToUser'])->name('treasury.pay-to-user');
         Route::post('/treasury/receive-from-user', [TreasuryController::class, 'receiveFromUser'])->name('treasury.receive-from-user');
         Route::get('/treasury/{transaction}', [App\Http\Controllers\Admin\TreasuryController::class, 'show'])->name('treasury.show');
@@ -168,6 +171,7 @@ Route::middleware(['auth', 'role:callcenter'])
         Route::put('/orders/{id}', [CCOrders::class, 'update'])->name('orders.update');
         Route::patch('/orders/{id}/cancel', [CCOrders::class, 'cancel'])->name('orders.cancel');
         Route::patch('/orders/{id}/send-early', [CCOrders::class, 'sendEarly'])->name('orders.send-early');
+        Route::get('/orders/{id}/pdf', [CCOrders::class, 'downloadPdf'])->name('orders.pdf');
 
         // Clients
         Route::get('/clients/search', [CCClients::class, 'searchByPhone'])->name('clients.search');

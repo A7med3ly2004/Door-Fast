@@ -50,7 +50,7 @@ function renderNewOrders() {
         if (waitedMins > reserveDelayMin+10) { cardClass += ' very-urgent'; alertHtml = `<div class="wait-alert" style="color:var(--secondary);background:#fee2e2;display:flex;align-items:center;gap:5px;">انتظر <span class="order-timer" data-time="${order.sent_to_delivery_at || order.created_at}">00:00</span> ⚠️</div>`; }
         else if (waitedMins > reserveDelayMin+5) cardClass += ' urgent';
         var card = document.createElement('div'); card.className = cardClass; card.id = `order-${order.id}`;
-        card.innerHTML = `<div class="order-header"><div class="order-number">#${order.order_number}</div>${alertHtml}</div><div style="font-weight:600;margin-bottom:15px;color:var(--primary)">إجمالي: ${order.total} ج</div><div class="hidden-zone"><div class="blur-overlay"><span style="font-size:18px">🔒 إخفاء</span></div><div class="hidden-content"><strong>الاسم:</strong> ${order.client?.name ?? ''}<br><strong>الهاتف:</strong> ${order.client?.phone ?? ''}</div></div><button class="btn-accept" onclick="acceptOrder(${order.id})">✔ قبول الطلب</button>`;
+        card.innerHTML = `<div class="order-header"><div class="order-number">#${order.order_number}</div>${alertHtml}</div><div class="hidden-zone"><div class="blur-overlay"><span style="font-size:18px">🔒 إخفاء</span></div><div class="hidden-content"><strong>الاسم:</strong> ${order.client?.name ?? ''}<br><strong>الهاتف:</strong> ${order.client?.phone ?? ''}</div></div><button class="btn-accept" onclick="acceptOrder(${order.id})">✔ قبول الطلب</button>`;
         grid.appendChild(card);
     });
 }

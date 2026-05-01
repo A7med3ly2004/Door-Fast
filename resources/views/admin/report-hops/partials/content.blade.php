@@ -48,8 +48,11 @@
             <h2 id="detail-shop-name">—</h2>
             <div style="color:var(--text-muted);font-size:13px" id="detail-shop-info"></div>
         </div>
-        <a id="shop-pdf-btn" href="#" target="_blank" class="btn btn-danger" data-no-spa>📄 تصدير PDF</a>
-        <button id="shop-excel-btn" onclick="exportShopReportExcel()" class="btn btn-success" style="display:none;background:#217346;color:#fff;">تصدير Excel</button>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <a id="shop-pdf-btn" href="#" target="_blank" class="btn btn-danger" data-no-spa>تصدير PDF</a>
+            <button id="shop-excel-btn" onclick="exportShopReportExcel()" class="btn btn-success"
+                style="display:none;background:#217346;color:#fff;">تصدير Excel</button>
+        </div>
     </div>
     <div class="kpi-grid" style="margin-bottom:20px">
         <div class="kpi-card blue">
@@ -57,7 +60,7 @@
             <div class="kpi-value" id="sk-orders">—</div>
         </div>
         <div class="kpi-card green">
-            <div class="kpi-label">مُوصَّلة</div>
+            <div class="kpi-label">تم التوصيلة</div>
             <div class="kpi-value" id="sk-completed">—</div>
         </div>
         <div class="kpi-card red">
@@ -75,7 +78,8 @@
                 <label class="form-label">نسبة الخصم (%)</label>
                 <input type="number" id="shop-discount-percent" class="form-control" value="0" min="0" max="100"
                     oninput="updateFinalAmount()">
-                <button class="btn btn-primary" style="margin-top:12px; width:100%" onclick="printDueInvoice()">طباعة فاتورة مستحق</button>
+                <button class="btn btn-primary" style="margin-top:12px; width:100%" onclick="printDueInvoice()">طباعة
+                    فاتورة مستحق</button>
             </div>
 
             <div class="kpi-card blue"
@@ -231,16 +235,16 @@
                 params: { ...getFilters(), shop_id: currentShopId }
             });
             const columns = [
-                { header: 'رقم الطلب',   key: 'order_number', width: 18 },
-                { header: 'التاريخ',      key: 'created_at',   width: 20 },
-                { header: 'العميل',       key: 'client',       width: 22 },
-                { header: 'المندوب',      key: 'delivery',     width: 18 },
-                { header: 'كول سنتر',   key: 'callcenter',   width: 18 },
-                { header: 'عدد الأصناف', key: 'items_count',  width: 14 },
-                { header: 'الإجمالي',     key: 'total',        width: 14 },
-                { header: 'الحالة',       key: 'status',       width: 14 },
+                { header: 'رقم الطلب', key: 'order_number', width: 18 },
+                { header: 'التاريخ', key: 'created_at', width: 20 },
+                { header: 'العميل', key: 'client', width: 22 },
+                { header: 'المندوب', key: 'delivery', width: 18 },
+                { header: 'كول سنتر', key: 'callcenter', width: 18 },
+                { header: 'عدد الأصناف', key: 'items_count', width: 14 },
+                { header: 'الإجمالي', key: 'total', width: 14 },
+                { header: 'الحالة', key: 'status', width: 14 },
             ];
-            const statusMap = { pending: 'باقي', received: 'مُسلَّم', delivered: 'مُوصَّل', cancelled: 'ملغي' };
+            const statusMap = { pending: 'باقي', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
             const rows = data.orders.map(o => ({
                 ...o,
                 created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',

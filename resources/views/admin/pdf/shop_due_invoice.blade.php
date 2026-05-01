@@ -183,25 +183,25 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="text-align: left">{{ $ar('الإجمالي') }}</th>
-                <th style="text-align: left">{{ $ar('سعر الوحدة') }}</th>
+                <th style="text-align: center">{{ $ar('الإجمالي') }}</th>
+                <th style="text-align: center">{{ $ar('سعر الوحدة') }}</th>
                 <th style="text-align: center">{{ $ar('الكمية') }}</th>
-                <th>{{ $ar('المتجر') }}</th>
-                <th>{{ $ar('الصنف') }}</th>
+                <th style="text-align: center">{{ $ar('المتجر') }}</th>
+                <th style="text-align: right">{{ $ar('الصنف') }}</th>
             </tr>
         </thead>
         <tbody>
             @forelse($items as $item)
                 <tr>
-                    <td style="text-align: left">
-                        {{ $ar('ج') }} {{ number_format($item->total_value, 2) }}
+                    <td style="text-align: center">
+                        {{ number_format($item->total_value, 2) }} {{ $ar('ج') }}
                     </td>
-                    <td style="text-align: left">
-                        {{ $ar('ج') }} {{ number_format($item->unit_price, 2) }}
+                    <td style="text-align: center">
+                        {{ number_format($item->unit_price, 2) }} {{ $ar('ج') }}
                     </td>
                     <td style="text-align: center">{{ $item->total_qty }}</td>
-                    <td>{{ $ar($item->shop->name ?? 'بدون متجر') }}</td>
-                    <td>{{ $ar($item->item_name) }}</td>
+                    <td style="text-align: center">{{ $ar($item->shop->name ?? 'بدون متجر') }}</td>
+                    <td style="text-align: right">{{ $ar($item->item_name) }}</td>
                 </tr>
             @empty
                 <tr>

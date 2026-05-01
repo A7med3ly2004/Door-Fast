@@ -48,6 +48,17 @@ class OrderController extends Controller
     public function accept($id)
     {
 
+        $maxActive = (int) Setting::get('max_active_orders', 3);
+        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        $activeCount = Order::where('delivery_id', auth()->id())
+            ->where('status', 'received')
+            ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
+            ->count();
+
+        if ($activeCount >= $maxActive) {
+            return response()->json(['success' => false, 'message' => "لا يمكنك استلام أكثر من {$maxActive} طلبات في نفس الوقت. قم بتوصيل الطلبات الحالية أولاً."]);
+        }
+
         try {
             DB::transaction(function () use ($id) {
                 $delivery = auth()->user();

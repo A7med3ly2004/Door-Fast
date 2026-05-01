@@ -75,7 +75,7 @@
         .items-table th {
             background-color: #ffafafff;
             padding: 10px;
-            text-align: right;
+            text-align: center;
             font-weight: bold;
             border-bottom: 2px solid #cbd5e1;
         }
@@ -83,7 +83,7 @@
         .items-table td {
             padding: 10px;
             border-bottom: 1px solid #e2e8f0;
-            text-align: right;
+            text-align: center;
         }
 
         .totals-table {
@@ -114,7 +114,7 @@
             border-top: 2px solid #a10303ff;
             padding-top: 15px;
         }
-        
+
 
 
         .footer {
@@ -177,16 +177,16 @@
                 <td class="info-label">{{ $ar('عنوان العميل:') }}</td>
             </tr>
             @if($order->delivery)
-            <tr>
-                <td>{{ $ar($order->delivery->name) }}</td>
-                <td class="info-label">{{ $ar('المندوب:') }}</td>
-            </tr>
+                <tr>
+                    <td>{{ $ar($order->delivery->name) }}</td>
+                    <td class="info-label">{{ $ar('المندوب:') }}</td>
+                </tr>
             @endif
             @if($order->callcenter)
-            <tr>
-                <td>{{ $ar($order->callcenter->name) }}</td>
-                <td class="info-label">{{ $ar('كول سنتر:') }}</td>
-            </tr>
+                <tr>
+                    <td>{{ $ar($order->callcenter->name) }}</td>
+                    <td class="info-label">{{ $ar('كول سنتر:') }}</td>
+                </tr>
             @endif
             @if($order->send_to_phone)
                 <tr>
@@ -210,26 +210,26 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="text-align: left">{{ $ar('الإجمالي') }}</th>
-                <th style="text-align: left">{{ $ar('سعر الوحدة') }}</th>
+                <th style="text-align: center">{{ $ar('الإجمالي') }}</th>
+                <th style="text-align: center">{{ $ar('سعر الوحدة') }}</th>
                 <th style="text-align: center">{{ $ar('الكمية') }}</th>
-                <th>{{ $ar('المتجر') }}</th>
-                <th>{{ $ar('المنتج') }}</th>
+                <th style="text-align: center">{{ $ar('المتجر') }}</th>
+                <th style="text-align: center">{{ $ar('المنتج') }}</th>
             </tr>
         </thead>
         <tbody>
             @forelse($order->items as $item)
                 <tr>
-                    <td style="text-align: left">
+                    <td style="text-align: center">
                         {{ $item->total ? number_format($item->total, 2) : number_format(($item->unit_price * $item->quantity), 2) }}
                         {{ $ar('ج') }}
                     </td>
-                    <td style="text-align: left">{{ $item->unit_price ? number_format($item->unit_price, 2) : '-' }}
+                    <td style="text-align: center">{{ $item->unit_price ? number_format($item->unit_price, 2) : '-' }}
                         {{ $item->unit_price ? $ar('ج') : '' }}
                     </td>
                     <td style="text-align: center">{{ $item->quantity }}</td>
-                    <td>{{ $ar($item->shop->name ?? 'بدون متجر') }}</td>
-                    <td>{{ $ar($item->item_name) }}</td>
+                    <td style="text-align: center">{{ $ar($item->shop->name ?? 'بدون متجر') }}</td>
+                    <td style="text-align: center">{{ $ar($item->item_name) }}</td>
                 </tr>
             @empty
                 <tr>
@@ -268,7 +268,7 @@
 
 
     <div class="footer">
-        <p>{{ $ar('تم إنشاء هذه الفاتورة آلياً.') }} DoorFast {{ $ar('شكراً لتعاملكم مع') }}</p>
+        <p>DoorFast {{ $ar('شكراً لتعاملكم مع') }}</p>
     </div>
 
 </body>

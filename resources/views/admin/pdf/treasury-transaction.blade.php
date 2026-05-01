@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>إيصال معاملة مالية #{{ $transaction->id }}</title>
+    <title>#{{ $transaction->id }}</title>
     <style>
         body {
             font-family: 'XBRiyaz', 'DejaVu Sans', sans-serif;
@@ -68,12 +68,12 @@
         .totals-table .label {
             font-weight: bold;
             color: #000000ff;
-            width: 60%;
+            width: 150px;
         }
 
         .totals-table .value {
             font-weight: bold;
-            width: 40%;
+            text-align: right;
         }
 
         .totals-table .grand-total .label,
@@ -133,10 +133,10 @@
             </td>
             <td style="width: 40%; text-align: center;">
                 <h1 style="color: #a10303ff; margin: 0; font-size: 28px;">DoorFast</h1>
-                <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 16px; font-weight: bold;">
+                <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 16px;">
                     إيصال معاملة مالية
                 </p>
-                <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 12px;">
+                <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 14px;">
                     {{ now()->format('Y-m-d H:i') }} التاريخ:
                 </p>
             </td>
@@ -152,24 +152,25 @@
                 <td class="info-label">رقم العملية:</td>
             </tr>
             <tr>
-                <td>{{ $transaction->transaction_date->format('Y-m-d') }}</td>
+                <td style="color: #000000ff; font-size: 14px;">{{ $transaction->transaction_date->format('Y-m-d') }}
+                </td>
                 <td class="info-label">تاريخ المعاملة:</td>
             </tr>
             <tr>
-                <td style="font-weight: bold; color: #1e293b;">{{ $transaction->type_label }}</td>
+                <td style="color: #000000ff; font-size: 14px;">{{ $transaction->type_label }}</td>
                 <td class="info-label">نوع المعاملة:</td>
             </tr>
             <tr>
-                <td style="font-weight: bold;">{{ $transaction->by_whom }}</td>
-                <td class="info-label">الطرف الثاني (المستفيد / الدافع):</td>
+                <td style=" font-size: 14px; color: #000000ff;">{{ $transaction->by_whom }}</td>
+                <td class="info-label">الطرف الثاني:</td>
             </tr>
             <tr>
-                <td style="color: #3b82f6;">{{ $transaction->note ?? 'لا توجد ملاحظات' }}</td>
+                <td style="color: #000000ff; font-size: 14px;">{{ $transaction->note ?? 'لا توجد ملاحظات' }}</td>
                 <td class="info-label">ملاحظات:</td>
             </tr>
             <tr>
-                <td>{{ $transaction->recordedBy?->name ?? '—' }}</td>
-                <td class="info-label">سُجِّلت بواسطة:</td>
+                <td style="color: #000000ff; font-size: 14px;">{{ $transaction->recordedBy?->name ?? '—' }}</td>
+                <td class="info-label">سجلت بواسطة:</td>
             </tr>
         </table>
     </div>
@@ -177,20 +178,20 @@
     <table class="totals-table">
         <tr class="grand-total">
             <td class="value">
-                ج.م {{ number_format((float) $transaction->amount, 2) }}
+                ج.م <span dir="ltr">{{ number_format((float) $transaction->amount, 2) }}</span>
             </td>
-            <td class="label">قيمة المعاملة</td>
+            <td class="label">قيمة المعاملة : </td>
         </tr>
     </table>
 
     <table class="signatures">
         <tr>
-            <td>توقيع الموظف (المحاسب)</td>
+            <td>توقيع المدير</td>
             <td>توقيع الطرف الثاني</td>
         </tr>
         <tr class="lines">
-            <td>_______________________</td>
-            <td>_______________________</td>
+            <td>..............</td>
+            <td>..............</td>
         </tr>
     </table>
 
@@ -199,4 +200,5 @@
     </div>
 
 </body>
+
 </html>

@@ -75,10 +75,10 @@ class Order extends Model
         $last = self::orderBy('id', 'desc')->first();
         $num  = $last ? (intval(substr($last->order_number, 4)) + 1) : 1;
         
-        $orderNumber = 'ORD-' . str_pad($num, 6, '0', STR_PAD_LEFT);
+        $orderNumber = 'ORD-' . str_pad($num, 7, '0', STR_PAD_LEFT);
         while (self::where('order_number', $orderNumber)->exists()) {
             $num++;
-            $orderNumber = 'ORD-' . str_pad($num, 6, '0', STR_PAD_LEFT);
+            $orderNumber = 'ORD-' . str_pad($num, 7, '0', STR_PAD_LEFT);
         }
         
         return $orderNumber;

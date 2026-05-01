@@ -1,25 +1,28 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/png" href="{{ asset('DF_logo_2026.PNG') }}">
     <title>لوحة الدلفري الاحتياطي - DoorFast</title>
-    
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     {{-- ── Core CDNs ── --}}
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <style>
         :root {
-            --primary: #f59e0b; /* Yellow */
-            --secondary: #dc2626; /* Red */
+            --primary: #f59e0b;
+            /* Yellow */
+            --secondary: #dc2626;
+            /* Red */
             --bg-color: #f3f4f6;
             --sidebar-bg: #ffffff;
             --text-dark: #1f2937;
@@ -52,10 +55,22 @@
 
         /* Typography scaling */
         @media (max-width: 767px) {
-            body { font-size: 14px; }
-            .kpi-value { font-size: 24px; }
-            .order-number { font-size: 18px; }
-            .total-amount { font-size: 20px; font-weight: 800; }
+            body {
+                font-size: 14px;
+            }
+
+            .kpi-value {
+                font-size: 24px;
+            }
+
+            .order-number {
+                font-size: 18px;
+            }
+
+            .total-amount {
+                font-size: 20px;
+                font-weight: 800;
+            }
         }
 
         /* Sidebar structure (Desktop/Tablet) */
@@ -67,7 +82,7 @@
             flex-direction: column;
             z-index: 10;
         }
-        
+
         .sidebar-header {
             padding: 20px;
             text-align: center;
@@ -90,7 +105,8 @@
             position: relative;
         }
 
-        .menu-item:hover, .menu-item.active {
+        .menu-item:hover,
+        .menu-item.active {
             background-color: #fef3c7;
             color: var(--primary);
             border-right: 4px solid var(--primary);
@@ -117,7 +133,7 @@
         .topbar {
             height: 70px;
             background-color: #ffffff;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
@@ -235,7 +251,10 @@
         /* Full Screen Overlay for Inactive Shift */
         .shift-overlay {
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background-color: rgba(255, 255, 255, 0.95);
             display: flex;
             flex-direction: column;
@@ -331,9 +350,17 @@
 
         /* Mobile specific styles */
         @media (max-width: 767px) {
-            .sidebar { display: none; }
-            .bottom-nav { display: flex; }
-            .main-content { padding-bottom: 60px; }
+            .sidebar {
+                display: none;
+            }
+
+            .bottom-nav {
+                display: flex;
+            }
+
+            .main-content {
+                padding-bottom: 60px;
+            }
 
             /* MOBILE: reduce content area padding + add bottom nav clearance */
             .content-area {
@@ -346,51 +373,68 @@
                 height: 60px;
                 padding: 0 10px;
             }
+
             .topbar-left {
                 font-size: 16px;
                 gap: 8px;
             }
+
             .topbar-right {
                 gap: 6px;
             }
+
             .user-name {
                 display: none;
             }
+
             .user-profile {
                 padding-right: 8px;
                 gap: 0;
             }
+
             .shift-status-pill {
                 padding: 8px 8px;
                 gap: 0;
             }
+
             .shift-status-pill span {
                 display: none;
             }
+
             .btn-top-action {
                 padding: 8px;
                 border-radius: 50%;
             }
+
             .btn-top-action span {
                 display: none;
             }
+
             .btn-top-action svg {
                 width: 20px;
                 height: 20px;
             }
         }
+
         @media (min-width: 768px) {
-            .bottom-nav { display: none; }
-            .sidebar { display: flex; }
+            .bottom-nav {
+                display: none;
+            }
+
+            .sidebar {
+                display: flex;
+            }
         }
-        
     </style>
     @yield('styles')
-    
+
     @vite(['resources/js/app.js'])
 </head>
+
 <body>
-    <div id="spa-loading-bar" style="position:fixed;top:0;left:0;right:0;height:3px;background:var(--primary);z-index:9999;width:0;transition:width 0.3s ease;display:none;"></div>
+    <div id="spa-loading-bar"
+        style="position:fixed;top:0;left:0;right:0;height:3px;background:var(--primary);z-index:9999;width:0;transition:width 0.3s ease;display:none;">
+    </div>
 
     <!-- Desktop Sidebar -->
     <div class="sidebar">
@@ -412,7 +456,7 @@
                 مكتملة
             </a>
             <a href="{{ route('reserve.wallet.index') }}" class="menu-item" data-spa="true">
-                💰 كشف حسابي
+                كشف حسابي
             </a>
         </div>
     </div>
@@ -433,15 +477,26 @@
                     <div class="user-name">{{ auth()->user()->name }}</div>
                 </div>
 
-                <button id="end-shift-btn" class="btn-top-action btn-end-shift" style="display: none;" onclick="endShift()" title="إنهاء الشفت">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                <button id="end-shift-btn" class="btn-top-action btn-end-shift" style="display: none;"
+                    onclick="endShift()" title="إنهاء الشفت">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                    </svg>
                     <span>إنهاء الشفت</span>
                 </button>
 
                 <form method="POST" action="{{ route('logout') }}" id="logout-form">
                     @csrf
-                    <button type="button" class="btn-top-action btn-logout" onclick="confirmLogout()" title="تسجيل الخروج">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    <button type="button" class="btn-top-action btn-logout" onclick="confirmLogout()"
+                        title="تسجيل الخروج">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
                         <span>خروج</span>
                     </button>
                 </form>
@@ -463,32 +518,59 @@
     <div class="bottom-nav">
         <a href="{{ route('reserve.dashboard') }}" class="nav-item" data-spa="true">
             <div class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 20V10"></path>
+                    <path d="M12 20V4"></path>
+                    <path d="M6 20v-6"></path>
+                </svg>
             </div>
             <span>إحصائياتي</span>
         </a>
         <a href="{{ route('reserve.orders.new') }}" class="nav-item" data-spa="true">
             <div class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
             </div>
             <span>جديدة</span>
             <span id="new-orders-badge-mobile" class="nav-badge" style="display: none;">0</span>
         </a>
         <a href="{{ route('reserve.orders.received') }}" class="nav-item" data-spa="true">
             <div class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                    <path
+                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                    </path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
             </div>
             <span>مستلمة</span>
         </a>
         <a href="{{ route('reserve.orders.delivered') }}" class="nav-item" data-spa="true">
             <div class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
             </div>
             <span>مكتملة</span>
         </a>
         <a href="{{ route('reserve.wallet.index') }}" class="nav-item" data-spa="true">
             <div class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+                    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+                    <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+                </svg>
             </div>
             <span>حسابي</span>
         </a>
@@ -555,7 +637,7 @@
             a.addEventListener('click', e => { e.preventDefault(); navigate(a.href); });
         });
         window.addEventListener('popstate', e => { if (e.state && e.state.url) navigate(e.state.url, false); });
-        
+
         let isShiftActive = false;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -644,7 +726,7 @@
                     confirmButtonText: 'تسجيل الخروج',
                     cancelButtonText: 'إلغاء'
                 }).then((res) => {
-                    if(res.isConfirmed) document.getElementById('logout-form').submit();
+                    if (res.isConfirmed) document.getElementById('logout-form').submit();
                 });
             } else {
                 document.getElementById('logout-form').submit();
@@ -654,17 +736,17 @@
         function checkNewOrdersBadge() {
             if (!isShiftActive) return;
             axios.get('{{ route("reserve.orders.new-data") }}').then(res => {
-                if(res.data.orders) {
+                if (res.data.orders) {
                     const badgeMobile = document.getElementById('new-orders-badge-mobile');
                     const badgeDesktop = document.getElementById('new-orders-badge-desktop');
                     const count = res.data.orders.length;
-                    
-                    if(count > 0) {
-                        if(badgeMobile) { badgeMobile.style.display = 'block'; badgeMobile.innerText = count; }
-                        if(badgeDesktop) { badgeDesktop.style.display = 'inline-block'; badgeDesktop.innerText = count; }
+
+                    if (count > 0) {
+                        if (badgeMobile) { badgeMobile.style.display = 'block'; badgeMobile.innerText = count; }
+                        if (badgeDesktop) { badgeDesktop.style.display = 'inline-block'; badgeDesktop.innerText = count; }
                     } else {
-                        if(badgeMobile) badgeMobile.style.display = 'none';
-                        if(badgeDesktop) badgeDesktop.style.display = 'none';
+                        if (badgeMobile) badgeMobile.style.display = 'none';
+                        if (badgeDesktop) badgeDesktop.style.display = 'none';
                     }
                 }
             }).catch(e => console.log(e));
@@ -672,7 +754,8 @@
 
         window.myDeliveryId = {{ auth()->id() }};
     </script>
-    
+
     @yield('scripts')
 </body>
+
 </html>

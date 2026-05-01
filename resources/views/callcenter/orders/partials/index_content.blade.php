@@ -1,6 +1,6 @@
 {{-- Callcenter Orders Index SPA partial --}}
 <div class="section-header"><h2>قائمة الطلبات</h2><a href="{{ route('callcenter.orders.create') }}" class="btn btn-primary">طلب جديد</a></div>
-<div class="card" style="margin-bottom:16px"><div class="filter-bar"><input type="text" id="f-search" class="form-control" placeholder="رقم الطلب / العميل / الهاتف" style="min-width:200px"><select id="f-status" class="form-select"><option value="">كل الحالات</option><option value="pending">باقي</option><option value="received">مُسلَّم</option><option value="delivered">مُوصَّل</option><option value="cancelled">ملغي</option></select><button class="btn btn-primary" onclick="loadList(1)">🔍 بحث</button><button class="btn btn-secondary" onclick="resetFilters()">↺ إعادة</button></div></div>
+<div class="card" style="margin-bottom:16px"><div class="filter-bar"><input type="text" id="f-search" class="form-control" placeholder="رقم الطلب / العميل / الهاتف" style="min-width:200px"><select id="f-status" class="form-select"><option value="">كل الحالات</option><option value="pending">باقي</option><option value="received">مسلم للمندوب</option><option value="delivered">تم التوصيل</option><option value="cancelled">ملغي</option></select><button class="btn btn-primary" onclick="loadList(1)">🔍 بحث</button><button class="btn btn-secondary" onclick="resetFilters()">↺ إعادة</button></div></div>
 <div class="card" style="padding:0;position:relative">
     <div class="loading-overlay" id="tbl-loading"><div class="spin"></div></div>
     <div class="table-wrap">

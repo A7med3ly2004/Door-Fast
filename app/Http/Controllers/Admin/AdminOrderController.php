@@ -155,6 +155,22 @@ class AdminOrderController extends Controller
         // 4. Create order
         // If delivery chosen → received immediately (goes to their received orders)
         // If no delivery   → pending (goes to new orders pool for all agents)
+        
+        if ($deliveryId) {
+            $maxActive = (int) \App\Models\Setting::get('max_active_orders', 3);
+            list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+            $activeCount = Order::where('delivery_id', $deliveryId)
+                ->where('status', 'received')
+                ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
+                ->count();
+
+            if ($activeCount >= $maxActive) {
+                return response()->json([
+                    'errors' => ['delivery_id' => ["عذراً، المندوب لديه الحد الأقصى من الطلبات قيد التوصيل ({$maxActive} طلبات)."]]
+                ], 422);
+            }
+        }
+
         $orderStatus    = $deliveryId ? 'received' : 'pending';
         $acceptedAt     = $deliveryId ? now() : null;
 

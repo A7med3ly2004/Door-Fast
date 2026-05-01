@@ -49,11 +49,12 @@ class ReportController extends Controller
 
         // KPIs
         $kpis = [
-            'total'     => $orders->count(),
-            'delivered' => $orders->where('status', 'delivered')->count(),
-            'cancelled' => $orders->where('status', 'cancelled')->count(),
-            'pending'   => $orders->where('status', 'pending')->count(),
-            'revenue'   => $orders->where('status', 'delivered')->sum('total'),
+            'total'         => $orders->count(),
+            'delivered'     => $orders->where('status', 'delivered')->count(),
+            'cancelled'     => $orders->where('status', 'cancelled')->count(),
+            'pending'       => $orders->where('status', 'pending')->count(),
+            'revenue'       => $orders->where('status', 'delivered')->sum('total'),
+            'delivery_fees' => $orders->where('status', 'delivered')->sum('delivery_fee'),
         ];
 
         // Daily chart
@@ -76,7 +77,7 @@ class ReportController extends Controller
             $total     = $group->count();
             $completed = $group->where('status', 'delivered')->count();
             return [
-                'name'        => $first->delivery?->name ?? 'غير مُعيَّن',
+                'name'        => $first->delivery?->name ?? 'غير معين',
                 'total'       => $total,
                 'completed'   => $completed,
                 'cancelled'   => $group->where('status', 'cancelled')->count(),
@@ -88,7 +89,7 @@ class ReportController extends Controller
         $ccBreakdown = $orders->groupBy('callcenter_id')->map(function ($group) {
             $first = $group->first();
             return [
-                'name'      => $first->callcenter?->name ?? 'غير مُعيَّن',
+                'name'      => $first->callcenter?->name ?? 'غير معين',
                 'total'     => $group->count(),
                 'cancelled' => $group->where('status', 'cancelled')->count(),
                 'revenue'   => $group->where('status', 'delivered')->sum('total'),

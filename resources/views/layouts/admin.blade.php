@@ -302,6 +302,10 @@
             color: #fff;
         }
 
+        .btn-success:hover {
+            transform: translateY(-2px);
+        }
+
         .btn-sm {
             padding: 5px 12px;
             font-size: 15px;
@@ -658,6 +662,13 @@
         .kpi-card.cyan {
             border-color: var(--cyan) !important;
             background: rgba(8, 145, 178, 0.15) !important;
+            border-right-width: 5px !important;
+            border-right-style: solid !important;
+        }
+        
+        .kpi-card.purple {
+            border-color: #9333ea !important;
+            background: rgba(147, 51, 234, 0.15) !important;
             border-right-width: 5px !important;
             border-right-style: solid !important;
         }
@@ -1022,8 +1033,10 @@
             <span class="topbar-title" id="spa-page-title">@yield('page-title', 'لوحة التحكم')</span>
             <div class="topbar-right">
                 <div style="position:relative;cursor:pointer" onclick="toggleNotifPanel()">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        style="width: 24px; height: 24px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                     <span id="notif-count-badge" style="display:none;position:absolute;top:-4px;left:-4px;background:var(--red);color:#fff;
                                font-size:10px;font-weight:800;min-width:18px;height:18px;line-height:18px;
@@ -1088,8 +1101,8 @@
         function statusBadge(status) {
             const map = {
                 pending: ['باقي', 'badge-yellow'],
-                received: ['مُسلَّم للمندوب', 'badge-blue'],
-                delivered: ['مُوصَّل', 'badge-green'],
+                received: ['مسلم للمندوب', 'badge-blue'],
+                delivered: ['تم التوصيل', 'badge-green'],
                 cancelled: ['ملغي', 'badge-red'],
             };
             const [label, cls] = map[status] || [status, 'badge-gray'];
@@ -1274,7 +1287,7 @@
 
     {{-- ── Shared Excel Export Utility ── --}}
     <script>
-        window.exportToExcel = function(data, columns, filename, sheetName) {
+        window.exportToExcel = function (data, columns, filename, sheetName) {
             // columns = [{header: 'اسم العمود', key: 'مفتاح البيانات', width: 20}]
             const wb = XLSX.utils.book_new();
             const wsData = [columns.map(c => c.header)];

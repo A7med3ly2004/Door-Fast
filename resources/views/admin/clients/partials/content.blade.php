@@ -12,6 +12,7 @@
         <input type="date" id="filter-to" class="form-control">
         <button class="btn btn-primary" onclick="loadClients(1)">🔍 بحث</button>
         <button class="btn btn-secondary" onclick="resetFilters()">↺ إعادة</button>
+        <button class="btn btn-success" onclick="exportClientsExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
     </div>
 </div>
 
@@ -326,4 +327,36 @@
     }
 
     loadClients(1);
+
+    async function exportClientsExcel() {
+        try {
+            const { data } = await axios.get('{{ route("admin.clients.index") }}', {
+                params: { ...getFilters(), page: 1, per_page: 9999 },
+                headers: { 'Accept': 'application/json' }
+            });
+
+            const columns = [
+                { header: 'الاسم',           key: 'name',              width: 22 },
+                { header: 'الكود',           key: 'code',              width: 12 },
+                { header: 'الهاتف',          key: 'phone',             width: 16 },
+                { header: 'هاتف 2',          key: 'phone2',            width: 16 },
+                { header: 'عدد العناوين',    key: 'addresses_count',   width: 14 },
+                { header: 'عدد الطلبات',     key: 'orders_count',      width: 14 },
+                { header: 'إجمالي الإنفاق', key: 'orders_sum_total',  width: 16 },
+                { header: 'تاريخ التسجيل',  key: 'created_at',        width: 20 },
+            ];
+
+            const rows = data.data.map(c => ({
+                ...c,
+                created_at: c.created_at ? new Date(c.created_at).toLocaleDateString('ar-EG') : '—',
+                orders_sum_total: parseFloat(c.orders_sum_total || 0).toFixed(2),
+            }));
+
+            exportToExcel(rows, columns, 'clients-' + new Date().toISOString().slice(0, 10), 'العملاء');
+            showSuccess('تم تصدير العملاء بنجاح');
+        } catch (e) {
+            showError('حدث خطأ');
+            console.error(e);
+        }
+    }
 </script>

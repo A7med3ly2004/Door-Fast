@@ -443,7 +443,7 @@
                 تم التوصيل
             </a>
             <a href="{{ route('delivery.wallet.index') }}" class="menu-item" data-spa="true">
-                💰 كشف حسابي
+                كشف حسابي
             </a>
         </div>
     </div>

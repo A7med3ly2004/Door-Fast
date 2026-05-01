@@ -242,8 +242,8 @@ class TreasuryTransaction extends Model
             'settlement'       => 'تسوية',
             'dain'             => 'صرف مديونية',
             'discount'         => 'خصم',
-            'pay_to_user'      => 'دفع لموظف',
-            'receive_from_user'=> 'استلام من موظف',
+            'pay_to_user'      => 'إيصال صرف',
+            'receive_from_user'=> 'إيصال استلام',
             default            => $this->type,
         };
     }

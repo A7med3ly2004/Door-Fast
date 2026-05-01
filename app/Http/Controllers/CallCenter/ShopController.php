@@ -54,6 +54,11 @@ class ShopController extends Controller
             'notes'            => 'nullable|string',
         ]);
 
+        // Auto-generate code if not provided
+        if (empty($data['code'])) {
+            $data['code'] = Shop::generateCode();
+        }
+
         $shop = Shop::create(array_merge($data, ['is_active' => true]));
 
         ActivityLog::log(

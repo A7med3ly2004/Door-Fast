@@ -53,8 +53,11 @@
 .btn-dmc-view { width: 100%; padding: 12px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700; font-size: 15px; margin-top: 10px; cursor: pointer; transition: 0.2s; }
 .btn-dmc-view:hover { background: #e2e8f0; }
 
-.btn-invoice { width: 100%; padding: 14px; background-color: #25d366; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.3s; }
+.btn-invoice { flex: 1; padding: 14px; background-color: #25d366; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: 0.3s; }
 .btn-invoice:hover { background-color: #128c7e; }
+
+.btn-chat { flex: 1; padding: 14px; background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: 0.3s; }
+.btn-chat:hover { background-color: #e2e8f0; }
 
 /* MOBILE RESPONSIVE */
 @media (max-width: 768px) {
@@ -65,12 +68,12 @@
     .desktop-only { display: none !important; }
     .mobile-only { display: flex !important; }
 
-    .modal-overlay { padding: 0; }
-    .modal-content { max-width: 100%; max-height: 100vh; border-radius: 0; height: 100vh; }
-    .modal-header { border-radius: 0; padding: 14px 16px; }
+    .modal-overlay { padding: 16px; align-items: flex-end; }
+    .modal-content { max-width: 100%; max-height: 85vh; border-radius: 16px; height: auto; }
+    .modal-header { border-radius: 16px 16px 0 0; padding: 14px 16px; }
     .modal-header h3 { font-size: 16px; }
     .modal-body { padding: 16px; }
-    .modal-footer { padding: 14px 16px; border-radius: 0; }
+    .modal-footer { padding: 14px 16px; border-radius: 0 0 16px 16px; }
 }
 </style>
 
@@ -253,9 +256,13 @@ function openDeliveredModal(orderId) {
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn-invoice" onclick="sendInvoice(${order.id}, '${order.order_number}', '${order.send_to_phone || clientPhone}')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                إرسال الفاتورة للعميل
+            <button class="btn-chat" onclick="openWhatsAppChat('${order.send_to_phone || clientPhone}', '${order.order_number}')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                محادثة العميل
+            </button>
+            <button class="btn-invoice" onclick="sendInvoice(${order.id}, '${order.order_number}', '${order.send_to_phone || clientPhone}', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                مشاركة الفاتورة
             </button>
         </div>
     `;
@@ -271,30 +278,78 @@ document.getElementById('delivered-details-modal').addEventListener('click', fun
     if (e.target === this) closeDeliveredModal();
 });
 
-function sendInvoice(orderId, orderNumber, phoneStr) {
+async function sendInvoice(orderId, orderNumber, phoneStr, btnElement) {
     var dlUrl = '/reserve/orders/' + orderId + '/invoice/download';
     
+    if (btnElement) {
+        btnElement.dataset.originalHtml = btnElement.innerHTML;
+        btnElement.innerHTML = 'جاري التجهيز... ⏳';
+        btnElement.style.pointerEvents = 'none';
+        btnElement.style.opacity = '0.7';
+    }
+
+    try {
+        const response = await fetch(dlUrl);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const blob = await response.blob();
+        
+        const fileName = 'Invoice_ORD-' + orderNumber + '.pdf';
+        const file = new File([blob], fileName, { type: 'application/pdf' });
+        
+        var msg = "مرحباً،\n\nإليك فاتورة طلبك رقم #" + orderNumber + " من DoorFast 📦.\n\nشكراً لثقتك بنا!";
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'فاتورة طلب #' + orderNumber,
+                text: msg
+            });
+        } else {
+            // Fallback for browsers that do not support Web Share API with files
+            var link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            if (!window.isSecureContext) {
+                alert('عفواً، ميزة المشاركة المباشرة تتطلب اتصالاً آمناً (HTTPS). نظراً لأنك تختبر على (HTTP)، المتصفح يمنع هذه الميزة أمنياً. لذلك تم تحميل الفاتورة في جهازك كحل بديل.');
+            } else {
+                alert('متصفحك لا يدعم المشاركة المباشرة للملفات. تم تحميل الفاتورة في جهازك.');
+            }
+        }
+    } catch (error) {
+        console.error('Error sharing invoice:', error);
+        if (error.name === 'NotAllowedError') {
+             alert('تم منع المشاركة. قد يكون السبب أن المتصفح يحتاج لضغطك المباشر بدون تأخير التحميل.');
+             // Fallback
+             var link = document.createElement('a');
+             link.href = window.URL.createObjectURL(file);
+             link.download = fileName;
+             document.body.appendChild(link);
+             link.click();
+             document.body.removeChild(link);
+        } else if (error.name !== 'AbortError') {
+             alert('حدث خطأ أثناء محاولة المشاركة.');
+        }
+    } finally {
+        if (btnElement) {
+            btnElement.innerHTML = btnElement.dataset.originalHtml;
+            btnElement.style.pointerEvents = 'auto';
+            btnElement.style.opacity = '1';
+        }
+    }
+}
+
+function openWhatsAppChat(phoneStr, orderNumber) {
     var phoneNum = phoneStr.replace(/[^0-9]/g, '');
     if(phoneNum.length > 0 && !phoneNum.startsWith('20')) {
         if(phoneNum.length == 11) phoneNum = '20' + phoneNum;
     }
-    
-    var msg = "مرحباً،\n\nإليك فاتورة طلبك رقم #" + orderNumber + " من DoorFast 📦.\n\nشكراً لثقتك بنا!";
+    var msg = "مرحباً،\nأنا مندوب DoorFast 📦 بخصوص طلبك رقم #" + orderNumber + ".";
     var encodedMsg = encodeURIComponent(msg);
-    var waLink = "https://wa.me/" + phoneNum + "?text=" + encodedMsg;
-    
-    // First trigger PDF download
-    var link = document.createElement('a');
-    link.href = dlUrl;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Then redirect to WA after a small delay
-    setTimeout(() => {
-        window.location.href = waLink;
-    }, 1000);
+    window.open("https://wa.me/" + phoneNum + "?text=" + encodedMsg, '_blank');
 }
 
 function onShiftStarted() { fetchDeliveredOrders(); }

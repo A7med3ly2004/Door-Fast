@@ -70,15 +70,15 @@
     .info-value { font-size: 14px; }
     .btn-view { padding: 12px; font-size: 15px; }
     /* MOBILE: full-screen modal on phones */
-    .modal-overlay { padding: 0; }
-    .modal-content { max-width: 100%; max-height: 100vh; border-radius: 0; height: 100vh; }
-    .modal-header { border-radius: 0; padding: 14px 16px; }
+    .modal-overlay { padding: 16px; align-items: flex-end; }
+    .modal-content { max-width: 100%; max-height: 85vh; border-radius: 16px; height: auto; }
+    .modal-header { border-radius: 16px 16px 0 0; padding: 14px 16px; }
     .modal-header h3 { font-size: 16px; }
     .modal-body { padding: 16px; }
     .items-list { padding: 12px; font-size: 13px; }
     .money-total { font-size: 20px; padding: 12px; }
     /* MOBILE: stack modal footer buttons vertically */
-    .modal-footer { flex-direction: column-reverse; padding: 14px 16px; border-radius: 0; }
+    .modal-footer { flex-direction: column-reverse; padding: 14px 16px; border-radius: 0 0 16px 16px; }
     .modal-footer .btn-deliver,
     .modal-footer .btn-cancel { flex: unset; width: 100%; }
     .btn-deliver { font-size: 16px; padding: 14px; }

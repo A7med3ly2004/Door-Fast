@@ -118,11 +118,32 @@ class OrderController extends Controller
         $total = $itemsTotal + $deliveryFee - $discountAmt;
 
         // 4. Create order
+        $isDeliveryChosen = !empty($request->delivery_id);
+        
+        if ($isDeliveryChosen) {
+            $maxActive = (int) Setting::get('max_active_orders', 3);
+            list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+            $activeCount = Order::where('delivery_id', $request->delivery_id)
+                ->where('status', 'received')
+                ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
+                ->count();
+
+            if ($activeCount >= $maxActive) {
+                return response()->json([
+                    'errors' => ['delivery_id' => ["عذراً، المندوب لديه الحد الأقصى من الطلبات قيد التوصيل ({$maxActive} طلبات)."]]
+                ], 422);
+            }
+        }
+
+        $orderStatus = $isDeliveryChosen ? 'received' : 'pending';
+        $acceptedAt = $isDeliveryChosen ? Carbon::now() : null;
+        $sentToDeliveryAt = $isDeliveryChosen ? Carbon::now() : Carbon::now()->addMinutes($holdMinutes);
+
         $order = Order::create([
             'order_number' => Order::generateNumber(),
             'callcenter_id' => auth()->id(),
             'delivery_id' => $request->delivery_id ?: null,
-            'is_delivery_chosen' => !empty($request->delivery_id),
+            'is_delivery_chosen' => $isDeliveryChosen,
             'client_id' => $client->id,
             'client_address' => $request->client_address,
             'send_to_phone' => $request->send_to_phone ?: null,
@@ -132,8 +153,9 @@ class OrderController extends Controller
             'discount' => $discount,
             'discount_type' => $discountType,
             'total' => $total,
-            'status' => 'pending',
-            'sent_to_delivery_at' => Carbon::now()->addMinutes($holdMinutes),
+            'status' => $orderStatus,
+            'accepted_at' => $acceptedAt,
+            'sent_to_delivery_at' => $sentToDeliveryAt,
         ]);
 
         // Handle send-to customer creation
@@ -199,7 +221,7 @@ class OrderController extends Controller
 
         // 7. Fire event
         try {
-            event(new OrderStatusUpdated(['order_id' => $order->id, 'status' => 'pending', 'order_number' => $order->order_number]));
+            event(new OrderStatusUpdated(['order_id' => $order->id, 'status' => $orderStatus, 'order_number' => $order->order_number, 'delivery_id' => $order->delivery_id]));
         } catch (\Throwable) {
         }
 
@@ -417,9 +439,29 @@ class OrderController extends Controller
         $deliveryFee = (float) ($request->delivery_fee ?? 0);
         $total = $itemsTotal + $deliveryFee - $discountAmt;
 
+        $isDeliveryChosen = !empty($request->delivery_id);
+        
+        if ($isDeliveryChosen && $order->delivery_id != $request->delivery_id) {
+            $maxActive = (int) Setting::get('max_active_orders', 3);
+            list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+            $activeCount = Order::where('delivery_id', $request->delivery_id)
+                ->where('status', 'received')
+                ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
+                ->count();
+
+            if ($activeCount >= $maxActive) {
+                return response()->json([
+                    'errors' => ['delivery_id' => ["عذراً، المندوب لديه الحد الأقصى من الطلبات قيد التوصيل ({$maxActive} طلبات)."]]
+                ], 422);
+            }
+        }
+
+        $orderStatus = $isDeliveryChosen ? 'received' : 'pending';
+        $acceptedAt = $isDeliveryChosen ? Carbon::now() : null;
+
         $order->update([
             'delivery_id' => $request->delivery_id ?: null,
-            'is_delivery_chosen' => !empty($request->delivery_id),
+            'is_delivery_chosen' => $isDeliveryChosen,
             'client_address' => $request->client_address,
             'send_to_phone' => $request->send_to_phone ?: null,
             'send_to_address' => $request->send_to_address ?: null,
@@ -428,6 +470,8 @@ class OrderController extends Controller
             'discount' => $discount,
             'discount_type' => $discountType,
             'total' => $total,
+            'status' => $orderStatus,
+            'accepted_at' => $acceptedAt,
         ]);
 
         $order->items()->delete();

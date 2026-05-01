@@ -11,7 +11,7 @@
 <div class="card" style="margin-bottom:20px"><div class="card-title">طلباتي آخر 7 أيام</div><div class="chart-container" style="height:220px"><canvas id="chartBar"></canvas></div></div>
 <div class="card"><div class="card-title">أداء المناديب (من طلباتي)</div>
     <div class="table-wrap"><table>
-        <thead><tr><th style="text-align: center;">المندوب</th><th style="text-align: center;">إجمالي الطلبات</th><th style="text-align: center;">مُوصَّل</th><th style="text-align: center;">ملغي</th><th style="text-align: center;">الإيراد</th></tr></thead>
+        <thead><tr><th style="text-align: center;">المندوب</th><th style="text-align: center;">إجمالي الطلبات</th><th style="text-align: center;">تم التوصيل</th><th style="text-align: center;">ملغي</th><th style="text-align: center;">الإيراد</th></tr></thead>
         <tbody id="delivery-body"><tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted)">جاري التحميل...</td></tr></tbody>
     </table></div>
 </div>

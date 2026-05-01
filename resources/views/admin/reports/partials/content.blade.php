@@ -3,8 +3,9 @@
     <h2>التقارير</h2>
     <div style="display:flex;gap:10px;align-items:center;">
         <a id="export-pdf-btn" href="{{ route('admin.reports.export-pdf') }}" target="_blank" class="btn btn-danger"
-            data-no-spa>📄 تصدير PDF</a>
-        <button class="btn btn-success btn-sm" id="export-excel-btn" onclick="exportReportExcel()" style="background:#217346;color:#fff;" data-no-spa>تصدير Excel</button>
+            data-no-spa>تصدير PDF</a>
+        <button class="btn btn-success btn-sm" id="export-excel-btn" onclick="exportReportExcel()"
+            style="background:#217346;color:#fff;" data-no-spa>تصدير Excel</button>
     </div>
 </div>
 <div class="card" style="margin-bottom:20px">
@@ -23,13 +24,13 @@
         <button class="btn btn-secondary" onclick="resetReport()">إعادة</button>
     </div>
 </div>
-<div class="kpi-grid" style="margin-bottom:20px">
+<div class="kpi-grid" style="margin-bottom:20px; grid-template-columns: repeat(3, 1fr);">
     <div class="kpi-card cyan">
         <div class="kpi-label">إجمالي الطلبات</div>
         <div class="kpi-value" id="r-total">—</div>
     </div>
     <div class="kpi-card green">
-        <div class="kpi-label">مُوصَّلة</div>
+        <div class="kpi-label">تم التوصيلة</div>
         <div class="kpi-value" id="r-delivered">—</div>
     </div>
     <div class="kpi-card red">
@@ -43,6 +44,11 @@
     <div class="kpi-card blue">
         <div class="kpi-label">الإيرادات</div>
         <div class="kpi-value" id="r-revenue">—</div>
+        <div class="kpi-sub">ج.م</div>
+    </div>
+    <div class="kpi-card blue">
+        <div class="kpi-label">إجمالي التوصيل</div>
+        <div class="kpi-value" id="r-delivery-fees">—</div>
         <div class="kpi-sub">ج.م</div>
     </div>
 </div>
@@ -59,7 +65,7 @@
                     <tr>
                         <th style="text-align: right;">المندوب</th>
                         <th style="text-align: center;">الطلبات</th>
-                        <th style="text-align: center;">مُوصَّلة</th>
+                        <th style="text-align: center;">تم التوصيلة</th>
                         <th style="text-align: center;">الإيراد</th>
                     </tr>
                 </thead>
@@ -128,7 +134,8 @@
             document.getElementById('r-delivered').textContent = data.kpis.delivered;
             document.getElementById('r-cancelled').textContent = data.kpis.cancelled;
             document.getElementById('r-pending').textContent = data.kpis.pending;
-            document.getElementById('r-revenue').textContent = parseFloat(data.kpis.revenue).toLocaleString('ar-EG', { minimumFractionDigits: 2 });
+            document.getElementById('r-revenue').textContent = parseFloat(data.kpis.revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('r-delivery-fees').textContent = parseFloat(data.kpis.delivery_fees).toLocaleString('en-US', { minimumFractionDigits: 2 });
             var ctx = document.getElementById('reportChart').getContext('2d');
             if (reportChart) reportChart.destroy();
             reportChart = new Chart(ctx, {
@@ -153,28 +160,28 @@
     window.exportReportExcel = async function () {
         try {
             const filters = {
-                from:          document.getElementById('filter-from').value,
-                to:            document.getElementById('filter-to').value,
-                delivery_id:   document.getElementById('filter-delivery').value,
+                from: document.getElementById('filter-from').value,
+                to: document.getElementById('filter-to').value,
+                delivery_id: document.getElementById('filter-delivery').value,
                 callcenter_id: document.getElementById('filter-callcenter').value,
-                page:          1,
-                per_page:      9999,
+                page: 1,
+                per_page: 9999,
             };
             const { data } = await axios.get('{{ route("admin.reports.data") }}', { params: filters });
 
             const columns = [
-                { header: 'رقم الطلب',   key: 'order_number', width: 18 },
-                { header: 'التاريخ',      key: 'created_at',   width: 20 },
-                { header: 'العميل',       key: 'client',       width: 22 },
-                { header: 'كول سنتر',   key: 'callcenter',   width: 18 },
-                { header: 'المندوب',      key: 'delivery',     width: 18 },
+                { header: 'رقم الطلب', key: 'order_number', width: 18 },
+                { header: 'التاريخ', key: 'created_at', width: 20 },
+                { header: 'العميل', key: 'client', width: 22 },
+                { header: 'كول سنتر', key: 'callcenter', width: 18 },
+                { header: 'المندوب', key: 'delivery', width: 18 },
                 { header: 'رسوم التوصيل', key: 'delivery_fee', width: 16 },
-                { header: 'الخصم',        key: 'discount',     width: 12 },
-                { header: 'الإجمالي',     key: 'total',        width: 14 },
-                { header: 'الحالة',       key: 'status',       width: 14 },
+                { header: 'الخصم', key: 'discount', width: 12 },
+                { header: 'الإجمالي', key: 'total', width: 14 },
+                { header: 'الحالة', key: 'status', width: 14 },
             ];
 
-            const statusMap = { pending: 'باقي', received: 'مُسلَّم', delivered: 'مُوصَّل', cancelled: 'ملغي' };
+            const statusMap = { pending: 'باقي', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
             const rows = data.orders.map(o => ({
                 ...o,
                 created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',

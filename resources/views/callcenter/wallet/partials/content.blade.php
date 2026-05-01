@@ -42,17 +42,17 @@ resources/views/callcenter/wallet/partials/content.blade.php
 <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px;">
     <div class="kpi-card green">
         <div class="kpi-label">إجمالي المدين (دخل)</div>
-        <div class="kpi-value" id="w-kpi-debit" style="color:var(--success);">—</div>
+        <div class="kpi-value" id="w-kpi-debit">—</div>
         <div class="kpi-sub">ج.م</div>
     </div>
     <div class="kpi-card red">
         <div class="kpi-label">إجمالي الدائن (خروج)</div>
-        <div class="kpi-value" id="w-kpi-credit" style="color:var(--red);">—</div>
+        <div class="kpi-value" id="w-kpi-credit">—</div>
         <div class="kpi-sub">ج.م</div>
     </div>
     <div class="kpi-card yellow">
         <div class="kpi-label">الرصيد الحالي</div>
-        <div class="kpi-value" id="w-kpi-balance" style="color:var(--yellow);">—</div>
+        <div class="kpi-value" id="w-kpi-balance">—</div>
         <div class="kpi-sub">ج.م</div>
     </div>
 </div>

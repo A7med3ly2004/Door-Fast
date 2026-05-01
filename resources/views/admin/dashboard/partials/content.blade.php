@@ -15,7 +15,7 @@
         <div class="kpi-value" id="v-orders">—</div>
     </div>
     <div class="kpi-card green" id="kpi-completed">
-        <div class="kpi-label">مُوصَّلة اليوم</div>
+        <div class="kpi-label">تم التوصيلة اليوم</div>
         <div class="kpi-value" id="v-completed">—</div>
     </div>
     <div class="kpi-card yellow">
@@ -91,7 +91,7 @@
                 <thead>
                     <tr>
                         <th>المندوب</th>
-                        <th>مُوصَّلة</th>
+                        <th>تم التوصيلة</th>
                         <th>الإيراد</th>
                     </tr>
                 </thead>
@@ -138,8 +138,8 @@
             document.getElementById('v-completed').textContent = k.completed_today;
             document.getElementById('v-pending').textContent = k.pending_today;
             document.getElementById('v-cancelled').textContent = k.cancelled_today;
-            document.getElementById('v-daily').textContent = parseFloat(k.daily_revenue).toLocaleString('ar-EG', { minimumFractionDigits: 2 });
-            document.getElementById('v-monthly').textContent = parseFloat(k.monthly_revenue).toLocaleString('ar-EG', { minimumFractionDigits: 2 });
+            document.getElementById('v-daily').textContent = parseFloat(k.daily_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('v-monthly').textContent = parseFloat(k.monthly_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
             document.getElementById('v-clients').textContent = k.total_clients;
 
             var labels = data.chart.map(d => d.label);
@@ -162,12 +162,12 @@
             var dpBody = document.getElementById('delivery-perf-body');
             dpBody.innerHTML = data.delivery_perf.length === 0
                 ? '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">لا بيانات اليوم</td></tr>'
-                : data.delivery_perf.map(d => `<tr><td>${d.name}</td><td><span class="badge badge-green">${d.completed}</span></td><td>${parseFloat(d.revenue).toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج</td></tr>`).join('');
+                : data.delivery_perf.map(d => `<tr><td>${d.name}</td><td><span class="badge badge-green">${d.completed}</span></td><td>${parseFloat(d.revenue).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td></tr>`).join('');
 
             var ccBody = document.getElementById('cc-perf-body');
             ccBody.innerHTML = data.cc_perf.length === 0
                 ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">لا بيانات اليوم</td></tr>'
-                : data.cc_perf.map(cc => `<tr><td>${cc.name}</td><td>${cc.created}</td><td><span class="badge badge-red">${cc.cancelled}</span></td><td>${parseFloat(cc.revenue).toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج</td></tr>`).join('');
+                : data.cc_perf.map(cc => `<tr><td>${cc.name}</td><td>${cc.created}</td><td><span class="badge badge-red">${cc.cancelled}</span></td><td>${parseFloat(cc.revenue).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td></tr>`).join('');
         } catch (e) { console.error('stats error', e); }
     }
 
@@ -182,7 +182,7 @@
                 : data.orders.map(o => `<tr>
                 <td style="text-align:center"><strong>${o.order_number}</strong></td>
                 <td style="text-align:center">${o.client}</td><td style="text-align:center">${o.callcenter}</td><td style="text-align:center">${o.delivery}</td>
-                <td style="text-align:center">${parseFloat(o.total).toLocaleString('ar-EG', { minimumFractionDigits: 2 })} ج</td>
+                <td style="text-align:center">${parseFloat(o.total).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td>
                 <td style="text-align:center">${statusBadge(o.status)}</td>
                 <td style="text-align:center;color:var(--text-muted);font-size:12px">${formatDate(o.created_at)}</td>
             </tr>`).join('');

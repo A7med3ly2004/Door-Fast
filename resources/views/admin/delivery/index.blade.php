@@ -3,7 +3,7 @@
 @section('page-title', 'إدارة المناديب')
 
 @section('content')
-    <div class="section-header" style="justify-content: flex-end;margin-bottom: 0;">
+    <div class="section-header" style="justify-content: flex-end; gap: 8px; margin-bottom: 0;">
         <button class="btn btn-success" onclick="exportDeliveryExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
         <button class="btn btn-primary" onclick="openModal('modal-add-delivery')">إضافة مندوب</button>
     </div>
@@ -24,7 +24,7 @@
                         <th style="text-align: center;">النوع</th>
                         <th style="text-align: center;">حالة المندوب</th>
                         <th style="text-align: center;">حالة الوردية</th>
-                        <th style="text-align: center;">مُوصَّلة اليوم</th>
+                        <th style="text-align: center;">تم التوصيلة اليوم</th>
                         <th style="text-align: center;">إيراد اليوم</th>
                         <th style="text-align: center;">إجراءات</th>
                     </tr>
@@ -90,7 +90,7 @@
                         <th style="text-align: center;">النوع</th>
                         <th style="text-align: center;">حالة المندوب</th>
                         <th style="text-align: center;">حالة الوردية</th>
-                        <th style="text-align: center;">مُوصَّلة اليوم</th>
+                        <th style="text-align: center;">تم التوصيلة اليوم</th>
                         <th style="text-align: center;">إيراد اليوم</th>
                         <th style="text-align: center;">إجراءات</th>
                     </tr>

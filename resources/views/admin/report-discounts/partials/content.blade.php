@@ -198,7 +198,7 @@
 
                 // KPIs
                 document.getElementById('dc-kpi-orders').textContent = d.kpis.total_orders;
-                document.getElementById('dc-kpi-discounts').textContent = parseFloat(d.kpis.total_discounts).toLocaleString('ar-EG', { minimumFractionDigits: 2 });
+                document.getElementById('dc-kpi-discounts').textContent = parseFloat(d.kpis.total_discounts).toLocaleString('en-US', { minimumFractionDigits: 2 });
                 document.getElementById('dc-count-label').textContent = d.totals.count + ' طلب';
 
                 // Rows
@@ -329,7 +329,7 @@
         // ─── Helpers ──────────────────────────────────────────────
         function fmtDate(str) {
             if (!str) return '—';
-            return new Date(str).toLocaleDateString('ar-EG', {
+            return new Date(str).toLocaleDateString('en-US', {
                 year: 'numeric', month: 'short', day: 'numeric',
                 hour: '2-digit', minute: '2-digit'
             });
@@ -343,7 +343,7 @@
         function statusBadge(s) {
             var map = {
                 pending: ['badge badge-yellow', 'معلق'],
-                received: ['badge', 'مستلم'],
+                received: ['badge', 'مسلم للمندوب'],
                 delivered: ['badge badge-green', 'تم التوصيل'],
                 cancelled: ['badge badge-red', 'ملغي'],
             };

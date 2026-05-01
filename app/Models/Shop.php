@@ -34,4 +34,11 @@ class Shop extends Model
     {
         return $query->where('is_active', true);
     }
+
+    public static function generateCode(): string
+    {
+        $last = static::latest('id')->value('id') ?? 0;
+        $next = $last + 1;
+        return 'SHP-' . str_pad($next, 3, '0', STR_PAD_LEFT);
+    }
 }

@@ -3,41 +3,50 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivityLog;
 use App\Models\Client;
-use App\Models\ClientAddress;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\OrderLog;
+use App\Models\Setting;
 use App\Models\Shop;
 use App\Models\User;
-use App\Events\OrderStatusUpdated;
-use Carbon\Carbon;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
+/**
+ * AdminOrderController
+ *
+ * المسؤوليات:
+ *  1. Validation — هنا فقط.
+ *  2. استدعاء OrderService بالـ validated data (adminMode: true).
+ *  3. بناء الـ Response.
+ *
+ * يشترك مع CC\OrderController في نفس OrderService::createOrder().
+ */
 class AdminOrderController extends Controller
 {
+    public function __construct(private OrderService $orderService) {}
+
     // ─── Helpers ───────────────────────────────────────────────────
 
     /** Active deliveries for the order-create dropdown. */
     private function activeDeliveries(): array
     {
-        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+        [$startOfToday, $endOfToday] = Setting::businessDayRange();
         $businessDate = $startOfToday->toDateString();
 
         return User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->where('is_active', true)
             ->whereHas('shifts', fn($q) => $q->where('is_active', true)->where('date', $businessDate))
-            ->withCount(['deliveryOrders as orders_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])->whereIn('status', ['received', 'delivered'])])
+            ->withCount(['deliveryOrders as orders_today' => fn($q) => $q
+                ->whereBetween('created_at', [$startOfToday, $endOfToday])
+                ->whereIn('status', ['received', 'delivered'])])
             ->with(['shifts' => fn($q) => $q->where('is_active', true)->where('date', $businessDate)])
             ->get()
             ->map(fn($d) => [
-                'id'         => $d->id,
-                'name'       => $d->name,
-                'role'       => $d->role,
-                'orders_today' => $d->orders_today,
-                'max_orders' => $d->shifts->first()?->max_orders ?? 10,
+                'id'          => $d->id,
+                'name'        => $d->name,
+                'role'        => $d->role,
+                'orders_today'=> $d->orders_today,
+                'max_orders'  => $d->shifts->first()?->max_orders ?? 10,
             ])
             ->toArray();
     }
@@ -46,8 +55,8 @@ class AdminOrderController extends Controller
 
     public function create()
     {
-        $shops       = Shop::where('is_active', true)->orderBy('name')->get(['id', 'name']);
-        $deliveries  = $this->activeDeliveries();
+        $shops      = Shop::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $deliveries = $this->activeDeliveries();
 
         if (request()->header('X-SPA-Navigation')) {
             return response()->json([
@@ -63,102 +72,60 @@ class AdminOrderController extends Controller
     /**
      * Store a new admin order.
      *
-     * Differences from CC store:
-     *  - callcenter_id = null  (marks as admin order)
-     *  - sent_to_delivery_at = now()  (no hold period — admin order)
-     *  - delivery_id is OPTIONAL:
-     *      * with delivery → status='received', goes to received orders
-     *      * without delivery → status='pending', goes to new orders for all
+     * Differences from CC store handled transparently by OrderService (adminMode: true):
+     *  - callcenter_id = null
+     *  - sent_to_delivery_at = now() always (no hold period)
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'phone'             => 'required|string',
-            'code'              => 'required|string',
-            'name'              => 'required|string',
-            'client_address'    => 'required|string',
-            'delivery_id'       => 'nullable|exists:users,id',
-            'items'             => 'required|array|min:1',
-            'items.*.item_name' => 'required|string',
-            'items.*.quantity'  => 'required|numeric|min:0.01',
-            'items.*.unit_price'=> 'required|numeric|min:0',
+        // ── Validation (Controller responsibility) ──────────────────
+        $validated = $request->validate([
+            'phone'              => 'required|string',
+            'code'               => 'required|string',
+            'name'               => 'required|string',
+            'client_address'     => 'required|string',
+            'delivery_id'        => 'nullable|exists:users,id',
+            'items'              => 'required|array|min:1',
+            'items.*.item_name'  => 'required|string',
+            'items.*.quantity'   => 'required|numeric|min:0.01',
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.shop_id'    => 'nullable|exists:shops,id',
         ], [
-            'phone.required'      => 'رقم الهاتف مطلوب',
-            'code.required'       => 'الكود مطلوب',
-            'name.required'       => 'اسم العميل مطلوب',
+            'phone.required'          => 'رقم الهاتف مطلوب',
+            'code.required'           => 'الكود مطلوب',
+            'name.required'           => 'اسم العميل مطلوب',
             'client_address.required' => 'العنوان مطلوب',
-            'delivery_id.exists'  => 'المندوب غير موجود',
-            'items.required'      => 'يجب إضافة صنف واحد على الأقل',
+            'delivery_id.exists'      => 'المندوب غير موجود',
+            'items.required'          => 'يجب إضافة صنف واحد على الأقل',
         ]);
 
-        // Determine if a delivery agent was chosen
-        $deliveryId = $request->filled('delivery_id') ? $request->delivery_id : null;
+        // Merge remaining fields the service needs
+        $data = array_merge($validated, $request->only([
+            'phone2', 'is_new_address',
+            'discount', 'discount_type', 'delivery_fee',
+            'notes', 'send_to_phone', 'send_to_address',
+            'send_to_name', 'send_to_code', 'send_to_client_id',
+        ]));
 
-        // 1. Find or create client
-        $client = Client::where('phone', $request->phone)->first();
-        $addressWarning = null;
-
-        if ($client) {
-            $update = [];
-            if ($request->name && $client->name !== $request->name) $update['name'] = $request->name;
-            if ($request->phone2 && $client->phone2 !== $request->phone2) $update['phone2'] = $request->phone2;
-            if ($update) $client->update($update);
-        } else {
-            $client = Client::create([
-                'phone'  => $request->phone,
-                'phone2' => $request->phone2,
-                'name'   => $request->name,
-                'code'   => $request->code,
-            ]);
-
-            ActivityLog::log(
-                event: 'client.created_inline',
-                description: 'تم إضافة عميل جديد أثناء الفاتورة (أدمن) — ' . $client->name,
-                subjectType: 'client',
-                subjectId: $client->id,
-                subjectLabel: $client->name,
-                properties: ['client_code' => $client->code, 'phone' => $client->phone]
-            );
-        }
-
-        // 2. Handle new address
-        if ($request->is_new_address && $request->client_address) {
-            $addrCount = $client->addresses()->count();
-            if ($addrCount < 5) {
-                ClientAddress::create([
-                    'client_id'  => $client->id,
-                    'address'    => $request->client_address,
-                    'is_default' => $addrCount === 0,
-                ]);
-            } else {
-                $addressWarning = 'تم حفظ الطلب لكن لم يُضَف العنوان — العميل لديه 5 عناوين بالفعل';
-            }
-        }
-
-        // 3. Compute totals
-        $items       = $request->items;
+        // ── Discount guard (HTTP-layer) ──────────────────────────────
+        $items       = $data['items'];
         $itemsTotal  = collect($items)->sum(fn($i) => $i['quantity'] * $i['unit_price']);
-        $discount    = (float) ($request->discount ?? 0);
-        $discountType= $request->discount_type ?? 'amount';
+        $discount    = (float) ($data['discount'] ?? 0);
+        $discountType= $data['discount_type'] ?? 'amount';
         $discountAmt = $discountType === 'percent' ? ($itemsTotal * $discount / 100) : $discount;
+        $maxDiscountPercent = (float) Setting::get('max_discount_percentage', 50);
 
-        $maxDiscountPercent = (float) \App\Models\Setting::get('max_discount_percentage', 50);
         if ($itemsTotal > 0 && ($discountAmt / $itemsTotal * 100) > $maxDiscountPercent) {
             return response()->json([
-                'errors' => ['discount' => ["عذراً، نسبة الخصم لا يمكن أن تتجاوز {$maxDiscountPercent}% من إجمالي الأصناف. (أقصى قيمة: " . round($itemsTotal * $maxDiscountPercent / 100, 2) . " ج)"]]
+                'errors' => ['discount' => ["عذراً، نسبة الخصم لا يمكن أن تتجاوز {$maxDiscountPercent}% من إجمالي الأصناف. (أقصى قيمة: " . round($itemsTotal * $maxDiscountPercent / 100, 2) . " ج)"]],
             ], 422);
         }
 
-        $deliveryFee = (float) ($request->delivery_fee ?? 0);
-        $total       = $itemsTotal + $deliveryFee - $discountAmt;
-
-        // 4. Create order
-        // If delivery chosen → received immediately (goes to their received orders)
-        // If no delivery   → pending (goes to new orders pool for all agents)
-        
+        // ── Delivery capacity guard ──────────────────────────────────
+        $deliveryId = $request->filled('delivery_id') ? $request->delivery_id : null;
         if ($deliveryId) {
-            $maxActive = (int) \App\Models\Setting::get('max_active_orders', 3);
-            list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+            $maxActive = (int) Setting::get('max_active_orders', 3);
+            [$startOfToday, $endOfToday] = Setting::businessDayRange();
             $activeCount = Order::where('delivery_id', $deliveryId)
                 ->where('status', 'received')
                 ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
@@ -166,109 +133,13 @@ class AdminOrderController extends Controller
 
             if ($activeCount >= $maxActive) {
                 return response()->json([
-                    'errors' => ['delivery_id' => ["عذراً، المندوب لديه الحد الأقصى من الطلبات قيد التوصيل ({$maxActive} طلبات)."]]
+                    'errors' => ['delivery_id' => ["عذراً، المندوب لديه الحد الأقصى من الطلبات قيد التوصيل ({$maxActive} طلبات)."]],
                 ], 422);
             }
         }
 
-        $orderStatus    = $deliveryId ? 'received' : 'pending';
-        $acceptedAt     = $deliveryId ? now() : null;
-
-        $order = Order::create([
-            'order_number'       => Order::generateNumber(),
-            'callcenter_id'      => null,           // ← admin order marker
-            'delivery_id'        => $deliveryId,
-            'is_delivery_chosen' => (bool) $deliveryId,
-            'client_id'          => $client->id,
-            'client_address'     => $request->client_address,
-            'send_to_phone'      => $request->send_to_phone ?: null,
-            'send_to_address'    => $request->send_to_address ?: null,
-            'notes'              => $request->notes,
-            'delivery_fee'       => $deliveryFee,
-            'discount'           => $discount,
-            'discount_type'      => $discountType,
-            'total'              => $total,
-            'status'             => $orderStatus,
-            'sent_to_delivery_at'=> now(),          // ← always now (admin = no hold)
-            'accepted_at'        => $acceptedAt,
-        ]);
-
-        // Handle send-to customer creation
-        if ($request->filled('send_to_phone') && !$request->filled('send_to_client_id')) {
-            $sendToClient = \App\Models\Client::firstOrCreate(
-                ['phone' => $request->send_to_phone],
-                [
-                    'name'  => $request->send_to_name ?: 'Unnamed',
-                    'code'  => $request->send_to_code ?: \App\Models\Client::generateCode(),
-                    'phone2'=> null,
-                ]
-            );
-            if ($sendToClient->wasRecentlyCreated) {
-                $sendToClient->addresses()->create([
-                    'address'    => $request->send_to_address ?? '',
-                    'is_default' => true,
-                ]);
-                \App\Models\ActivityLog::log(
-                    event: 'client.created_sendto',
-                    description: 'تم إضافة عميل الإرسال إليه تلقائياً — ' . $sendToClient->name,
-                    subjectType: 'client', subjectId: $sendToClient->id,
-                    subjectLabel: $sendToClient->name,
-                    properties: ['phone' => $sendToClient->phone, 'code' => $sendToClient->code]
-                );
-            }
-        }
-
-        // 5. Create items
-        foreach ($items as $item) {
-            if (empty($item['item_name'])) continue;
-            OrderItem::create([
-                'order_id'   => $order->id,
-                'shop_id'    => $item['shop_id'] ?: null,
-                'item_name'  => $item['item_name'],
-                'quantity'   => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'total'      => $item['quantity'] * $item['unit_price'],
-            ]);
-        }
-
-        // 6. Log
-        $logAction = $deliveryId
-            ? 'إنشاء طلب مباشر من الأدمن — تم تحديد مندوب'
-            : 'إنشاء طلب من الأدمن — بدون مندوب (طلبات جديدة)';
-
-        OrderLog::create([
-            'order_id' => $order->id,
-            'user_id'  => auth()->id(),
-            'action'   => $logAction,
-            'notes'    => 'بواسطة: ' . auth()->user()->name,
-        ]);
-
-        ActivityLog::log(
-            event: 'order.created_admin',
-            description: $deliveryId ? 'تم إنشاء طلب من الأدمن مع تحديد مندوب' : 'تم إنشاء طلب من الأدمن بدون مندوب',
-            subjectType: 'order',
-            subjectId: $order->id,
-            subjectLabel: $order->order_number,
-            properties: [
-                'order_number' => $order->order_number,
-                'client_name'  => $client->name,
-                'client_code'  => $client->code,
-                'total'        => $order->total,
-                'delivery_id'  => $order->delivery_id,
-            ]
-        );
-
-        // 7. Broadcast
-        // - With delivery: notify that specific agent (received)
-        // - Without delivery: broadcast as pending so all agents' new-orders pages refresh
-        try {
-            event(new OrderStatusUpdated([
-                'order_id'     => $order->id,
-                'status'       => $orderStatus,
-                'order_number' => $order->order_number,
-                'delivery_id'  => $order->delivery_id,
-            ]));
-        } catch (\Throwable) {}
+        // ── Delegate to service (adminMode: true = callcenter_id null, no hold) ─
+        $result = $this->orderService->createOrder($data, callcenterId: null, adminMode: true);
 
         $successMsg = $deliveryId
             ? 'تم إرسال الطلب مباشرة للمندوب المحدد'
@@ -276,14 +147,14 @@ class AdminOrderController extends Controller
 
         return response()->json([
             'success'      => true,
-            'order_number' => $order->order_number,
+            'order_number' => $result['order']->order_number,
             'message'      => $successMsg,
             'has_delivery' => (bool) $deliveryId,
-            'warning'      => $addressWarning,
+            'warning'      => $result['addressWarning'],
         ]);
     }
 
-    // ─── Client Search (reuse CC logic) ──────────────────────────
+    // ─── Client Search ────────────────────────────────────────────
 
     public function searchClient(Request $request)
     {
@@ -312,5 +183,4 @@ class AdminOrderController extends Controller
             ]),
         ]);
     }
-
 }

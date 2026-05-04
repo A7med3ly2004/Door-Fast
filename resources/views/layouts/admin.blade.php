@@ -17,6 +17,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+    {{-- TomSelect for searchable selects --}}
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
     <style>
         :root {
             --yellow: #f59e0b;
@@ -44,6 +48,36 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+        }
+
+        /* ── Custom Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+            transition: background 0.2s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #334155 transparent;
         }
 
         body {
@@ -166,7 +200,7 @@
             justify-content: space-between;
             position: sticky;
             top: 0;
-            z-index: 50;
+            z-index: 200;
         }
 
         .topbar-title {
@@ -350,7 +384,7 @@
 
         tbody td {
             padding: 12px 16px;
-            font-size: 17px;
+            font-size: 14px;
             border-bottom: 1px solid var(--border);
             vertical-align: middle;
         }
@@ -368,7 +402,7 @@
             display: inline-block;
             padding: 3px 10px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 700;
         }
 
@@ -397,6 +431,11 @@
             color: #475569;
         }
 
+        .badge-cyan {
+            background-color: #c8f4ffff;
+            color: var(--cyan);
+        }
+
         /* ── Forms ── */
         .form-group {
             margin-bottom: 16px;
@@ -408,6 +447,7 @@
             font-weight: 700;
             color: var(--text-muted);
             margin-bottom: 6px;
+            margin-right: 10px;
         }
 
         .form-control {
@@ -427,6 +467,109 @@
             border-color: var(--yellow);
         }
 
+        /* Tailwind-like utilities for custom dropdowns */
+        .relative {
+            position: relative;
+        }
+
+        .absolute {
+            position: absolute;
+        }
+
+        .top-full {
+            top: 100%;
+        }
+
+        .right-0 {
+            right: 0;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .opacity-0 {
+            opacity: 0;
+        }
+
+        .invisible {
+            visibility: hidden;
+        }
+
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+
+        .group:hover .group-hover\:opacity-100 {
+            opacity: 1 !important;
+        }
+
+        .group:hover .group-hover\:visible {
+            visibility: visible !important;
+        }
+
+        .bg-white\/80 {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .backdrop-blur {
+            /* backdrop-filter removed: causes GPU scroll jank */
+        }
+
+        .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .rounded-md {
+            border-radius: 0.375rem;
+        }
+
+        .overflow-hidden {
+            overflow: hidden;
+        }
+
+        .overflow-y-auto {
+            overflow-y: auto;
+        }
+
+        .mt-1 {
+            margin-top: 0.25rem;
+        }
+
+        .px-3 {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+
+        .py-2 {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        .hover\:bg-green-50:hover {
+            background-color: #f0fdf4 !important;
+        }
+
+        .hover\:text-green-700:hover {
+            color: #801515ff !important;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+        }
+
+        .text-gray-800 {
+            color: #1f2937;
+        }
+
+        .transition-colors {
+            transition: background-color 0.2s, color 0.2s;
+        }
+
         .form-select {
             width: 100%;
             background: var(--input-bg);
@@ -437,6 +580,56 @@
             font-family: 'Cairo', sans-serif;
             font-size: 13px;
             outline: none;
+        }
+
+        /* ── Tom Select Overrides ── */
+        .ts-wrapper.form-select {
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
+        .ts-control {
+            background: var(--input-bg) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+            padding: 7px 12px !important;
+            color: var(--text) !important;
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            box-shadow: none !important;
+            min-height: 38px;
+        }
+
+        .ts-control>input {
+            color: var(--text) !important;
+        }
+
+        .ts-dropdown {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text) !important;
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+            margin-top: 4px;
+        }
+
+        .ts-dropdown .option {
+            padding: 8px 12px;
+        }
+
+        .ts-dropdown .option:hover,
+        .ts-dropdown .option.active {
+            background: var(--border) !important;
+            color: var(--text) !important;
+        }
+
+        .ts-wrapper.single .ts-control:after {
+            border-color: var(--text-muted) transparent transparent transparent !important;
         }
 
         .form-row {
@@ -621,7 +814,8 @@
             padding: 18px;
             position: relative;
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            will-change: transform;
         }
 
         .kpi-card.red {
@@ -665,7 +859,7 @@
             border-right-width: 5px !important;
             border-right-style: solid !important;
         }
-        
+
         .kpi-card.purple {
             border-color: #9333ea !important;
             background: rgba(147, 51, 234, 0.15) !important;
@@ -1213,13 +1407,13 @@
         });
     </script>
 
-    <div id="notif-panel" style="display:none;position:fixed;top:64px;left:0;width:360px;max-height:80vh;
+    <div id="notif-panel" style="display:none;position:fixed;top:64px;left:10px;width:400px;max-height:80vh;
          overflow-y:auto;background:var(--card-bg);border:1px solid var(--border);border-radius:0 0 16px 16px;
          z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.4);">
         <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
             <strong>التنبيهات</strong>
             <button onclick="markAllRead()" class="btn btn-sm btn-secondary"
-                style="border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;padding:4px 8px;font-size:11px;">تحديد
+                style="border:1px solid var(--border);border-radius:6px;background:none;background-color: #bd3434;cursor:pointer;padding:4px 8px;font-size:11px;">تحديد
                 كمقروء</button>
         </div>
         <div id="notif-list" style="padding:8px 0;"></div>
@@ -1248,10 +1442,21 @@
                 }
                 list.innerHTML = res.data.items.map(function (n) {
                     var bgColor = n.is_read ? 'transparent' : 'rgba(245,158,11,0.08)';
-                    var icon = n.type === 'cancelled' ? '❌' : n.type === 'delayed_delivery' ? '⏱️' : '⚠️';
+                    var icon;
+                    if (n.type === 'cancelled') {
+                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#dc2626" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6"/></svg>';
+                    } else if (n.type === 'delayed_delivery') {
+                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>';
+                    } else {
+                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
+                    }
                     return '<div style="padding:12px 18px;border-bottom:1px solid var(--border);background:' + bgColor + '">' +
-                        '<div style="font-size:13px;font-weight:600">' + icon + ' ' + n.message + '</div>' +
-                        '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + new Date(n.created_at).toLocaleString("ar-EG") + '</div>' +
+                        '<div style="display:flex;align-items:flex-start;gap:10px">' +
+                        icon +
+                        '<div style="flex:1">' +
+                        '<div style="font-size:13px;font-weight:600;line-height:1.4">' + n.message + '</div>' +
+                        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">' + new Date(n.created_at).toLocaleString("ar-EG") + '</div>' +
+                        '</div></div>' +
                         '</div>';
                 }).join('');
             } catch (e) { console.error(e); }
@@ -1281,8 +1486,24 @@
             });
         }
 
-        // Initial badge count
-        axios.get('/admin/notifications/count').then(function (r) { _notifCount = r.data.count; updateNotifBadge(); }).catch(e => console.error(e));
+        // ── Polling: refresh badge count every 30s ──
+        function _refreshNotifCount() {
+            axios.get('/admin/notifications/count')
+                .then(function (r) {
+                    var prev = _notifCount;
+                    _notifCount = r.data.count;
+                    updateNotifBadge();
+                    // إذا جاءت إشعارات جديدة والبانل مفتوح — حدّث القائمة
+                    if (_notifCount > prev && _notifOpen) loadNotifications();
+                })
+                .catch(function (e) { console.warn('notif-poll error', e); });
+        }
+
+        // جلب أولي فوري عند تحميل الصفحة
+        _refreshNotifCount();
+
+        // ثم كل 30 ثانية
+        setInterval(_refreshNotifCount, 30000);
     </script>
 
     {{-- ── Shared Excel Export Utility ── --}}
@@ -1304,6 +1525,18 @@
             });
             XLSX.utils.book_append_sheet(wb, ws, sheetName || 'Sheet1');
             XLSX.writeFile(wb, filename + '.xlsx');
+        };
+
+        window.selectDropdown = function (inputId, value, label) {
+            var input = document.getElementById(inputId);
+            if (input) {
+                input.value = value;
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            var labelEl = document.getElementById('label-' + inputId);
+            if (labelEl) {
+                labelEl.innerText = label;
+            }
         };
     </script>
 

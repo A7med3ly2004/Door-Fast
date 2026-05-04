@@ -67,7 +67,7 @@
                 <tr>
                     <th style="text-align:center">رقم الطلب</th>
                     <th style="text-align:center">العميل</th>
-                    <th style="text-align:center">كول سنتر</th>
+                    <th style="text-align:center">تم انشاؤه</th>
                     <th style="text-align:center">المندوب</th>
                     <th style="text-align:center">الإجمالي</th>
                     <th style="text-align:center">الحالة</th>
@@ -181,7 +181,12 @@
                 ? '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">لا طلبات</td></tr>'
                 : data.orders.map(o => `<tr>
                 <td style="text-align:center"><strong>${o.order_number}</strong></td>
-                <td style="text-align:center">${o.client}</td><td style="text-align:center">${o.callcenter}</td><td style="text-align:center">${o.delivery}</td>
+                <td style="text-align:center">${o.client}</td>
+                <td style="text-align:center">
+                    ${o.creator_name}
+                    ${o.creator_type === 'admin' ? '<div class="kpi-sub" style="font-size:11px;margin-top:2px;color:var(--info)">أدمن</div>' : ''}
+                </td>
+                <td style="text-align:center">${o.delivery}</td>
                 <td style="text-align:center">${parseFloat(o.total).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td>
                 <td style="text-align:center">${statusBadge(o.status)}</td>
                 <td style="text-align:center;color:var(--text-muted);font-size:12px">${formatDate(o.created_at)}</td>

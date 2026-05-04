@@ -10,14 +10,25 @@
 
     {{-- Filters --}}
     <div class="card" style="margin-bottom:20px">
-        <div class="filter-bar">
-            <input type="text" id="filter-search" class="form-control" placeholder="بحث بالاسم / الهاتف / الكود"
-                style="min-width:220px">
-            <input type="date" id="filter-from" class="form-control">
-            <input type="date" id="filter-to" class="form-control">
-            <button class="btn btn-primary" onclick="loadClients(1)">بحث</button>
-            <button class="btn btn-secondary" onclick="resetFilters()">إعادة</button>
-            <button class="btn btn-success" onclick="exportClientsExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
+        <div class="filter-bar" style="align-items: flex-end;">
+            <div>
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث</label>
+                <input type="text" id="filter-search" class="form-control" placeholder="بحث بالاسم / الهاتف / الكود"
+                    style="min-width:220px">
+            </div>
+            <div>
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ من</label>
+                <input type="date" id="filter-from" class="form-control">
+            </div>
+            <div>
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ إلى</label>
+                <input type="date" id="filter-to" class="form-control">
+            </div>
+            <div style="display: flex; gap: 5px; margin-bottom: 2px;">
+                <button class="btn btn-primary" onclick="loadClients(1)">بحث</button>
+                <button class="btn btn-secondary" onclick="resetFilters()">إعادة</button>
+                <button class="btn btn-success" onclick="exportClientsExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
+            </div>
         </div>
     </div>
 

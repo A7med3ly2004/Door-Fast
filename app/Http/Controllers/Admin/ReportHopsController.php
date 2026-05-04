@@ -73,7 +73,7 @@ class ReportHopsController extends Controller
         if ($shopId) {
             $shop       = Shop::findOrFail($shopId);
             $shopOrders = Order::whereHas('items', fn($q) => $q->where('shop_id', $shopId))
-                ->with(['client', 'delivery', 'callcenter', 'items' => fn($q) => $q->where('shop_id', $shopId)])
+                ->with(['client', 'delivery', 'callcenter', 'admin', 'items' => fn($q) => $q->where('shop_id', $shopId)])
                 ->whereBetween('created_at', [$from, $to])
                 ->latest()
                 ->get();
@@ -116,7 +116,8 @@ class ReportHopsController extends Controller
                 'created_at'   => $o->created_at->toIso8601String(),
                 'client'       => $o->client?->name ?? '—',
                 'delivery'     => $o->delivery?->name ?? '—',
-                'callcenter'   => $o->callcenter?->name ?? '—',
+                'callcenter'   => $o->callcenter?->name ?? $o->admin?->name ?? '—',
+                'creator_type' => $o->callcenter ? 'cc' : ($o->admin ? 'admin' : null),
                 'items_count'  => $o->items->count(),
                 'total'        => $o->items->sum('total'),
                 'status'       => $o->status,

@@ -46,27 +46,37 @@
         {{-- Delivery agent --}}
         <div>
             <label class="form-label">المندوب</label>
-            <select class="form-select" id="al-delivery-id" onchange="alApplyFilters()">
-                <option value="">كل المناديب</option>
-                @foreach($deliveryUsers as $u)
-                    <option value="{{ $u->id }}" {{ ($filters['delivery_id'] ?? '') == $u->id ? 'selected' : '' }}>
-                        {{ $u->name }}
-                    </option>
-                @endforeach
-            </select>
+            <div class="relative group" style="min-width:160px; z-index: 50;">
+                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="label-al-delivery-id">كل المناديب</span>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <input type="hidden" id="al-delivery-id" value="{{ $filters['delivery_id'] ?? '' }}" onchange="alApplyFilters()">
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-delivery-id', '', 'كل المناديب')">كل المناديب</div>
+                    @foreach($deliveryUsers as $u)
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-delivery-id', '{{ $u->id }}', '{{ $u->name }}')">{{ $u->name }}</div>
+                    @endforeach
+                </div>
+            </div>
         </div>
 
         {{-- Callcenter --}}
         <div>
             <label class="form-label">الكول سنتر</label>
-            <select class="form-select" id="al-callcenter-id" onchange="alApplyFilters()">
-                <option value="">كل الكول سنتر</option>
-                @foreach($callcenterUsers as $u)
-                    <option value="{{ $u->id }}" {{ ($filters['callcenter_id'] ?? '') == $u->id ? 'selected' : '' }}>
-                        {{ $u->name }}
-                    </option>
-                @endforeach
-            </select>
+            <div class="relative group" style="min-width:160px; z-index: 40;">
+                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="label-al-callcenter-id">كل الكول سنتر</span>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <input type="hidden" id="al-callcenter-id" value="{{ $filters['callcenter_id'] ?? '' }}" onchange="alApplyFilters()">
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-callcenter-id', '', 'كل الكول سنتر')">كل الكول سنتر</div>
+                    @foreach($callcenterUsers as $u)
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-callcenter-id', '{{ $u->id }}', '{{ $u->name }}')">{{ $u->name }}</div>
+                    @endforeach
+                </div>
+            </div>
         </div>
 
         {{-- Reset --}}
@@ -292,6 +302,8 @@
         ['al-delivery-id','al-callcenter-id'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
+            const lbl = document.getElementById('label-' + id);
+            if (lbl) lbl.innerText = id === 'al-delivery-id' ? 'كل المناديب' : 'كل الكول سنتر';
         });
         alFetch(1);
     };

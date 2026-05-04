@@ -2,47 +2,14 @@
 
 namespace App\Http\Controllers\Delivery;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Base\BaseDeliveryShiftController;
 use App\Models\ActivityLog;
 use App\Models\Shift;
-use App\Models\Setting;
-use Carbon\Carbon;
 
-class ShiftController extends Controller
+class ShiftController extends BaseDeliveryShiftController
 {
-    public function start(Request $request)
+    protected function afterStart(mixed $delivery, Shift $shift): void
     {
-        $delivery = auth()->user();
-
-        // ── Guard: CC must have enabled the shift first ───────────
-        if (! $delivery->cc_shift_enabled) {
-            return response()->json([
-                'success' => false,
-                'message' => 'لا يمكنك بدء الوردية. يجب على الكول سنتر تفعيل وردية أولاً.',
-            ], 403);
-        }
-
-        $businessDate = \App\Models\Setting::businessDayRange()[0]->toDateString();
-
-        // Ensure no active shift today
-        $existingShift = Shift::where('delivery_id', $delivery->id)
-            ->where('date', $businessDate)
-            ->where('is_active', true)
-            ->first();
-
-        if ($existingShift) {
-            return response()->json(['success' => false, 'message' => 'لديك شفت نشط بالفعل']);
-        }
-
-
-        Shift::create([
-            'delivery_id' => $delivery->id,
-            'date'        => $businessDate,
-            'started_at'  => Carbon::now(),
-            'is_active'   => true,
-        ]);
-
         ActivityLog::log(
             event: 'shift.started',
             description: 'تم بدء وردية لمندوب — ' . $delivery->name,
@@ -51,53 +18,16 @@ class ShiftController extends Controller
             subjectLabel: $delivery->name,
             properties: []
         );
-
-        return response()->json(['success' => true, 'message' => 'تم بدء الوردية بنجاح']);
     }
 
-    public function end(Request $request)
+    protected function afterEnd(mixed $delivery, Shift $shift): void
     {
-        $delivery = auth()->user();
-        $businessDate = \App\Models\Setting::businessDayRange()[0]->toDateString();
-
-        $shift = Shift::where('delivery_id', $delivery->id)
-            ->where('date', $businessDate)
-            ->where('is_active', true)
-            ->first();
-
-        if ($shift) {
-            $shift->update([
-                'ended_at' => Carbon::now(),
-                'is_active' => false,
-            ]);
-
-            ActivityLog::log(
-                event: 'shift.ended',
-                description: 'تم إنهاء وردية لمندوب — ' . $delivery->name,
-                subjectType: 'shift',
-                subjectId: $delivery->id,
-                subjectLabel: $delivery->name
-            );
-
-            return response()->json(['success' => true]);
-        }
-
-        return response()->json(['success' => false, 'message' => 'لا يوجد شفت نشط لإنهائه']);
-    }
-
-    public function status(Request $request)
-    {
-        $delivery = auth()->user();
-        $businessDate = \App\Models\Setting::businessDayRange()[0]->toDateString();
-
-        $shift = Shift::where('delivery_id', $delivery->id)
-            ->where('date', $businessDate)
-            ->where('is_active', true)
-            ->first();
-
-        return response()->json([
-            'is_active' => $shift ? true : false,
-            'started_at' => $shift ? $shift->started_at : null
-        ]);
+        ActivityLog::log(
+            event: 'shift.ended',
+            description: 'تم إنهاء وردية لمندوب — ' . $delivery->name,
+            subjectType: 'shift',
+            subjectId: $delivery->id,
+            subjectLabel: $delivery->name
+        );
     }
 }

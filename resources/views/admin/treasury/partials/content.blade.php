@@ -43,12 +43,13 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             صرف مصروف
         </button>
         <button class="btn" onclick="openPayToUserModal()" style="background:#0891b2;color:#fff;">
-           ايصال دفع نقدي   
+            ايصال دفع نقدي
         </button>
         <button class="btn" onclick="openReceiveFromUserModal()" style="background:#059669;color:#fff;">
             ايصال استلام نقدي
         </button>
-        <button class="btn btn-success btn-sm" onclick="exportTreasuryExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
+        <button class="btn btn-success btn-sm" onclick="exportTreasuryExcel()"
+            style="background:#217346;color:#fff;">تصدير Excel</button>
     </div>
 </div>
 
@@ -56,30 +57,30 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
     <div class="kpi-card yellow">
         <div class="kpi-label">الرصيد الحالي للخزينة</div>
-        <div class="kpi-value" id="kpi-balance" style="color:var(--yellow)">{{ $initialStats['balance'] }}</div>
+        <div class="kpi-value" id="kpi-balance">{{ $initialStats['balance'] }}</div>
         <div class="kpi-sub">ج.م</div>
     </div>
     <div class="kpi-card red">
         <div class="kpi-label">إجمالي المصروفات</div>
-        <div class="kpi-value" id="kpi-expenses" style="color:var(--red)">{{ $initialStats['total_expenses'] }}</div>
+        <div class="kpi-value" id="kpi-expenses">{{ $initialStats['total_expenses'] }}</div>
         <div class="kpi-sub">ج.م</div>
     </div>
     <div class="kpi-card cyan">
         <div class="kpi-label">اجمالي ايصالات الدفع</div>
-        <div class="kpi-value" id="kpi-payment-receipts" style="color: #0891b2">
+        <div class="kpi-value" id="kpi-payment-receipts">
             {{ $initialStats['payment_receipts'] }}
         </div>
         <div class="kpi-sub">ج.م</div>
     </div>
     <div class="kpi-card green">
         <div class="kpi-label">اجمالي ايصالات الاستلام</div>
-        <div class="kpi-value" id="kpi-receiving-receipts" style="color:var(--success)">
+        <div class="kpi-value" id="kpi-receiving-receipts">
             {{ $initialStats['receiving_receipts'] }}
         </div>
         <div class="kpi-sub">ج.م</div>
     </div>
-    
-    
+
+
 </div>
 
 {{-- ── Filter Bar ────────────────────────────────────────────────── --}}
@@ -95,12 +96,19 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         </div>
         <div>
             <div class="form-label" style="margin-bottom:4px;">نوع المعاملة</div>
-            <select id="filter-type" class="form-select">
-                <option value="">الكل</option>
-                <option value="expense" {{ ($filters['type'] ?? '') === 'expense' ? 'selected' : '' }}>مصروف</option>
-                <option value="pay_to_user" {{ ($filters['type'] ?? '') === 'pay_to_user' ? 'selected' : '' }}>ايصال دفع</option>
-                <option value="receive_from_user" {{ ($filters['type'] ?? '') === 'receive_from_user' ? 'selected' : '' }}>ايصال استلام </option>
-            </select>
+            <div class="relative group" style="min-width:160px; z-index: 50;">
+                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="label-filter-type">الكل</span>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <input type="hidden" id="filter-type" value="{{ $filters['type'] ?? '' }}">
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-type', '', 'الكل')">الكل</div>
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-type', 'expense', 'مصروف')">مصروف</div>
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-type', 'pay_to_user', 'ايصال دفع')">ايصال دفع</div>
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-type', 'receive_from_user', 'ايصال استلام')">ايصال استلام</div>
+                </div>
+            </div>
         </div>
         <div style="display:flex;gap:8px;align-self:flex-end;">
             <button class="btn btn-primary" onclick="applyFilters()">بحث</button>
@@ -147,7 +155,8 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                         </td>
                         <td style="font-weight:700;text-align:center;">{{ number_format((float) $tx->amount, 2) }}</td>
                         <td style="text-align:right;">{{ $tx->recordedBy?->name ?? '—' }}</td>
-                        <td style="color:var(--text-muted);font-size:12px;text-align:right;">{{ Str::limit($tx->note ?? '—', 40) }}</td>
+                        <td style="color:var(--text-muted);font-size:12px;text-align:right;">
+                            {{ Str::limit($tx->note ?? '—', 40) }}</td>
                         <td style="text-align:center;">
                             <div style="display:flex;gap:6px;justify-content:center;">
                                 <button class="btn btn-sm btn-info" onclick="showDetail({{ $tx->id }})"
@@ -394,11 +403,11 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                         @endforeach
                     </optgroup>
                     @if(isset($admins) && $admins->count())
-                    <optgroup label="مديرين">
-                        @foreach($admins as $adm)
-                            <option value="{{ $adm->id }}">{{ $adm->name }}</option>
-                        @endforeach
-                    </optgroup>
+                        <optgroup label="مديرين">
+                            @foreach($admins as $adm)
+                                <option value="{{ $adm->id }}">{{ $adm->name }}</option>
+                            @endforeach
+                        </optgroup>
                     @endif
                 </select>
                 <div class="error-text" id="pay-user-id-error"></div>
@@ -460,20 +469,23 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                     <option value="" data-balance="0">بدون موظف (لحساب الإدارة)...</option>
                     <optgroup label="كول سينتر">
                         @foreach($callcenters as $cc)
-                            <option value="{{ $cc->id }}" data-balance="{{ $cc->wallet->balance ?? 0 }}">{{ $cc->name }}</option>
+                            <option value="{{ $cc->id }}" data-balance="{{ $cc->wallet->balance ?? 0 }}">{{ $cc->name }}
+                            </option>
                         @endforeach
                     </optgroup>
                     <optgroup label="مناديب">
                         @foreach($deliveries as $d)
-                            <option value="{{ $d->id }}" data-balance="{{ $d->wallet->balance ?? 0 }}">{{ $d->name }}</option>
+                            <option value="{{ $d->id }}" data-balance="{{ $d->wallet->balance ?? 0 }}">{{ $d->name }}
+                            </option>
                         @endforeach
                     </optgroup>
                     @if(isset($admins) && $admins->count())
-                    <optgroup label="مديرين">
-                        @foreach($admins as $adm)
-                            <option value="{{ $adm->id }}" data-balance="{{ $adm->wallet->balance ?? 0 }}">{{ $adm->name }}</option>
-                        @endforeach
-                    </optgroup>
+                        <optgroup label="مديرين">
+                            @foreach($admins as $adm)
+                                <option value="{{ $adm->id }}" data-balance="{{ $adm->wallet->balance ?? 0 }}">{{ $adm->name }}
+                                </option>
+                            @endforeach
+                        </optgroup>
                     @endif
                 </select>
                 <div class="error-text" id="receive-user-id-error"></div>
@@ -877,6 +889,8 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             document.getElementById('filter-from').value = '';
             document.getElementById('filter-to').value = '';
             document.getElementById('filter-type').value = '';
+            const typeLabel = document.getElementById('label-filter-type');
+            if (typeLabel) typeLabel.innerText = 'الكل';
             applyFilters();
         };
 
@@ -902,8 +916,8 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             if (tx.type === 'income') { badgeBg = 'rgba(34,197,94,.15)'; badgeText = 'var(--success)'; badgeLabel = 'إيراد'; }
             else if (tx.type === 'expense') { badgeBg = 'rgba(220,38,38,.12)'; badgeText = 'var(--red)'; badgeLabel = 'مصروف'; }
             else if (tx.type === 'settlement') { badgeBg = 'rgba(245,158,11,.15)'; badgeText = 'var(--yellow)'; badgeLabel = 'تسوية'; }
-            else if (tx.type === 'pay_to_user') { badgeBg = 'rgba(8,145,178,.15)'; badgeText = '#0891b2'; badgeLabel = 'دفع لموظف'; }
-            else if (tx.type === 'receive_from_user') { badgeBg = 'rgba(5,150,105,.15)'; badgeText = '#059669'; badgeLabel = 'استلام من موظف'; }
+            else if (tx.type === 'pay_to_user') { badgeBg = 'rgba(8,145,178,.15)'; badgeText = '#0891b2'; badgeLabel = 'ايصال صرف نقدى'; }
+            else if (tx.type === 'receive_from_user') { badgeBg = 'rgba(5,150,105,.15)'; badgeText = '#059669'; badgeLabel = 'ايصال استلام نقدى'; }
             else if (tx.type === 'dain') { badgeBg = 'rgba(79,70,229,.15)'; badgeText = 'var(--indigo)'; badgeLabel = 'دائن'; }
 
             const typeBadge = `<span style="background:${badgeBg};color:${badgeText};padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;">${badgeLabel}</span>`;
@@ -975,7 +989,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                         <div>
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">مُنشئ المعاملة (الموظف)</div>
                             <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px">
-                                <span style="width:20px;height:20px;background:var(--border);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${(tx.recorded_by||'').charAt(0)}</span>
+                                <span style="width:20px;height:20px;background:var(--border);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${(tx.recorded_by || '').charAt(0)}</span>
                                 ${escHtml(tx.recorded_by)}
                             </div>
                         </div>
@@ -1121,7 +1135,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             var select = document.getElementById('receive-user-id');
             var selectedOption = select.options[select.selectedIndex];
             var balance = selectedOption.getAttribute('data-balance');
-            
+
             if (balance && parseFloat(balance) > 0) {
                 document.getElementById('receive-amount').value = parseFloat(balance);
             } else {
@@ -1207,7 +1221,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         window.exportTreasuryExcel = async function () {
             try {
                 const from = document.getElementById('filter-from')?.value || '';
-                const to   = document.getElementById('filter-to')?.value   || '';
+                const to = document.getElementById('filter-to')?.value || '';
                 const type = document.getElementById('filter-type')?.value || '';
 
                 const { data } = await axios.get('/admin/treasury/data', {
@@ -1215,12 +1229,12 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                 });
 
                 const columns = [
-                    { header: 'رقم العملية', key: 'id',               width: 12 },
-                    { header: 'التاريخ',     key: 'transaction_date', width: 14 },
-                    { header: 'النوع',       key: 'type_label',       width: 16 },
-                    { header: 'المبلغ',      key: 'amount',           width: 14 },
-                    { header: 'بواسطة',     key: 'by_whom',          width: 22 },
-                    { header: 'ملاحظة',     key: 'note',             width: 30 },
+                    { header: 'رقم العملية', key: 'id', width: 12 },
+                    { header: 'التاريخ', key: 'transaction_date', width: 14 },
+                    { header: 'النوع', key: 'type_label', width: 16 },
+                    { header: 'المبلغ', key: 'amount', width: 14 },
+                    { header: 'بواسطة', key: 'by_whom', width: 22 },
+                    { header: 'ملاحظة', key: 'note', width: 30 },
                 ];
 
                 exportToExcel(data.data, columns, 'treasury-' + new Date().toISOString().slice(0, 10), 'الخزينة');

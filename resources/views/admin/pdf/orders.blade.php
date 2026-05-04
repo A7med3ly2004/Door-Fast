@@ -37,8 +37,9 @@
             <th style="text-align:center">الإجمالي</th>
             <th style="text-align:center">الخصم</th>
             <th style="text-align:center">توصيل</th>
+            <th style="text-align:center">اختيار المندوب</th>
             <th style="text-align:right">المندوب</th>
-            <th style="text-align:right">كول سنتر</th>
+            <th style="text-align:right">تم انشاؤه</th>
             <th style="text-align:right">العميل</th>
             <th style="text-align:center">التاريخ</th>
             <th style="text-align:center">رقم الطلب</th>
@@ -60,8 +61,9 @@
             <td style="text-align:center">{{ number_format($order->total, 2) }} ج</td>
             <td style="text-align:center">{{ number_format($order->discount, 2) }} ج</td>
             <td style="text-align:center">{{ number_format($order->delivery_fee, 2) }} ج</td>
+            <td style="text-align:center">{{ $order->is_delivery_chosen ? 'نعم' : '—' }}</td>
             <td style="text-align:right">{{ $order->delivery?->name ?? '—' }}</td>
-            <td style="text-align:right">{{ $order->callcenter?->name ?? '—' }}</td>
+            <td style="text-align:right">{{ $order->callcenter?->name ?? $order->admin?->name ?? '—' }}</td>
             <td style="text-align:right">{{ $order->client?->name ?? '—' }}</td>
             <td style="text-align:center">{{ $order->created_at->format('Y-m-d') }}</td>
             <td style="text-align:center">{{ $order->order_number }}</td>
@@ -74,7 +76,7 @@
             <td style="text-align:center">{{ number_format($orders->sum('total'), 2) }} ج</td>
             <td style="text-align:center">{{ number_format($orders->sum('discount'), 2) }} ج</td>
             <td style="text-align:center">{{ number_format($orders->sum('delivery_fee'), 2) }} ج</td>
-            <td colspan="5" style="text-align:right; padding-right:20px">الإجمالي ({{ $orders->count() }} طلب)</td>
+            <td colspan="6" style="text-align:right; padding-right:20px">الإجمالي ({{ $orders->count() }} طلب)</td>
         </tr>
     </tfoot>
 </table>

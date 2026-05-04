@@ -17,15 +17,16 @@ class OrderController extends Controller
         if ($request->header('X-SPA-Navigation')) {
             $deliveries   = User::where('role', 'delivery')->orderBy('name')->get(['id', 'name']);
             $callcenters  = User::where('role', 'callcenter')->orderBy('name')->get(['id', 'name']);
+            $admins       = User::where('role', 'admin')->orderBy('name')->get(['id', 'name']);
             return response()->json([
-                'html'       => view('admin.orders.partials.content', compact('deliveries', 'callcenters'))->render(),
+                'html'       => view('admin.orders.partials.content', compact('deliveries', 'callcenters', 'admins'))->render(),
                 'title'      => 'الطلبات',
                 'csrf_token' => csrf_token(),
             ]);
         }
 
         if ($request->ajax() || $request->wantsJson()) {
-            $query = Order::with(['client', 'callcenter', 'delivery', 'items.shop'])
+            $query = Order::with(['client', 'callcenter', 'admin', 'delivery', 'items.shop'])
                 ->withCount('items')
                 ->latest();
 
@@ -44,6 +45,9 @@ class OrderController extends Controller
             if ($request->filled('callcenter_id')) {
                 $query->where('callcenter_id', $request->callcenter_id);
             }
+            if ($request->filled('admin_id')) {
+                $query->where('admin_id', $request->admin_id);
+            }
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
@@ -59,7 +63,8 @@ class OrderController extends Controller
 
         $deliveries   = User::where('role', 'delivery')->orderBy('name')->get(['id', 'name']);
         $callcenters  = User::where('role', 'callcenter')->orderBy('name')->get(['id', 'name']);
-        return view('admin.orders.index', compact('deliveries', 'callcenters'));
+        $admins       = User::where('role', 'admin')->orderBy('name')->get(['id', 'name']);
+        return view('admin.orders.index', compact('deliveries', 'callcenters', 'admins'));
     }
 
     public function show($id)
@@ -140,13 +145,14 @@ class OrderController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $query = Order::with(['client', 'callcenter', 'delivery'])->latest();
+        $query = Order::with(['client', 'callcenter', 'admin', 'delivery'])->latest();
 
         if ($request->filled('status'))       $query->where('status', $request->status);
         if ($request->filled('from'))          $query->whereDate('created_at', '>=', $request->from);
         if ($request->filled('to'))            $query->whereDate('created_at', '<=', $request->to);
         if ($request->filled('delivery_id'))   $query->where('delivery_id', $request->delivery_id);
         if ($request->filled('callcenter_id')) $query->where('callcenter_id', $request->callcenter_id);
+        if ($request->filled('admin_id'))      $query->where('admin_id', $request->admin_id);
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {

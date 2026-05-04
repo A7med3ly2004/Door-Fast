@@ -6,12 +6,19 @@
     <div class="filter-bar" style="margin-bottom:0;">
         <div style="flex:1;min-width:200px;">
             <label class="form-label">المندوب <span style="color:var(--red)">*</span></label>
-            <select id="filter-delivery-id" class="form-select">
-                <option value="">اختر المندوب</option>
-                @foreach($deliveries as $d)
-                    <option value="{{ $d->id }}">{{ $d->name }}</option>
-                @endforeach
-            </select>
+            <div class="relative group" style="z-index: 50;">
+                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="label-filter-delivery-id">اختر المندوب</span>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <input type="hidden" id="filter-delivery-id" value="">
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-delivery-id', '', 'اختر المندوب')">اختر المندوب</div>
+                    @foreach($deliveries as $d)
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-delivery-id', '{{ $d->id }}', '{{ $d->name }}')">{{ $d->name }}</div>
+                    @endforeach
+                </div>
+            </div>
         </div>
         <div>
             <label class="form-label">من تاريخ (اختياري)</label>
@@ -114,7 +121,7 @@
                         <th style="text-align:center;">كود الطلب</th>
                         <th style="text-align:center;">التاريخ</th>
                         <th style="text-align:right;">العميل</th>
-                        <th style="text-align:center;">الكول سنتر</th>
+                        <th style="text-align:center;">تم انشاؤه</th>
                         <th style="text-align:center;">رسوم التوصيل</th>
                         <th style="text-align:center;">الخصم</th>
                         <th style="text-align:center;">الإجمالي</th>
@@ -233,12 +240,13 @@
             for (var i = 0; i < payload.data.length; i++) {
                 var order = payload.data[i];
                 var clientName = order.client ? esc(order.client.name) : '—';
-                var callcenterName = order.callcenter ? esc(order.callcenter.name) : '—';
+                var creatorName = order.callcenter ? esc(order.callcenter.name) : (order.admin ? esc(order.admin.name) : '—');
+                var creatorBadge = (order.admin && !order.callcenter) ? ' <span class="badge badge-blue" style="font-size:9px; padding:1px 4px;">أدمن</span>' : '';
                 rows += '<tr>'
                     + '<td style="color:var(--yellow);font-weight:700;text-align:center;">' + (order.order_number || ('#' + order.id)) + '</td>'
                     + '<td style="font-size:14px;text-align:center;">' + formatDate(order.created_at) + '</td>'
                     + '<td style="text-align:right;">' + clientName + '</td>'
-                    + '<td style="text-align:center;">' + callcenterName + '</td>'
+                    + '<td style="text-align:center;">' + creatorName + creatorBadge + '</td>'
                     + '<td style="text-align:center;">' + order.delivery_fee + ' ج.م</td>'
                     + '<td style="text-align:center;">' + order.discount + ' ج.م</td>'
                     + '<td style="font-weight:700;text-align:center;">' + order.total + ' ج.م</td>'
@@ -336,7 +344,7 @@
                 { header: 'رقم الطلب', key: 'order_number', width: 18 },
                 { header: 'التاريخ', key: 'created_at', width: 20 },
                 { header: 'العميل', key: 'client.name', width: 22 },
-                { header: 'كول سنتر', key: 'callcenter.name', width: 18 },
+                { header: 'تم انشاؤه', key: 'creator_name', width: 18 },
                 { header: 'رسوم التوصيل', key: 'delivery_fee', width: 16 },
                 { header: 'الخصم', key: 'discount', width: 12 },
                 { header: 'الإجمالي', key: 'total', width: 14 },
@@ -345,6 +353,7 @@
             const statusMap = { pending: 'باقي', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
             const rows = res.data.orders.data.map(o => ({
                 ...o,
+                creator_name: o.callcenter ? o.callcenter.name : (o.admin ? o.admin.name : '—'),
                 created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',
                 status: statusMap[o.status] || o.status,
             }));

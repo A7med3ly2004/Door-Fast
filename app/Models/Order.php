@@ -9,6 +9,7 @@ class Order extends Model
     protected $fillable = [
         'order_number',
         'callcenter_id',
+        'admin_id',
         'delivery_id',
         'is_delivery_chosen',
         'client_id',
@@ -42,6 +43,11 @@ class Order extends Model
     public function callcenter()
     {
         return $this->belongsTo(User::class, 'callcenter_id');
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
     }
 
     public function delivery()

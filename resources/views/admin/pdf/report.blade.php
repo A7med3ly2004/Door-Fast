@@ -22,7 +22,7 @@
 </style>
 </head>
 <body>
-<h1>تقرير الفترة العامة</h1>
+<h1>التقارير العامة</h1>
 <div class="meta">
     from : <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ $filters['from'] }}</span>
     &nbsp;
@@ -47,7 +47,7 @@
             <th style="text-align:center">الحالة</th>
             <th style="text-align:center">الإجمالي</th>
             <th style="text-align:right">المندوب</th>
-            <th style="text-align:right">كول سنتر</th>
+            <th style="text-align:right">تم انشاؤه</th>
             <th style="text-align:right">العميل</th>
             <th style="text-align:center">التاريخ</th>
             <th style="text-align:center">رقم الطلب</th>
@@ -69,7 +69,7 @@
             </td>
             <td style="text-align:center">{{ number_format($o->total, 2) }} ج</td>
             <td style="text-align:right">{{ $o->delivery?->name ?? '—' }}</td>
-            <td style="text-align:right">{{ $o->callcenter?->name ?? '—' }}</td>
+            <td style="text-align:right">{{ $o->callcenter?->name ?? $o->admin?->name ?? '—' }}</td>
             <td style="text-align:right">{{ $o->client?->name ?? '—' }}</td>
             <td style="text-align:center">{{ $o->created_at->format('Y-m-d') }}</td>
             <td style="text-align:center">{{ $o->order_number }}</td>

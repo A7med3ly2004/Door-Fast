@@ -26,7 +26,9 @@ use App\Http\Controllers\Delivery\DashboardController as DeliveryDashboard;
 // ── Login ──
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
 Route::redirect('/', '/login');
-Route::post('/login', [LoginController::class, 'login'])->name('login.post');
+Route::post('/login', [LoginController::class, 'login'])
+    ->middleware('throttle:5,1')
+    ->name('login.post');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // ── Admin ──

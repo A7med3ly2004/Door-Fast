@@ -15,6 +15,10 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    {{-- TomSelect for searchable selects --}}
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
     <style>
         :root {
@@ -406,6 +410,49 @@
             font-family: 'Cairo', sans-serif;
             font-size: 13px;
             outline: none;
+        }
+
+        /* ── Tom Select Overrides ── */
+        .ts-wrapper.form-select {
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+        .ts-control {
+            background: var(--input-bg) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+            padding: 7px 12px !important;
+            color: var(--text) !important;
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            box-shadow: none !important;
+            min-height: 38px;
+        }
+        .ts-control > input {
+            color: var(--text) !important;
+        }
+        .ts-dropdown {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--text) !important;
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+            margin-top: 4px;
+        }
+        .ts-dropdown .option {
+            padding: 8px 12px;
+        }
+        .ts-dropdown .option:hover, .ts-dropdown .option.active {
+            background: var(--border) !important;
+            color: var(--text) !important;
+        }
+        .ts-wrapper.single .ts-control:after {
+            border-color: var(--text-muted) transparent transparent transparent !important;
         }
 
         .form-row {

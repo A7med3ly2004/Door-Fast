@@ -23,15 +23,20 @@ class ReportController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $admins = User::where('role', 'admin')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         if (request()->header('X-SPA-Navigation')) {
             return response()->json([
-                'html'       => view('admin.reports.partials.content', compact('deliveries', 'callcenters'))->render(),
+                'html'       => view('admin.reports.partials.content', compact('deliveries', 'callcenters', 'admins'))->render(),
                 'title'      => 'التقارير',
                 'csrf_token' => csrf_token(),
             ]);
         }
 
-        return view('admin.reports.index', compact('deliveries', 'callcenters'));
+        return view('admin.reports.index', compact('deliveries', 'callcenters', 'admins'));
     }
 
     public function data(Request $request)
@@ -39,11 +44,12 @@ class ReportController extends Controller
         $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
         $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
 
-        $query = Order::with(['client', 'callcenter', 'delivery'])
+        $query = Order::with(['client', 'callcenter', 'admin', 'delivery'])
             ->whereBetween('created_at', [$from, $to]);
 
         if ($request->filled('delivery_id'))   $query->where('delivery_id', $request->delivery_id);
         if ($request->filled('callcenter_id')) $query->where('callcenter_id', $request->callcenter_id);
+        if ($request->filled('admin_id'))      $query->where('admin_id', $request->admin_id);
 
         $orders = $query->latest()->get();
 
@@ -105,7 +111,8 @@ class ReportController extends Controller
             'order_number' => $o->order_number,
             'created_at'   => $o->created_at->toIso8601String(),
             'client'       => $o->client?->name ?? '—',
-            'callcenter'   => $o->callcenter?->name ?? '—',
+            'creator_name' => $o->callcenter?->name ?? $o->admin?->name ?? '—',
+            'creator_type' => $o->callcenter ? 'cc' : ($o->admin ? 'admin' : null),
             'delivery'     => $o->delivery?->name ?? '—',
             'delivery_fee' => $o->delivery_fee,
             'discount'     => $o->discount,
@@ -138,11 +145,12 @@ class ReportController extends Controller
         $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
         $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
 
-        $query = Order::with(['client', 'callcenter', 'delivery'])
+        $query = Order::with(['client', 'callcenter', 'admin', 'delivery'])
             ->whereBetween('created_at', [$from, $to]);
 
         if ($request->filled('delivery_id'))   $query->where('delivery_id', $request->delivery_id);
         if ($request->filled('callcenter_id')) $query->where('callcenter_id', $request->callcenter_id);
+        if ($request->filled('admin_id'))      $query->where('admin_id', $request->admin_id);
 
         $orders  = $query->latest()->get();
         $filters = ['from' => $from->format('Y-m-d'), 'to' => $to->format('Y-m-d')];

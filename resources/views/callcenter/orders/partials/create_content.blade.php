@@ -92,6 +92,14 @@
         color: var(--yellow);
         white-space: nowrap;
         padding: 0 4px;
+        text-align: center;
+    }
+
+    .items-table .ts-control {
+        padding: 6px 8px !important;
+        font-size: 12px !important;
+        border-radius: 6px !important;
+        min-height: 28px !important;
     }
 
     .btn-del-row {
@@ -250,7 +258,7 @@
         <button class="btn btn-secondary btn-sm" style="margin-bottom:8px" onclick="toggleSendTo('${id}')">↗ إرسال إلى عميل آخر</button><div class="sendto-section" id="${id}-sendto"><div class="form-row"><div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="stSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div><div class="form-group"><label class="form-label">عنوان المستلم *</label><div id="${id}-st-addr-wrap"><input type="text" class="form-control" id="${id}-st-addr-txt" placeholder="العنوان"></div></div></div><div class="form-row"><div class="form-group"><label class="form-label">الكود</label><div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" onblur="stSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="stGenCode('${id}')">كود جديد</button></div></div><div class="form-group"><label class="form-label">اسم المستلم</label><input type="text" class="form-control" id="${id}-st-name" placeholder="Unnamed if left blank"></div></div></div>
         <input type="hidden" id="${id}-st-client-id" value="">
         <input type="hidden" id="${id}-st-client-found" value="0">
-        <div class="section-label">📦 الأصناف</div><table class="items-table"><thead><tr><th style="min-width:120px">الصنف</th><th style="width:55px">الكمية</th><th style="width:70px">السعر</th><th style="width:65px">الإجمالي</th><th style="min-width:100px">المتجر</th><th style="width:30px"></th></tr></thead><tbody id="${id}-items"></tbody></table><button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addItemRow('${id}')">＋ إضافة صنف</button>
+        <div class="section-label">📦 الأصناف</div><table class="items-table"><thead><tr><th style="min-width:120px">الصنف</th><th style="width:55px">الكمية</th><th style="width:70px">السعر</th><th style="width:65px; text-align: center;">الإجمالي</th><th style="min-width:100px">المتجر</th><th style="width:30px"></th></tr></thead><tbody id="${id}-items"></tbody></table><button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addItemRow('${id}')">＋ إضافة صنف</button>
         <div class="section-label">📝 ملاحظات</div><textarea class="form-control" id="${id}-notes" rows="2" placeholder="ملاحظات اختيارية..."></textarea>
     </div>
     <div class="order-card-footer">
@@ -271,12 +279,12 @@
             if (el('st-addr-wrap')) { el('st-addr-wrap').innerHTML = draft.stAddrWrap || el('st-addr-wrap').innerHTML; if (el('st-addr-txt') && draft.stAddrVal) el('st-addr-txt').value = draft.stAddrVal; }
             if (el('notes')) el('notes').value = draft.notes || ''; if (el('fee')) el('fee').value = draft.fee || '0'; if (el('disc')) el('disc').value = draft.disc || '0'; if (el('disc-type')) el('disc-type').value = draft.discType || 'amount';
             if (el('disc-jm')) el('disc-jm').classList.toggle('active', draft.discType !== 'percent'); if (el('disc-pct')) el('disc-pct').classList.toggle('active', draft.discType === 'percent');
-            if (draft.items && draft.items.length) { draft.items.forEach(item => { addItemRow(id); const tbody = el('items'); if (tbody && tbody.lastElementChild) { const inputs = tbody.lastElementChild.querySelectorAll('input'); const selShop = tbody.lastElementChild.querySelector('select'); if (inputs[0]) inputs[0].value = item.name; if (inputs[1]) inputs[1].value = item.qty; if (inputs[2]) inputs[2].value = item.price; if (selShop) selShop.value = item.shop || ''; } }); }
+            if (draft.items && draft.items.length) { draft.items.forEach(item => { addItemRow(id); const tbody = el('items'); if (tbody && tbody.lastElementChild) { const inputs = tbody.lastElementChild.querySelectorAll('input'); const selShop = tbody.lastElementChild.querySelector('select'); if (inputs[0]) inputs[0].value = item.name; if (inputs[1]) inputs[1].value = item.qty; if (inputs[2]) inputs[2].value = item.price; if (selShop) { if (selShop.tomselect) selShop.tomselect.setValue(item.shop || ''); else selShop.value = item.shop || ''; } } }); }
             calcTotals(id);
         }
     }
 
-    function buildDeliveryOptions() { return activeDeliveries.map(d => `<option value="${d.id}">${d.name} (${d.orders_today}/${d.max_orders})</option>`).join(''); }
+    function buildDeliveryOptions() { return activeDeliveries.map(d => `<option value="${d.id}">${d.name}</option>`).join(''); }
     function refreshDeliveryDropdowns() { document.querySelectorAll('[id$="-delivery"]').forEach(sel => { const current = sel.value; sel.innerHTML = '<option value="">— تلقائي —</option>' + buildDeliveryOptions(); if (current) sel.value = current; }); }
 
     async function searchClient(cardId, searchBy = 'phone') {
@@ -293,22 +301,22 @@
 
     function resetAddressSection(cardId, hasAddresses, addresses = []) {
         var sel = document.getElementById(cardId + '-address-sel'); const txt = document.getElementById(cardId + '-address-txt'); const isNew = document.getElementById(cardId + '-is-new-addr');
-        if (hasAddresses && addresses.length) { 
-            sel.style.display = ''; txt.style.display = 'none'; isNew.value = '0'; 
-            sel.innerHTML = '<option value="">— اختر العنوان —</option>'; 
+        if (hasAddresses && addresses.length) {
+            sel.style.display = ''; txt.style.display = 'none'; isNew.value = '0';
+            sel.innerHTML = '<option value="">— اختر العنوان —</option>';
             let hasDefault = false;
-            addresses.slice(0, 5).forEach(a => { 
-                const opt = document.createElement('option'); 
-                opt.value = a.address; 
-                opt.textContent = a.address + (a.is_default ? ' (افتراضي)' : ''); 
-                if (a.is_default) { opt.selected = true; hasDefault = true; } 
-                sel.appendChild(opt); 
-            }); 
+            addresses.slice(0, 5).forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.address;
+                opt.textContent = a.address + (a.is_default ? ' (افتراضي)' : '');
+                if (a.is_default) { opt.selected = true; hasDefault = true; }
+                sel.appendChild(opt);
+            });
             if (!hasDefault && addresses.length > 0) sel.options[1].selected = true;
             const newOpt = document.createElement('option');
             newOpt.value = '__new__'; newOpt.textContent = '＋ إضافة عنوان جديد';
             sel.appendChild(newOpt);
-            txt.value = ''; 
+            txt.value = '';
         }
         else { sel.style.display = 'none'; txt.style.display = ''; isNew.value = '1'; txt.value = ''; }
     }
@@ -332,9 +340,16 @@
 
     function addItemRow(cardId) {
         var shopOptionsRaw = SHOPS.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-        var tbody = document.getElementById(cardId + '-items'); const rowId = 'row-' + Date.now() + Math.random(); const tr = document.createElement('tr'); tr.id = rowId;
-        tr.innerHTML = `<td><input type="text" class="form-control" placeholder="اسم الصنف" oninput="calcTotals('${cardId}')"></td><td><input type="number" class="form-control" value="1" min="0.01" step="1" style="width:52px" oninput="calcRowTotal(this);calcTotals('${cardId}')"></td><td><input type="number" class="form-control" value="0" min="0" step="0.5" style="width:68px" oninput="calcRowTotal(this);calcTotals('${cardId}')"></td><td class="item-total">0.00</td><td><select class="form-select"><option value="">— متجر —</option>${shopOptionsRaw}</select></td><td><button class="btn-del-row" onclick="delRow('${rowId}','${cardId}')">✕</button></td>`;
-        tbody.appendChild(tr); saveDrafts();
+        var tbody = document.getElementById(cardId + '-items'); const rowId = 'row-' + Date.now() + Math.random().toString(36).slice(2); const tr = document.createElement('tr'); tr.id = rowId;
+        tr.innerHTML = `<td><input type="text" class="form-control" placeholder="اسم الصنف" oninput="calcTotals('${cardId}')"></td><td><input type="number" class="form-control" value="1" min="0.01" step="1" style="width:52px" oninput="calcRowTotal(this);calcTotals('${cardId}')"></td><td><input type="number" class="form-control" value="0" min="0" step="0.5" style="width:68px" oninput="calcRowTotal(this);calcTotals('${cardId}')"></td><td class="item-total">0.00</td><td><select class="form-select" id="${rowId}-shop"><option value="">— متجر —</option>${shopOptionsRaw}</select></td><td><button class="btn-del-row" onclick="delRow('${rowId}','${cardId}')">✕</button></td>`;
+        tbody.appendChild(tr);
+        if (typeof TomSelect !== 'undefined') {
+            new TomSelect(`#${rowId}-shop`, {
+                create: false,
+                sortField: { field: "text", direction: "asc" }
+            });
+        }
+        saveDrafts();
     }
 
     function calcRowTotal(input) { const row = input.closest('tr'); const qty = parseFloat(row.cells[1].querySelector('input').value) || 0; const prc = parseFloat(row.cells[2].querySelector('input').value) || 0; row.cells[3].textContent = (qty * prc).toFixed(2); }
@@ -361,7 +376,7 @@
         var clientAddress = ''; if (addrSel && addrSel.style.display !== 'none') clientAddress = addrSel.value === '__new__' ? addrTxt.value.trim() : addrSel.value; else if (addrTxt) clientAddress = addrTxt.value.trim();
         var deliveryId = document.getElementById(cardId + '-delivery').value; var stOpen = document.getElementById(cardId + '-sendto')?.classList.contains('open'); var sendToPhone = ''; var sendToAddr = ''; var sendToCode = ''; var sendToName = ''; var sendToClientId = ''; if (stOpen) { sendToPhone = document.getElementById(cardId + '-st-phone')?.value.trim() || ''; var stEl = document.getElementById(cardId + '-st-addr-txt'); sendToAddr = stEl ? (stEl.value || (stEl.options ? stEl.options[stEl.selectedIndex]?.value : '')) : ''; sendToCode = document.getElementById(cardId + '-st-code')?.value.trim() || ''; var rawName = document.getElementById(cardId + '-st-name')?.value.trim(); sendToName = rawName ? rawName : 'Unnamed'; sendToClientId = (document.getElementById(cardId + '-st-client-found')?.value === '1') ? document.getElementById(cardId + '-st-client-id')?.value : ''; }
         var notes = document.getElementById(cardId + '-notes').value; const fee = parseFloat(document.getElementById(cardId + '-fee').value) || 0; const disc = parseFloat(document.getElementById(cardId + '-disc').value) || 0; const discType = document.getElementById(cardId + '-disc-type').value;
-        var items = []; document.getElementById(cardId + '-items').querySelectorAll('tr').forEach(tr => { const itemName = tr.cells[0].querySelector('input')?.value.trim(); const qty = parseFloat(tr.cells[1].querySelector('input')?.value) || 0; const price = parseFloat(tr.cells[2].querySelector('input')?.value) || 0; const shopId = tr.cells[4].querySelector('select')?.value; if (itemName) items.push({ item_name: itemName, quantity: qty, unit_price: price, shop_id: shopId || null }); });
+        var items = []; document.getElementById(cardId + '-items').querySelectorAll('tr').forEach(tr => { const itemName = tr.cells[0].querySelector('input')?.value.trim(); const qty = parseFloat(tr.cells[1].querySelector('input')?.value) || 0; const price = parseFloat(tr.cells[2].querySelector('input')?.value) || 0; const shopSel = tr.querySelector('select[id$="-shop"]'); const shopId = shopSel ? shopSel.value : null; if (itemName) items.push({ item_name: itemName, quantity: qty, unit_price: price, shop_id: shopId || null }); });
         if (!phone) { showError('رقم الهاتف مطلوب'); return; } if (!code) { showError('الكود مطلوب'); return; } if (!name) { showError('اسم العميل مطلوب'); return; } if (!clientAddress) { showError('العنوان مطلوب'); return; } if (!items.length) { showError('يجب إضافة صنف واحد على الأقل'); return; }
         var btn = document.querySelector(`#${cardId} .btn-primary`); btn.disabled = true; btn.textContent = 'جاري الحفظ...'; const editId = document.getElementById(cardId + '-edit-id')?.value;
         var payload = { phone, phone2, code, name, client_address: clientAddress, is_new_address: isNewAddr, delivery_id: deliveryId || null, send_to_phone: sendToPhone || null, send_to_address: sendToAddr || null, send_to_code: sendToCode || null, send_to_name: sendToName || null, send_to_client_id: sendToClientId || null, notes, delivery_fee: fee, discount: disc, discount_type: discType, items };

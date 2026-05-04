@@ -23,8 +23,8 @@ class GeneralLedgerController extends Controller
 
         if ($request->header('X-SPA-Navigation')) {
             return response()->json([
-                'html'       => view('admin.general-ledger.partials.content', $data)->render(),
-                'title'      => 'كشف حساب عام',
+                'html' => view('admin.general-ledger.partials.content', $data)->render(),
+                'title' => 'كشف حساب عام',
                 'csrf_token' => csrf_token(),
             ]);
         }
@@ -40,16 +40,16 @@ class GeneralLedgerController extends Controller
     {
         $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
-            'to'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
 
         $from = $request->input('from');
-        $to   = $request->input('to');
+        $to = $request->input('to');
 
         $roleLabels = [
-            'admin'            => 'أدمن',
-            'callcenter'       => 'كول سينتر',
-            'delivery'         => 'مندوب',
+            'admin' => 'أدمن',
+            'callcenter' => 'كول سينتر',
+            'delivery' => 'مندوب',
             'reserve_delivery' => 'مندوب احتياطي',
         ];
 
@@ -66,8 +66,10 @@ class GeneralLedgerController extends Controller
 
         // Calculate debit/credit totals for treasury
         $treasuryQuery = TreasuryTransaction::query();
-        if ($from) $treasuryQuery->whereDate('transaction_date', '>=', $from);
-        if ($to) $treasuryQuery->whereDate('transaction_date', '<=', $to);
+        if ($from)
+            $treasuryQuery->whereDate('transaction_date', '>=', $from);
+        if ($to)
+            $treasuryQuery->whereDate('transaction_date', '<=', $to);
 
         $treasuryTotals = (clone $treasuryQuery)
             ->selectRaw("
@@ -77,13 +79,13 @@ class GeneralLedgerController extends Controller
             ->first();
 
         $treasuryRow = [
-            'user_id'      => 'treasury',
-            'name'         => 'الخزينة الرئيسية',
-            'role'         => 'treasury',
-            'role_label'   => 'خزينة',
-            'total_debit'  => number_format((float) $treasuryTotals->total_debit, 2),
+            'user_id' => 'treasury',
+            'name' => 'الخزينة الرئيسية',
+            'role' => 'treasury',
+            'role_label' => 'خزينة',
+            'total_debit' => number_format((float) $treasuryTotals->total_debit, 2),
             'total_credit' => number_format((float) $treasuryTotals->total_credit, 2),
-            'balance'      => number_format((float) $treasuryBalance, 2),
+            'balance' => number_format((float) $treasuryBalance, 2),
         ];
 
         // ── User rows ──────────────────────────────────────────────
@@ -92,13 +94,13 @@ class GeneralLedgerController extends Controller
 
             if (!$wallet) {
                 return [
-                    'user_id'      => $user->id,
-                    'name'         => $user->name,
-                    'role'         => $user->role,
-                    'role_label'   => $roleLabels[$user->role] ?? $user->role,
-                    'total_debit'  => '0.00',
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'role' => $user->role,
+                    'role_label' => $roleLabels[$user->role] ?? $user->role,
+                    'total_debit' => '0.00',
                     'total_credit' => '0.00',
-                    'balance'      => '0.00',
+                    'balance' => '0.00',
                 ];
             }
 
@@ -119,13 +121,13 @@ class GeneralLedgerController extends Controller
                 ->first();
 
             return [
-                'user_id'      => $user->id,
-                'name'         => $user->name,
-                'role'         => $user->role,
-                'role_label'   => $roleLabels[$user->role] ?? $user->role,
-                'total_debit'  => number_format((float) $totals->total_debit, 2),
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'role' => $user->role,
+                'role_label' => $roleLabels[$user->role] ?? $user->role,
+                'total_debit' => number_format((float) $totals->total_debit, 2),
                 'total_credit' => number_format((float) $totals->total_credit, 2),
-                'balance'      => number_format((float) $wallet->balance, 2),
+                'balance' => number_format((float) $wallet->balance, 2),
             ];
         });
 
@@ -143,15 +145,17 @@ class GeneralLedgerController extends Controller
     {
         $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
-            'to'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
 
         $from = $request->input('from');
-        $to   = $request->input('to');
+        $to = $request->input('to');
 
         $query = TreasuryTransaction::query();
-        if ($from) $query->whereDate('transaction_date', '>=', $from);
-        if ($to) $query->whereDate('transaction_date', '<=', $to);
+        if ($from)
+            $query->whereDate('transaction_date', '>=', $from);
+        if ($to)
+            $query->whereDate('transaction_date', '<=', $to);
 
         // Totals
         $totals = (clone $query)
@@ -171,8 +175,8 @@ class GeneralLedgerController extends Controller
             'settlement' => 'تسوية',
             'dain' => 'صرف مديونية',
             'discount' => 'خصم',
-            'pay_to_user' => 'دفع لموظف',
-            'receive_from_user' => 'استلام من موظف',
+            'pay_to_user' => 'ايصال دفع نقدي',
+            'receive_from_user' => 'ايصال استلام نقدي',
         ];
 
         $transactions = (clone $query)
@@ -182,13 +186,13 @@ class GeneralLedgerController extends Controller
             ->map(function (TreasuryTransaction $tx) use ($typeLabels) {
                 $isDebit = in_array($tx->type, ['income', 'settlement', 'receive_from_user']);
                 return [
-                    'id'               => $tx->id,
+                    'id' => $tx->id,
                     'transaction_date' => $tx->transaction_date->format('Y-m-d'),
-                    'description'      => ($typeLabels[$tx->type] ?? $tx->type) . ' — ' . ($tx->by_whom ?? '') . ($tx->note ? ' | ' . $tx->note : ''),
-                    'type_label'       => $typeLabels[$tx->type] ?? $tx->type,
-                    'debit'            => $isDebit ? number_format((float) $tx->amount, 2) : '',
-                    'credit'           => !$isDebit ? number_format((float) $tx->amount, 2) : '',
-                    'balance_after'    => '—',
+                    'description' => ($typeLabels[$tx->type] ?? $tx->type) . ' — ' . ($tx->by_whom ?? '') . ($tx->note ? ' | ' . $tx->note : ''),
+                    'type_label' => $typeLabels[$tx->type] ?? $tx->type,
+                    'debit' => $isDebit ? number_format((float) $tx->amount, 2) : '',
+                    'credit' => !$isDebit ? number_format((float) $tx->amount, 2) : '',
+                    'balance_after' => '—',
                 ];
             });
 
@@ -209,14 +213,14 @@ class GeneralLedgerController extends Controller
 
         return response()->json([
             'user' => [
-                'id'         => 'treasury',
-                'name'       => 'الخزينة الرئيسية',
-                'role'       => 'treasury',
+                'id' => 'treasury',
+                'name' => 'الخزينة الرئيسية',
+                'role' => 'treasury',
                 'role_label' => 'خزينة',
             ],
             'summary' => [
-                'total_debit'    => number_format((float) $totals->total_debit, 2),
-                'total_credit'   => number_format((float) $totals->total_credit, 2),
+                'total_debit' => number_format((float) $totals->total_debit, 2),
+                'total_credit' => number_format((float) $totals->total_credit, 2),
                 'period_balance' => number_format($periodBalance, 2),
                 'current_balance' => number_format((float) $currentBalance, 2),
             ],
@@ -232,19 +236,19 @@ class GeneralLedgerController extends Controller
     {
         $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
-            'to'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
 
         $from = $request->input('from');
-        $to   = $request->input('to');
+        $to = $request->input('to');
 
         $user = User::findOrFail($userId);
         $wallet = $user->getOrCreateWallet();
 
         $roleLabels = [
-            'admin'            => 'أدمن',
-            'callcenter'       => 'كول سينتر',
-            'delivery'         => 'مندوب',
+            'admin' => 'أدمن',
+            'callcenter' => 'كول سينتر',
+            'delivery' => 'مندوب',
             'reserve_delivery' => 'مندوب احتياطي',
         ];
 
@@ -272,13 +276,13 @@ class GeneralLedgerController extends Controller
             ->get()
             ->map(function (WalletTransaction $tx) {
                 return [
-                    'id'               => $tx->id,
+                    'id' => $tx->id,
                     'transaction_date' => $tx->transaction_date->format('Y-m-d'),
-                    'description'      => $tx->description ?? '—',
-                    'type_label'       => $tx->type_label,
-                    'debit'            => $tx->direction === 'debit' ? number_format((float) $tx->amount, 2) : '',
-                    'credit'           => $tx->direction === 'credit' ? number_format((float) $tx->amount, 2) : '',
-                    'balance_after'    => number_format((float) $tx->balance_after, 2),
+                    'description' => $tx->description ?? '—',
+                    'type_label' => $tx->type_label,
+                    'debit' => $tx->direction === 'debit' ? number_format((float) $tx->amount, 2) : '',
+                    'credit' => $tx->direction === 'credit' ? number_format((float) $tx->amount, 2) : '',
+                    'balance_after' => number_format((float) $tx->balance_after, 2),
                 ];
             });
 
@@ -286,14 +290,14 @@ class GeneralLedgerController extends Controller
 
         return response()->json([
             'user' => [
-                'id'         => $user->id,
-                'name'       => $user->name,
-                'role'       => $user->role,
+                'id' => $user->id,
+                'name' => $user->name,
+                'role' => $user->role,
                 'role_label' => $roleLabels[$user->role] ?? $user->role,
             ],
             'summary' => [
-                'total_debit'    => number_format((float) $totals->total_debit, 2),
-                'total_credit'   => number_format((float) $totals->total_credit, 2),
+                'total_debit' => number_format((float) $totals->total_debit, 2),
+                'total_credit' => number_format((float) $totals->total_credit, 2),
                 'period_balance' => number_format($periodBalance, 2),
                 'current_balance' => number_format((float) $wallet->balance, 2),
             ],

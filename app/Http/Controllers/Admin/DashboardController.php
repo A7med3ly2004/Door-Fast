@@ -93,7 +93,7 @@ class DashboardController extends Controller
 
     public function recentOrders()
     {
-        $orders = Order::with(['client', 'callcenter', 'delivery'])
+        $orders = Order::with(['client', 'callcenter', 'admin', 'delivery'])
             ->latest()
             ->take(5)
             ->get()
@@ -101,7 +101,8 @@ class DashboardController extends Controller
                 'id'             => $o->id,
                 'order_number'   => $o->order_number,
                 'client'         => $o->client?->name ?? '—',
-                'callcenter'     => $o->callcenter?->name ?? '—',
+                'creator_name'   => $o->callcenter?->name ?? $o->admin?->name ?? '—',
+                'creator_type'   => $o->callcenter ? 'cc' : ($o->admin ? 'admin' : null),
                 'delivery'       => $o->delivery?->name ?? '—',
                 'total'          => $o->total,
                 'status'         => $o->status,

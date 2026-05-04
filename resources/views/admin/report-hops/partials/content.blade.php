@@ -3,8 +3,9 @@
     <h2>تقارير المتاجر</h2>
 </div>
 <div class="card" style="margin-bottom:20px">
-    <div class="filter-bar">
+    <div class="filter-bar" style="align-items: flex-end;">
         <div style="flex:1; min-width:200px;">
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث عن متجر</label>
             <input type="text" id="shop-search-input" list="shops-list" class="form-control"
                 placeholder="ابحث واختر المتجر..." onchange="handleShopSelection(this)">
             <datalist id="shops-list">
@@ -13,9 +14,17 @@
                 @endforeach
             </datalist>
         </div>
-        <input type="date" id="filter-from" class="form-control">
-        <input type="date" id="filter-to" class="form-control">
-        <button class="btn btn-primary" onclick="loadGlobal()">عرض</button>
+        <div>
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ من</label>
+            <input type="date" id="filter-from" class="form-control">
+        </div>
+        <div>
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ إلى</label>
+            <input type="date" id="filter-to" class="form-control">
+        </div>
+        <div style="display: flex; gap: 5px; margin-bottom: 2px;">
+            <button class="btn btn-primary" onclick="loadGlobal()">عرض</button>
+        </div>
     </div>
 </div>
 <div class="kpi-grid" style="margin-bottom:20px">
@@ -135,7 +144,7 @@
                         <th style="text-align: center;">التاريخ</th>
                         <th style="text-align: right;">العميل</th>
                         <th style="text-align: center;">المندوب</th>
-                        <th style="text-align: center;">الكول سينتر</th>
+                        <th style="text-align: center;">تم انشاؤه</th>
                         <th style="text-align: center;">عدد الأصناف</th>
                         <th style="text-align: center;">الإجمالي</th>
                         <th style="text-align: center;">الحالة</th>
@@ -223,7 +232,7 @@
             shopChart = new Chart(ctx, { type: 'bar', data: { labels: data.chart.map(d => d.label), datasets: [{ label: 'الطلبات', data: data.chart.map(d => d.count), backgroundColor: '#f59e0b', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' }, beginAtZero: true } } } });
             document.getElementById('top-clients').innerHTML = data.top_clients.length ? data.top_clients.map(c => `<tr><td style="text-align:right">${c.name}</td><td style="text-align:center">${c.orders}</td><td style="text-align:center">${parseFloat(c.spend).toFixed(2)} ج</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">لا بيانات</td></tr>';
 
-            document.getElementById('shop-orders').innerHTML = data.orders.length ? data.orders.map(o => `<tr><td style="color:var(--yellow); text-align:center">${o.order_number}</td><td style="font-size:12px; text-align:center">${formatDate(o.created_at)}</td><td style="text-align:right">${o.client}</td><td style="text-align:center">${o.delivery}</td><td style="text-align:center">${o.callcenter}</td><td style="text-align:center">${o.items_count}</td><td style="text-align:center">${parseFloat(o.total).toFixed(2)} ج</td><td style="text-align:center">${statusBadge(o.status)}</td><td style="text-align:center;"><button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">عرض</button></td></tr>`).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--text-muted)">لا طلبات</td></tr>';
+            document.getElementById('shop-orders').innerHTML = data.orders.length ? data.orders.map(o => `<tr><td style="color:var(--yellow); text-align:center">${o.order_number}</td><td style="font-size:12px; text-align:center">${formatDate(o.created_at)}</td><td style="text-align:right">${o.client}</td><td style="text-align:center">${o.delivery}</td><td style="text-align:center">${o.callcenter}${o.creator_type==='admin' ? ' <span class="badge badge-blue" style="font-size:9px; padding:1px 4px;">أدمن</span>' : ''}</td><td style="text-align:center">${o.items_count}</td><td style="text-align:center">${parseFloat(o.total).toFixed(2)} ج</td><td style="text-align:center">${statusBadge(o.status)}</td><td style="text-align:center;"><button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">عرض</button></td></tr>`).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--text-muted)">لا طلبات</td></tr>';
         } catch (e) { console.error(e); showError('حدث خطأ'); }
     }
     loadGlobal();
@@ -239,7 +248,7 @@
                 { header: 'التاريخ', key: 'created_at', width: 20 },
                 { header: 'العميل', key: 'client', width: 22 },
                 { header: 'المندوب', key: 'delivery', width: 18 },
-                { header: 'كول سنتر', key: 'callcenter', width: 18 },
+                { header: 'تم انشاؤه', key: 'callcenter', width: 18 },
                 { header: 'عدد الأصناف', key: 'items_count', width: 14 },
                 { header: 'الإجمالي', key: 'total', width: 14 },
                 { header: 'الحالة', key: 'status', width: 14 },

@@ -6,12 +6,19 @@
     <div class="filter-bar" style="margin-bottom:0;">
         <div style="flex:1;min-width:200px;">
             <label class="form-label">الموظف <span style="color:var(--red)">*</span></label>
-            <select id="filter-callcenter-id" class="form-select">
-                <option value="">اختر الموظف</option>
-                @foreach($callcenters as $cc)
-                    <option value="{{ $cc->id }}">{{ $cc->name }}</option>
-                @endforeach
-            </select>
+            <div class="relative group" style="z-index: 50;">
+                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="label-filter-callcenter-id">اختر الموظف</span>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <input type="hidden" id="filter-callcenter-id" value="">
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-callcenter-id', '', 'اختر الموظف')">اختر الموظف</div>
+                    @foreach($callcenters as $cc)
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-callcenter-id', '{{ $cc->id }}', '{{ $cc->name }}')">{{ $cc->name }}</div>
+                    @endforeach
+                </div>
+            </div>
         </div>
         <div>
             <label class="form-label">من تاريخ (اختياري)</label>
@@ -115,7 +122,7 @@
                         <th style="text-align:center;">كود الطلب</th>
                         <th style="text-align:center;">التاريخ</th>
                         <th style="text-align:right;">العميل</th>
-                        <th style="text-align:center;">الموظف</th>
+                        <th style="text-align:center;">المندوب</th>
                         <th style="text-align:center;">رسوم التوصيل</th>
                         <th style="text-align:center;">الخصم</th>
                         <th style="text-align:center;">الإجمالي</th>
@@ -232,12 +239,16 @@
             for (var i = 0; i < payload.data.length; i++) {
                 var order = payload.data[i];
                 var clientName = order.client ? esc(order.client.name) : '—';
-                var callcenterName = order.callcenter ? esc(order.callcenter.name) : '—';
+                var deliveryName = order.delivery ? esc(order.delivery.name) : '—';
+                var deliveryCell = deliveryName;
+                if (order.is_delivery_chosen) {
+                    deliveryCell += '<div class="kpi-sub" style="font-size:11px; margin-top:4px; color:var(--red-dark);">تم اختيار المندوب</div>';
+                }
                 rows += '<tr>'
                     + '<td style="color:var(--yellow);font-weight:700;text-align:center;">' + (order.order_number || ('#' + order.id)) + '</td>'
                     + '<td style="font-size:12px;text-align:center;">' + formatDate(order.created_at) + '</td>'
                     + '<td style="text-align:right;">' + clientName + '</td>'
-                    + '<td style="text-align:center;">' + callcenterName + '</td>'
+                    + '<td style="text-align:center;">' + deliveryCell + '</td>'
                     + '<td style="text-align:center;">' + (order.delivery_fee || 0) + ' ج.م</td>'
                     + '<td style="text-align:center;">' + (order.discount || 0) + ' ج.م</td>'
                     + '<td style="font-weight:700;text-align:center;">' + (order.total || 0) + ' ج.م</td>'
@@ -332,6 +343,8 @@
                 { header: 'رقم الطلب', key: 'order_number', width: 18 },
                 { header: 'التاريخ', key: 'created_at', width: 20 },
                 { header: 'العميل', key: 'client.name', width: 22 },
+                { header: 'المندوب', key: 'delivery_name', width: 20 },
+                { header: 'اختيار المندوب', key: 'delivery_chosen_label', width: 16 },
                 { header: 'رسوم التوصيل', key: 'delivery_fee', width: 16 },
                 { header: 'الخصم', key: 'discount', width: 12 },
                 { header: 'الإجمالي', key: 'total', width: 14 },
@@ -342,6 +355,8 @@
                 ...o,
                 created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',
                 status: statusMap[o.status] || o.status,
+                delivery_name: o.delivery ? o.delivery.name : '—',
+                delivery_chosen_label: o.is_delivery_chosen ? 'نعم' : '—',
             }));
             exportToExcel(rows, columns, 'cc-report-' + res.data.agent_name + '-' + new Date().toISOString().slice(0, 10), 'تقرير كول سنتر');
             if (typeof showSuccess === 'function') showSuccess('تم التصدير');

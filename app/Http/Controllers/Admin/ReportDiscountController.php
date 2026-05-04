@@ -63,7 +63,7 @@ class ReportDiscountController extends Controller
             ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]
             : \App\Models\Setting::businessDayRange(today())[1];
 
-        $query = Order::with(['client', 'callcenter', 'delivery', 'items'])
+        $query = Order::with(['client', 'callcenter', 'admin', 'delivery', 'items'])
             ->whereBetween('created_at', [$from, $to])
             ->where('discount', '>', 0)
             ->where('status', 'delivered');
@@ -93,7 +93,8 @@ class ReportDiscountController extends Controller
             'created_at'   => $o->created_at->toIso8601String(),
             'client'       => $o->client?->name ?? '—',
             'client_code'  => $o->client?->code ?? '—',
-            'callcenter'   => $o->callcenter?->name ?? '—',
+            'callcenter'   => $o->callcenter?->name ?? $o->admin?->name ?? '—',
+            'creator_type' => $o->callcenter ? 'cc' : ($o->admin ? 'admin' : null),
             'delivery'     => $o->delivery?->name ?? '—',
             'items_count'  => $o->items->count(),
             'discount'     => $o->discount,
@@ -125,24 +126,29 @@ class ReportDiscountController extends Controller
         $order = Order::with(['client', 'callcenter', 'delivery', 'items'])->findOrFail($id);
 
         return response()->json([
-            'order_number'  => $order->order_number,
-            'created_at'    => $order->created_at->toIso8601String(),
-            'status'        => $order->status,
-            'client'        => $order->client?->name ?? '—',
-            'client_code'   => $order->client?->code ?? '—',
-            'callcenter'    => $order->callcenter?->name ?? '—',
-            'delivery'      => $order->delivery?->name ?? '—',
-            'discount'      => $order->discount,
-            'discount_type' => $order->discount_type,
-            'delivery_fee'  => $order->delivery_fee,
-            'total'         => $order->total,
-            'notes'         => $order->notes,
-            'items'         => $order->items->map(fn($i) => [
-                'item_name'  => $i->item_name,
-                'quantity'   => $i->quantity,
-                'unit_price' => $i->unit_price,
-                'total'      => $i->total,
-            ]),
+            'order' => [
+                'id'             => $order->id,
+                'order_number'   => $order->order_number,
+                'status'         => $order->status,
+                'notes'          => $order->notes,
+                'client_address' => $order->client_address,
+                'delivery_fee'   => $order->delivery_fee,
+                'discount'       => $order->discount,
+                'discount_type'  => $order->discount_type,
+                'total'          => $order->total,
+                'created_at'     => $order->created_at->toIso8601String(),
+                'client'         => $order->client ? ['name' => $order->client->name, 'phone' => $order->client->phone, 'code' => $order->client->code] : null,
+                'callcenter'     => $order->callcenter ? ['name' => $order->callcenter->name] : ($order->admin ? ['name' => $order->admin->name] : null),
+                'delivery'       => $order->delivery ? ['name' => $order->delivery->name] : null,
+                'items'          => $order->items->map(fn($item) => [
+                    'item_name'  => $item->item_name,
+                    'shop'       => $item->shop?->name ?? '—',
+                    'quantity'   => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'total'      => $item->total,
+                ]),
+                'logs'           => [], // تقارير الخصومات عادة لا تحتاج السجل الكامل هنا، لكن نتركه فارغاً للتوافق
+            ],
         ]);
     }
 }

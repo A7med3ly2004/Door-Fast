@@ -11,10 +11,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class CheckUnacceptedOrders implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+
+    public array $backoff = [30, 60, 120];
 
     public function handle(): void
     {
@@ -34,9 +39,18 @@ class CheckUnacceptedOrders implements ShouldQueue
                 'type' => 'unaccepted',
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
-                'message' => "الطلب #{$order->order_number} معلق عند المندوب لأكثر من {$yMins} دقيقة ولم يتم قبوله"
+                'message' => "الطلب #{$order->order_number} معلق عند المندوب ولم يتم قبوله"
             ]);
             event(new AdminNotificationCreated($notif));
         }
+    }
+
+    public function failed(\Throwable $e): void
+    {
+        Log::error('Job failed permanently: ' . static::class, [
+            'error'   => $e->getMessage(),
+            'file'    => $e->getFile(),
+            'line'    => $e->getLine(),
+        ]);
     }
 }

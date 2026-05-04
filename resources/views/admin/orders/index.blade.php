@@ -18,32 +18,121 @@
 
     {{-- Filters --}}
     <div class="card" style="margin-bottom:20px">
-        <div class="filter-bar">
-            <input type="text" id="filter-search" class="form-control" placeholder="بحث بالطلب / العميل / الهاتف"
-                style="min-width:260px">
-            <select id="filter-status" class="form-select">
-                <option value="">كل الحالات</option>
-                <option value="pending">باقي</option>
-                <option value="received">مسلم للمندوب</option>
-                <option value="delivered">تم التوصيل</option>
-                <option value="cancelled">ملغي</option>
-            </select>
-            <select id="filter-callcenter" class="form-select">
-                <option value="">كل الكول سنتر</option>
-                @foreach($callcenters as $cc)
-                    <option value="{{ $cc->id }}">{{ $cc->name }}</option>
-                @endforeach
-            </select>
-            <select id="filter-delivery" class="form-select">
-                <option value="">كل المناديب</option>
-                @foreach($deliveries as $d)
-                    <option value="{{ $d->id }}">{{ $d->name }}</option>
-                @endforeach
-            </select>
-            <input type="date" id="filter-from" class="form-control" placeholder="من">
-            <input type="date" id="filter-to" class="form-control" placeholder="إلى">
-            <button class="btn btn-primary" onclick="loadOrders(1)">بحث</button>
-            <button class="btn btn-secondary" onclick="resetFilters()">إعادة</button>
+        <div class="filter-bar" style="display: flex; flex-wrap: nowrap; align-items: flex-end; gap: 8px; width: 100%;">
+            <div style="width: 20%;">
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث</label>
+                <input type="text" id="filter-search" class="form-control" placeholder="بحث بالطلب / العميل / الهاتف"
+                    style="width: 100%; min-width: unset;">
+            </div>
+            <div style="width: 12%;">
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الحالة</label>
+                <div class="relative group" style="width: 100%; z-index: 50;">
+                    <div class="form-control"
+                        style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
+                        <span id="label-filter-status" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">كل الحالات</span>
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <input type="hidden" id="filter-status" value="">
+                    <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                        style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9);">
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-status', '', 'كل الحالات')">كل الحالات</div>
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-status', 'pending', 'باقي')">باقي</div>
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-status', 'received', 'مسلم للمندوب')">مسلم للمندوب</div>
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-status', 'delivered', 'تم التوصيل')">تم التوصيل</div>
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-status', 'cancelled', 'ملغي')">ملغي</div>
+                    </div>
+                </div>
+            </div>
+            <div style="width: 12%;">
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">كول سنتر</label>
+                <div class="relative group" style="width: 100%; z-index: 40;">
+                    <div class="form-control"
+                        style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
+                        <span id="label-filter-callcenter" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">كل الكول سنتر</span>
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <input type="hidden" id="filter-callcenter" value="">
+                    <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                        style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-callcenter', '', 'كل الكول سنتر')">كل الكول سنتر</div>
+                        @foreach($callcenters as $cc)
+                            <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                                onclick="selectDropdown('filter-callcenter', '{{ $cc->id }}', '{{ $cc->name }}')">
+                                {{ $cc->name }}
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            <div style="width: 12%;">
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الأدمن</label>
+                <div class="relative group" style="width: 100%; z-index: 35;">
+                    <div class="form-control"
+                        style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
+                        <span id="label-filter-admin" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">كل المديرين</span>
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <input type="hidden" id="filter-admin" value="">
+                    <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                        style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-admin', '', 'كل المديرين')">كل المديرين</div>
+                        @foreach($admins as $adm)
+                            <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                                onclick="selectDropdown('filter-admin', '{{ $adm->id }}', '{{ $adm->name }}')">
+                                {{ $adm->name }}
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            <div style="width: 12%;">
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">المندوب</label>
+                <div class="relative group" style="width: 100%; z-index: 30;">
+                    <div class="form-control"
+                        style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
+                        <span id="label-filter-delivery" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">كل المناديب</span>
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <input type="hidden" id="filter-delivery" value="">
+                    <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                        style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-delivery', '', 'كل المناديب')">كل المناديب</div>
+                        @foreach($deliveries as $d)
+                            <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                                onclick="selectDropdown('filter-delivery', '{{ $d->id }}', '{{ $d->name }}')">{{ $d->name }}
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            <div style="width: 10%;">
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ من</label>
+                <input type="date" id="filter-from" class="form-control" placeholder="من" style="width: 100%; min-width: unset;">
+            </div>
+            <div style="width: 10%;">
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ إلى</label>
+                <input type="date" id="filter-to" class="form-control" placeholder="إلى" style="width: 100%; min-width: unset;">
+            </div>
+            <div style="display: flex; gap: 5px; margin-bottom: 2px; width: 12%;">
+                <button class="btn btn-primary" style="flex: 1; padding: 8px 10px; min-width: unset; justify-content: center;" onclick="loadOrders(1)">بحث</button>
+                <button class="btn btn-secondary" style="flex: 1; padding: 8px 10px; min-width: unset; justify-content: center;" onclick="resetFilters()">إعادة</button>
+            </div>
         </div>
     </div>
 
@@ -59,7 +148,7 @@
                         <th style="text-align: center;">رقم الطلب</th>
                         <th style="text-align: center;">التاريخ</th>
                         <th style="text-align: center;">العميل</th>
-                        <th style="text-align: center;">كول سنتر</th>
+                        <th style="text-align: center;">تم انشاؤه</th>
                         <th style="text-align: center;">المندوب</th>
                         <th style="text-align: center;">عدد الأصناف</th>
                         <th style="text-align: center;">توصيل</th>
@@ -128,6 +217,7 @@
                 search: document.getElementById('filter-search').value,
                 status: document.getElementById('filter-status').value,
                 callcenter_id: document.getElementById('filter-callcenter').value,
+                admin_id: document.getElementById('filter-admin').value,
                 delivery_id: document.getElementById('filter-delivery').value,
                 from: document.getElementById('filter-from').value,
                 to: document.getElementById('filter-to').value,
@@ -138,9 +228,16 @@
             document.getElementById('filter-search').value = '';
             document.getElementById('filter-status').value = '';
             document.getElementById('filter-callcenter').value = '';
+            document.getElementById('filter-admin').value = '';
             document.getElementById('filter-delivery').value = '';
             document.getElementById('filter-from').value = '';
             document.getElementById('filter-to').value = '';
+
+            document.getElementById('label-filter-status').innerText = 'كل الحالات';
+            document.getElementById('label-filter-callcenter').innerText = 'كل الكول سنتر';
+            document.getElementById('label-filter-admin').innerText = 'كل المديرين';
+            document.getElementById('label-filter-delivery').innerText = 'كل المناديب';
+
             loadOrders(1);
         }
 
@@ -172,26 +269,28 @@
                 body.innerHTML = data.data.map(o => {
                     const itemsSummary = o.items ? o.items.map(i => `${i.item_name}×${i.quantity}`).join('، ').substring(0, 60) + '...' : '—';
                     return `<tr>
-                    <td><strong style="color:var(--yellow) text-align: center;">${o.order_number}</strong></td>
-                    <td style="font-size:12px;color:var(--text-muted) text-align: center;">${formatDate(o.created_at)}</td>
-                    <td style="text-align: center;">${o.client?.name ?? '—'}</td>
-                    <td style="text-align: center;">${o.callcenter?.name ?? '—'}</td>
-                    <td style="text-align: center;">
-                        ${o.delivery?.name ?? '—'}
-                        ${o.is_delivery_chosen ? '<div class="kpi-sub" style="font-size:11px; margin-top:4px; color:var(--text-muted);">تم اختيار المندوب</div>' : ''}
-                    </td>
-                    <td style="text-align: center;">${o.items_count}</td>
-                    <td style="text-align: center;">${parseFloat(o.delivery_fee || 0).toFixed(2)} ج</td>
-                    <td style="text-align: center;">${parseFloat(o.discount || 0).toFixed(2)} ج</td>
-                    <td style="text-align: center;"><strong>${parseFloat(o.total || 0).toFixed(2)} ج</strong></td>
-                    <td style="text-align: center;">${statusBadge(o.status)}</td>
-                    <td style="text-align: center;">
-                        <div style="display:flex;gap:6px;justify-content: center;">
-                            <button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">عـرض</button>
-                            ${o.status !== 'cancelled' && o.status !== 'delivered' ? `<button class="btn btn-sm btn-danger" onclick="cancelOrder(${o.id})">إلغاء</button>` : ''}
-                        </div>
-                    </td>
-                </tr>`;
+                            <td><strong style="color:var(--yellow) text-align: center;">${o.order_number}</strong></td>
+                            <td style="font-size:12px;color:var(--text-muted) text-align: center;">${formatDate(o.created_at)}</td>
+                            <td style="text-align: center;">${o.client?.name ?? '—'}</td>
+                            <td style="text-align: center;">${o.callcenter?.name ?? o.admin?.name ?? '—'}
+                                ${!o.callcenter && o.admin ? '<div class="kpi-sub" style="font-size:11px;margin-top:3px;color:var(--info);">\u0623\u062f\u0645\u0646</div>' : ''}
+                            </td>
+                            <td style="text-align: center;">
+                                ${o.delivery?.name ?? '—'}
+                                ${o.is_delivery_chosen ? '<div class="kpi-sub" style="font-size:11px; margin-top:4px; color:var(--red-dark); text-shadow: 0px 0px 0px #ff8d8d;">تم اختيار المندوب</div>' : ''}
+                            </td>
+                            <td style="text-align: center;">${o.items_count}</td>
+                            <td style="text-align: center;">${parseFloat(o.delivery_fee || 0).toFixed(2)} ج</td>
+                            <td style="text-align: center;">${parseFloat(o.discount || 0).toFixed(2)} ج</td>
+                            <td style="text-align: center;"><strong>${parseFloat(o.total || 0).toFixed(2)} ج</strong></td>
+                            <td style="text-align: center;">${statusBadge(o.status)}</td>
+                            <td style="text-align: center;">
+                                <div style="display:flex;gap:6px;justify-content: center;">
+                                    <button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">عـرض</button>
+                                    ${o.status !== 'cancelled' && o.status !== 'delivered' ? `<button class="btn btn-sm btn-danger" onclick="cancelOrder(${o.id})">إلغاء</button>` : ''}
+                                </div>
+                            </td>
+                        </tr>`;
                 }).join('');
 
                 renderPagination(data.last_page, data.current_page);
@@ -280,6 +379,7 @@
                     search: document.getElementById('filter-search').value,
                     status: document.getElementById('filter-status').value,
                     callcenter_id: document.getElementById('filter-callcenter').value,
+                    admin_id: document.getElementById('filter-admin').value,
                     delivery_id: document.getElementById('filter-delivery').value,
                     from: document.getElementById('filter-from').value,
                     to: document.getElementById('filter-to').value,
@@ -296,8 +396,9 @@
                     { header: 'التاريخ', key: 'created_at', width: 20 },
                     { header: 'العميل', key: 'client.name', width: 22 },
                     { header: 'هاتف العميل', key: 'client.phone', width: 16 },
-                    { header: 'كول سنتر', key: 'callcenter.name', width: 18 },
+                    { header: 'تم انشاؤه', key: 'creator_name', width: 20 },
                     { header: 'المندوب', key: 'delivery.name', width: 18 },
+                    { header: 'اختيار المندوب', key: 'delivery_chosen_label', width: 16 },
                     { header: 'عدد الأصناف', key: 'items_count', width: 14 },
                     { header: 'رسوم التوصيل', key: 'delivery_fee', width: 16 },
                     { header: 'الخصم', key: 'discount', width: 12 },
@@ -310,7 +411,9 @@
                 const rows = data.data.map(o => ({
                     ...o,
                     created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',
-                    status: statusMap[o.status] || o.status
+                    status: statusMap[o.status] || o.status,
+                    creator_name: o.callcenter?.name ?? o.admin?.name ?? '—',
+                    delivery_chosen_label: o.is_delivery_chosen ? 'نعم' : '—',
                 }));
 
                 exportToExcel(rows, columns, 'orders-' + new Date().toISOString().slice(0, 10), 'الطلبات');

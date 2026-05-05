@@ -171,6 +171,7 @@ Route::middleware(['auth', 'role:callcenter'])
         Route::post('/orders', [CCOrders::class, 'store'])->name('orders.store');
         Route::get('/orders/{id}', [CCOrders::class, 'show'])->name('orders.show');
         Route::put('/orders/{id}', [CCOrders::class, 'update'])->name('orders.update');
+        Route::patch('/orders/{id}/pause-edit', [CCOrders::class, 'pauseEdit'])->name('orders.pause-edit');
         Route::patch('/orders/{id}/cancel', [CCOrders::class, 'cancel'])->name('orders.cancel');
         Route::patch('/orders/{id}/send-early', [CCOrders::class, 'sendEarly'])->name('orders.send-early');
         Route::get('/orders/{id}/pdf', [CCOrders::class, 'downloadPdf'])->name('orders.pdf');

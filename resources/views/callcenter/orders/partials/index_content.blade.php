@@ -73,7 +73,7 @@
     <div class="modal modal-lg" style="max-width:800px">
         <div class="modal-header">
             <h3>تعديل الطلب — <span id="edit-num"></span></h3><button class="btn-close"
-                onclick="closeModal('modal-edit')">✕</button>
+                onclick="closeEditModal()">✕</button>
         </div>
         <div class="modal-body" id="edit-body"><input type="hidden" id="edit-id">
             <div class="grid-2" style="margin-bottom:12px">
@@ -133,7 +133,7 @@
             </div>
         </div>
         <div class="modal-footer"><button class="btn btn-secondary"
-                onclick="closeModal('modal-edit')">تراجع</button><button class="btn btn-primary" id="btn-save-edit"
+                onclick="closeEditModal()">تراجع</button><button class="btn btn-primary" id="btn-save-edit"
                 onclick="saveEdit()">حفظ التعديلات ✔</button></div>
     </div>
 </div>
@@ -339,8 +339,59 @@
         try { const { data } = await axios.patch(`/callcenter/orders/${id}/send-early`); showSuccess(data.message); loadList(currentPage); } catch (e) { showError(e.response?.data?.message ?? 'حدث خطأ'); }
     }
 
+    // ── Edit modal — timer freeze (keepalive) ───────────────────────
+    // بينما الفورم مفتوح نُرسل pause-edit كل 30 ثانية باستمرار
+    // حتى يظل المؤقت متجمداً تماماً.
+    var _editingOrderId  = null;   // id الطلب المفتوح حالياً
+    var _editKeepalive   = null;   // intervalId الـ keepalive
+    // كل كم ثانية نُجدد المؤقت (أقل من نصف hold_minutes)
+    var EDIT_KEEPALIVE_MS = 20000; // 20 ثانية
+
+    /** إرسال pause-edit — يُعيد ضبط sent_to_delivery_at من جديد. */
+    async function callPauseEdit(id) {
+        if (!id) return;
+        try { await axios.patch(`/callcenter/orders/${id}/pause-edit`); } catch (_) { /* 422 = انتهى الوقت مسبقاً — نتجاهل */ }
+    }
+
+    /** تشغيل الـ keepalive: يُرسل pause-edit فوراً ثم كل EDIT_KEEPALIVE_MS. */
+    function startEditKeepalive(id) {
+        stopEditKeepalive();           // أوقف أي keepalive سابق
+        callPauseEdit(id);             // إرسال فوري عند الفتح
+        _editKeepalive = setInterval(() => callPauseEdit(id), EDIT_KEEPALIVE_MS);
+    }
+
+    /** إيقاف الـ keepalive عند الإغلاق أو الحفظ. */
+    function stopEditKeepalive() {
+        if (_editKeepalive) { clearInterval(_editKeepalive); _editKeepalive = null; }
+    }
+
+    /**
+     * إغلاق مودال التعديل:
+     * - يُوقف الـ keepalive
+     * - يُعيد ضبط المؤقت مرة أخيرة (يبدأ العد من الصفر)
+     * - يُغلق النافذة ويُحدّث القائمة
+     */
+    async function closeEditModal() {
+        stopEditKeepalive();
+        const id = _editingOrderId;
+        _editingOrderId = null;
+        closeModal('modal-edit');
+        if (id) {
+            // إعادة ضبط المؤقت من الصفر بعد الإغلاق
+            try { await axios.patch(`/callcenter/orders/${id}/pause-edit`); } catch (_) {}
+        }
+        loadList(currentPage);
+    }
+
     async function editOrder(id) {
-        document.getElementById('edit-delivery').innerHTML = '<option value="">— تلقائي —</option>' + buildDeliveryOptions(); openModal('modal-edit'); document.getElementById('edit-body').style.opacity = '0.5';
+        _editingOrderId = id;
+        document.getElementById('edit-delivery').innerHTML = '<option value="">— تلقائي —</option>' + buildDeliveryOptions();
+        openModal('modal-edit');
+        document.getElementById('edit-body').style.opacity = '0.5';
+
+        // ابدأ الـ keepalive فوراً — الفورم مفتوح والمؤقت يجب أن يتجمد
+        startEditKeepalive(id);
+
         try {
             const { data } = await axios.get(`/callcenter/orders/${id}`); const o = data.order;
             document.getElementById('edit-id').value = o.id; document.getElementById('edit-num').textContent = o.order_number; document.getElementById('edit-address').value = o.client_address || ''; document.getElementById('edit-send-to-phone').value = o.send_to_phone || ''; document.getElementById('edit-send-to-address').value = o.send_to_address || ''; document.getElementById('edit-notes').value = o.notes || ''; document.getElementById('edit-fee').value = o.delivery_fee || 0; document.getElementById('edit-disc').value = o.discount || 0; document.getElementById('edit-disc-type').value = o.discount_type || 'amount';
@@ -348,7 +399,7 @@
             var tbody = document.getElementById('edit-items'); tbody.innerHTML = '';
             if (o.items && o.items.length) o.items.forEach(i => addEditRow(i.item_name, i.shop_id, i.quantity, i.unit_price)); else addEditRow();
             calcEditTotals(); document.getElementById('edit-body').style.opacity = '1';
-        } catch (e) { showError('تعذر جلب بيانات الطلب للتعديل'); closeModal('modal-edit'); }
+        } catch (e) { showError('تعذر جلب بيانات الطلب للتعديل'); stopEditKeepalive(); closeModal('modal-edit'); }
     }
 
     function addEditRow(name = '', shopId = '', qty = 1, price = 0) {
@@ -364,8 +415,13 @@
             var inputs = tr.querySelectorAll('input'); const qty = parseFloat(inputs[1].value) || 0; const prc = parseFloat(inputs[2].value) || 0; const total = qty * prc;
             tr.querySelector('.edit-row-total').textContent = total.toFixed(2) + ' ج'; itemsTotal += total;
         });
-        var fee = parseFloat(document.getElementById('edit-fee').value) || 0; const disc = parseFloat(document.getElementById('edit-disc').value) || 0; const discType = document.getElementById('edit-disc-type').value; let discAmt = disc; if (discType === 'percent') discAmt = itemsTotal * (disc / 100);
-        document.getElementById('edit-items-total').textContent = itemsTotal.toFixed(2) + ' ج'; document.getElementById('edit-grand-total').textContent = (itemsTotal + fee - discAmt).toFixed(2) + ' ج';
+        var fee = parseFloat(document.getElementById('edit-fee').value) || 0;
+        const baseTotal = itemsTotal + fee;
+        const disc = parseFloat(document.getElementById('edit-disc').value) || 0;
+        const discType = document.getElementById('edit-disc-type').value;
+        let discAmt = disc;
+        if (discType === 'percent') discAmt = baseTotal * (disc / 100);
+        document.getElementById('edit-items-total').textContent = itemsTotal.toFixed(2) + ' ج'; document.getElementById('edit-grand-total').textContent = (baseTotal - discAmt).toFixed(2) + ' ج';
     }
 
     async function saveEdit() {
@@ -378,7 +434,14 @@
         var address = document.getElementById('edit-address').value.trim(); if (!address) { showError('يحب إدخال عنوان العميل'); return; }
         var payload = { delivery_id: document.getElementById('edit-delivery').value || null, client_address: address, send_to_phone: document.getElementById('edit-send-to-phone').value || null, send_to_address: document.getElementById('edit-send-to-address').value || null, notes: document.getElementById('edit-notes').value, delivery_fee: document.getElementById('edit-fee').value || 0, discount: document.getElementById('edit-disc').value || 0, discount_type: document.getElementById('edit-disc-type').value, items };
         var btn = document.getElementById('btn-save-edit'); btn.disabled = true; btn.textContent = 'جاري الحفظ...';
-        try { const { data } = await axios.put(`/callcenter/orders/${id}`, payload); showSuccess(data.message); closeModal('modal-edit'); loadList(currentPage); }
+        try {
+            const { data } = await axios.put(`/callcenter/orders/${id}`, payload);
+            showSuccess(data.message);
+            stopEditKeepalive();      // إيقاف الـ keepalive بعد الحفظ الناجح
+            _editingOrderId = null;   // تم الحفظ — لا حاجة لإعادة ضبط المؤقت مرة أخرى
+            closeModal('modal-edit');
+            loadList(currentPage);
+        }
         catch (e) { const errors = e.response?.data?.errors; if (errors) showError(Object.values(errors).flat().join(' | ')); else showError(e.response?.data?.message ?? 'حدث خطأ أثناء الحفظ'); }
         finally { btn.disabled = false; btn.textContent = 'حفظ التعديلات ✔'; }
     }

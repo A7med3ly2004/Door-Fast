@@ -76,14 +76,17 @@ class OrderController extends Controller
         // ── Discount guard (HTTP-layer: return JSON error, not exception) ─
         $items      = $data['items'];
         $itemsTotal = collect($items)->sum(fn($i) => $i['quantity'] * $i['unit_price']);
+        $deliveryFee = (float) ($data['delivery_fee'] ?? 0);
+        $baseTotal  = $itemsTotal + $deliveryFee;
+
         $discount   = (float) ($data['discount'] ?? 0);
         $discountType = $data['discount_type'] ?? 'amount';
-        $discountAmt  = $discountType === 'percent' ? ($itemsTotal * $discount / 100) : $discount;
+        $discountAmt  = $discountType === 'percent' ? ($baseTotal * $discount / 100) : $discount;
         $maxDiscountPercent = (float) Setting::get('max_discount_percentage', 50);
 
-        if ($itemsTotal > 0 && ($discountAmt / $itemsTotal * 100) > $maxDiscountPercent) {
+        if ($baseTotal > 0 && ($discountAmt / $baseTotal * 100) > $maxDiscountPercent) {
             return response()->json([
-                'errors' => ['discount' => ["عذراً، نسبة الخصم لا يمكن أن تتجاوز {$maxDiscountPercent}% من إجمالي الأصناف. (أقصى قيمة: " . round($itemsTotal * $maxDiscountPercent / 100, 2) . " ج)"]],
+                'errors' => ['discount' => ["عذراً، نسبة الخصم لا يمكن أن تتجاوز {$maxDiscountPercent}% من إجمالي الطلب. (أقصى قيمة: " . round($baseTotal * $maxDiscountPercent / 100, 2) . " ج)"]],
             ], 422);
         }
 
@@ -230,19 +233,21 @@ class OrderController extends Controller
 
         $items        = $request->items ?? [];
         $itemsTotal   = collect($items)->sum(fn($i) => $i['quantity'] * $i['unit_price']);
+        $deliveryFee      = (float) ($request->delivery_fee ?? 0);
+        $baseTotal    = $itemsTotal + $deliveryFee;
+
         $discount     = (float) ($request->discount ?? 0);
         $discountType = $request->discount_type ?? 'amount';
-        $discountAmt  = $discountType === 'percent' ? ($itemsTotal * $discount / 100) : $discount;
+        $discountAmt  = $discountType === 'percent' ? ($baseTotal * $discount / 100) : $discount;
 
         $maxDiscountPercent = (float) Setting::get('max_discount_percentage', 50);
-        if ($itemsTotal > 0 && ($discountAmt / $itemsTotal * 100) > $maxDiscountPercent) {
+        if ($baseTotal > 0 && ($discountAmt / $baseTotal * 100) > $maxDiscountPercent) {
             return response()->json([
-                'errors' => ['discount' => ["عذراً، نسبة الخصم لا يمكن أن تتجاوز {$maxDiscountPercent}% من إجمالي الأصناف. (أقصى قيمة: " . round($itemsTotal * $maxDiscountPercent / 100, 2) . " ج)"]],
+                'errors' => ['discount' => ["عذراً، نسبة الخصم لا يمكن أن تتجاوز {$maxDiscountPercent}% من إجمالي الطلب. (أقصى قيمة: " . round($baseTotal * $maxDiscountPercent / 100, 2) . " ج)"]],
             ], 422);
         }
 
-        $deliveryFee      = (float) ($request->delivery_fee ?? 0);
-        $total            = $itemsTotal + $deliveryFee - $discountAmt;
+        $total            = $baseTotal - $discountAmt;
         $isDeliveryChosen = !empty($request->delivery_id);
 
         if ($isDeliveryChosen && $order->delivery_id != $request->delivery_id) {
@@ -260,19 +265,26 @@ class OrderController extends Controller
             }
         }
 
+        // ── Reset hold timer after edit ────────────────────────────
+        // بعد التعديل، نُعيد ضبط وقت الإرسال من الصفر حتى لا يُرسل الطلب
+        // في منتصف التعديل.
+        $holdMinutes      = (int) Setting::get('order_hold_minutes', 10);
+        $newSentAt        = $isDeliveryChosen ? Carbon::now() : Carbon::now()->addMinutes($holdMinutes);
+
         $order->update([
-            'delivery_id'        => $request->delivery_id ?: null,
-            'is_delivery_chosen' => $isDeliveryChosen,
-            'client_address'     => $request->client_address,
-            'send_to_phone'      => $request->send_to_phone ?: null,
-            'send_to_address'    => $request->send_to_address ?: null,
-            'notes'              => $request->notes,
-            'delivery_fee'       => $deliveryFee,
-            'discount'           => $discount,
-            'discount_type'      => $discountType,
-            'total'              => $total,
-            'status'             => $isDeliveryChosen ? 'received' : 'pending',
-            'accepted_at'        => $isDeliveryChosen ? Carbon::now() : null,
+            'delivery_id'         => $request->delivery_id ?: null,
+            'is_delivery_chosen'  => $isDeliveryChosen,
+            'client_address'      => $request->client_address,
+            'send_to_phone'       => $request->send_to_phone ?: null,
+            'send_to_address'     => $request->send_to_address ?: null,
+            'notes'               => $request->notes,
+            'delivery_fee'        => $deliveryFee,
+            'discount'            => $discount,
+            'discount_type'       => $discountType,
+            'total'               => $total,
+            'status'              => $isDeliveryChosen ? 'received' : 'pending',
+            'accepted_at'         => $isDeliveryChosen ? Carbon::now() : null,
+            'sent_to_delivery_at' => $newSentAt,
         ]);
 
         $order->items()->delete();
@@ -290,7 +302,11 @@ class OrderController extends Controller
 
         OrderLog::create(['order_id' => $order->id, 'user_id' => auth()->id(), 'action' => 'تعديل الطلب']);
 
-        return response()->json(['success' => true, 'message' => 'تم تعديل الطلب']);
+        return response()->json([
+            'success'             => true,
+            'message'             => 'تم تعديل الطلب',
+            'sent_to_delivery_at' => $order->fresh()->sent_to_delivery_at?->toIso8601String(),
+        ]);
     }
 
     public function cancel(Request $request, $id)
@@ -315,6 +331,33 @@ class OrderController extends Controller
         );
 
         return response()->json(['success' => true, 'message' => 'تم إلغاء الطلب']);
+    }
+
+    /**
+     * إيقاف مؤقت مؤقت الإرسال عند فتح نافذة التعديل أو إغلاقها بدون حفظ.
+     * يُعيد ضبط sent_to_delivery_at = now() + hold_minutes من جديد.
+     */
+    public function pauseEdit($id)
+    {
+        $order = Order::where('callcenter_id', auth()->id())
+            ->where('status', 'pending')
+            ->findOrFail($id);
+
+        // لا نسمح بإعادة الضبط إذا انتهى الوقت فعلاً قبل الفتح
+        // (لو already sent نتجاهل الطلب)
+        if (now()->gte($order->sent_to_delivery_at)) {
+            return response()->json(['success' => false, 'message' => 'انتهت مهلة التعديل'], 422);
+        }
+
+        $holdMinutes = (int) Setting::get('order_hold_minutes', 10);
+        $newSentAt   = now()->addMinutes($holdMinutes);
+
+        $order->update(['sent_to_delivery_at' => $newSentAt]);
+
+        return response()->json([
+            'success'             => true,
+            'sent_to_delivery_at' => $newSentAt->toIso8601String(),
+        ]);
     }
 
     public function sendEarly($id)

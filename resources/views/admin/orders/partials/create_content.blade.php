@@ -455,13 +455,14 @@
                 var t = qty * prc; tr.cells[3].textContent = t.toFixed(2); itemsTotal += t;
             });
             var fee = parseFloat(document.getElementById(cardId + '-fee').value) || 0;
+            var baseTotal = itemsTotal + fee;
             var disc = parseFloat(document.getElementById(cardId + '-disc').value) || 0;
             var discType = document.getElementById(cardId + '-disc-type').value;
-            var discAmt = discType === 'percent' ? (itemsTotal * disc / 100) : disc;
+            var discAmt = discType === 'percent' ? (baseTotal * disc / 100) : disc;
             document.getElementById(cardId + '-items-total').textContent = itemsTotal.toFixed(2) + ' ج';
             document.getElementById(cardId + '-fee-display').textContent = fee.toFixed(2) + ' ج';
             document.getElementById(cardId + '-disc-display').textContent = discAmt.toFixed(2) + ' ج';
-            document.getElementById(cardId + '-grand-total').textContent = (itemsTotal + fee - discAmt).toFixed(2) + ' ج';
+            document.getElementById(cardId + '-grand-total').textContent = (baseTotal - discAmt).toFixed(2) + ' ج';
         };
 
         window.admSetDiscType = function (cardId, type) {

@@ -110,14 +110,17 @@ class AdminOrderController extends Controller
         // ── Discount guard (HTTP-layer) ──────────────────────────────
         $items       = $data['items'];
         $itemsTotal  = collect($items)->sum(fn($i) => $i['quantity'] * $i['unit_price']);
+        $deliveryFee = (float) ($data['delivery_fee'] ?? 0);
+        $baseTotal   = $itemsTotal + $deliveryFee;
+
         $discount    = (float) ($data['discount'] ?? 0);
         $discountType= $data['discount_type'] ?? 'amount';
-        $discountAmt = $discountType === 'percent' ? ($itemsTotal * $discount / 100) : $discount;
+        $discountAmt = $discountType === 'percent' ? ($baseTotal * $discount / 100) : $discount;
         $maxDiscountPercent = (float) Setting::get('max_discount_percentage', 50);
 
-        if ($itemsTotal > 0 && ($discountAmt / $itemsTotal * 100) > $maxDiscountPercent) {
+        if ($baseTotal > 0 && ($discountAmt / $baseTotal * 100) > $maxDiscountPercent) {
             return response()->json([
-                'errors' => ['discount' => ["عذراً، نسبة الخصم لا يمكن أن تتجاوز {$maxDiscountPercent}% من إجمالي الأصناف. (أقصى قيمة: " . round($itemsTotal * $maxDiscountPercent / 100, 2) . " ج)"]],
+                'errors' => ['discount' => ["عذراً، نسبة الخصم لا يمكن أن تتجاوز {$maxDiscountPercent}% من إجمالي الطلب. (أقصى قيمة: " . round($baseTotal * $maxDiscountPercent / 100, 2) . " ج)"]],
             ], 422);
         }
 

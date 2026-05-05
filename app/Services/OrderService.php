@@ -50,13 +50,16 @@ class OrderService
             // ── 2. Compute totals ──────────────────────────────────
             $items       = $data['items'];
             $itemsTotal  = collect($items)->sum(fn($i) => $i['quantity'] * $i['unit_price']);
+            $deliveryFee = (float) ($data['delivery_fee'] ?? 0);
+            $baseTotal   = $itemsTotal + $deliveryFee;
+
             $discount    = (float) ($data['discount'] ?? 0);
             $discountType= $data['discount_type'] ?? 'amount';
             $discountAmt = $discountType === 'percent'
-                ? ($itemsTotal * $discount / 100)
+                ? ($baseTotal * $discount / 100)
                 : $discount;
-            $deliveryFee = (float) ($data['delivery_fee'] ?? 0);
-            $total       = $itemsTotal + $deliveryFee - $discountAmt;
+
+            $total       = $baseTotal - $discountAmt;
 
             // ── 3. Resolve delivery & status ───────────────────────
             $deliveryId        = !empty($data['delivery_id']) ? $data['delivery_id'] : null;

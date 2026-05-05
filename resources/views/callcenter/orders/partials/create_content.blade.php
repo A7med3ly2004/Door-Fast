@@ -356,8 +356,12 @@
     function delRow(rowId, cardId) { document.getElementById(rowId)?.remove(); calcTotals(cardId); saveDrafts(); }
     function calcTotals(cardId) {
         var itemsTotal = 0; document.getElementById(cardId + '-items').querySelectorAll('tr').forEach(tr => { const qty = parseFloat(tr.cells[1].querySelector('input')?.value || 0) || 0; const prc = parseFloat(tr.cells[2].querySelector('input')?.value || 0) || 0; const t = qty * prc; tr.cells[3].textContent = t.toFixed(2); itemsTotal += t; });
-        var fee = parseFloat(document.getElementById(cardId + '-fee').value) || 0; const disc = parseFloat(document.getElementById(cardId + '-disc').value) || 0; const discType = document.getElementById(cardId + '-disc-type').value; const discAmt = discType === 'percent' ? (itemsTotal * disc / 100) : disc;
-        document.getElementById(cardId + '-items-total').textContent = itemsTotal.toFixed(2) + ' ج'; document.getElementById(cardId + '-fee-display').textContent = fee.toFixed(2) + ' ج'; document.getElementById(cardId + '-disc-display').textContent = discAmt.toFixed(2) + ' ج'; document.getElementById(cardId + '-grand-total').textContent = (itemsTotal + fee - discAmt).toFixed(2) + ' ج';
+        var fee = parseFloat(document.getElementById(cardId + '-fee').value) || 0;
+        const baseTotal = itemsTotal + fee;
+        const disc = parseFloat(document.getElementById(cardId + '-disc').value) || 0;
+        const discType = document.getElementById(cardId + '-disc-type').value;
+        const discAmt = discType === 'percent' ? (baseTotal * disc / 100) : disc;
+        document.getElementById(cardId + '-items-total').textContent = itemsTotal.toFixed(2) + ' ج'; document.getElementById(cardId + '-fee-display').textContent = fee.toFixed(2) + ' ج'; document.getElementById(cardId + '-disc-display').textContent = discAmt.toFixed(2) + ' ج'; document.getElementById(cardId + '-grand-total').textContent = (baseTotal - discAmt).toFixed(2) + ' ج';
     }
     function setDiscType(cardId, type) { document.getElementById(cardId + '-disc-type').value = type; document.getElementById(cardId + '-disc-jm').classList.toggle('active', type === 'amount'); document.getElementById(cardId + '-disc-pct').classList.toggle('active', type === 'percent'); calcTotals(cardId); saveDrafts(); }
 

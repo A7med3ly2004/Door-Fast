@@ -90,24 +90,6 @@
             padding-top: 10px;
         }
 
-        .signatures {
-            width: 100%;
-            margin-top: 80px;
-            text-align: center;
-            direction: ltr;
-        }
-
-        .signatures td {
-            width: 50%;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .signatures .lines td {
-            padding-top: 40px;
-            color: #94a3b8;
-        }
-
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -140,7 +122,7 @@
             <td style="width: 40%; text-align: center;">
                 <h1 style="color: #a10303ff; margin: 0; font-size: 22px;">DoorFast</h1>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 14px;">
-                    إيصال معاملة مالية
+                    إيصال معاملة مالية — كشف حسابي
                 </p>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 12px;">
                     {{ now()->format('Y-m-d H:i') }} التاريخ:
@@ -167,37 +149,28 @@
                 <td class="info-label">نوع المعاملة:</td>
             </tr>
             <tr>
-                <td style=" font-size: 14px; color: #000000ff;">{{ $transaction->by_whom }}</td>
-                <td class="info-label">الطرف الثاني:</td>
+                <td style="color: #000000ff; font-size: 14px;">{{ $transaction->description ?? '—' }}</td>
+                <td class="info-label">البيان / الملاحظة:</td>
             </tr>
             <tr>
-                <td style="color: #000000ff; font-size: 14px;">{{ $transaction->note ?? 'لا توجد ملاحظات' }}</td>
-                <td class="info-label">ملاحظات:</td>
-            </tr>
-            <tr>
-                <td style="color: #000000ff; font-size: 14px;">{{ $transaction->recordedBy?->name ?? '—' }}</td>
-                <td class="info-label">سجلت بواسطة:</td>
+                <td style=" font-size: 14px; color: #000000ff;">{{ $user->name }}</td>
+                <td class="info-label">الكول سينتر:</td>
             </tr>
         </table>
     </div>
 
     <table class="totals-table">
-        <tr class="grand-total">
+        <tr>
             <td class="value">
                 ج.م <span dir="ltr">{{ number_format((float) $transaction->amount, 2) }}</span>
             </td>
-            <td class="label">قيمة المعاملة : </td>
+            <td class="label">قيمة المعاملة ({{ $transaction->direction === 'debit' ? 'مدين' : 'دائن' }}):</td>
         </tr>
-    </table>
-
-    <table class="signatures">
-        <tr>
-            <td>توقيع المدير</td>
-            <td>توقيع الطرف الثاني</td>
-        </tr>
-        <tr class="lines">
-            <td>..............</td>
-            <td>..............</td>
+        <tr class="grand-total">
+            <td class="value">
+                ج.م <span dir="ltr">{{ number_format((float) $transaction->balance_after, 2) }}</span>
+            </td>
+            <td class="label">الرصيد بعد العملية : </td>
         </tr>
     </table>
 

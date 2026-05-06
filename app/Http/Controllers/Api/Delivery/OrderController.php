@@ -329,6 +329,7 @@ class OrderController extends Controller
             'send_to'             => $order->send_to_phone ? [
                 'name'    => $order->send_to_name ?? null,
                 'phone'   => $order->send_to_phone,
+                'phone2'  => $order->send_to_phone2 ?? null,
                 'address' => $order->send_to_address,
             ] : null,
             'items'               => $order->items->map(fn($item) => [

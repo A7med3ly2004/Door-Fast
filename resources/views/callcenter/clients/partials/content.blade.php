@@ -217,6 +217,7 @@ async function viewClient(id) {
                     <thead style="background:transparent;">
                         <tr style="border-bottom:1px solid var(--border);">
                             <th style="padding:10px 16px; text-align:center;">رقم الطلب</th>
+                            <th style="padding:10px 16px; text-align:center;">الدور</th>
                             <th style="padding:10px 16px; text-align:center;">الحالة</th>
                             <th style="padding:10px 16px; text-align:center;">الإجمالي</th>
                             <th style="padding:10px 16px; text-align:center;">التاريخ</th>
@@ -225,10 +226,11 @@ async function viewClient(id) {
                     <tbody>
                         ${c.orders.map(o => `<tr style="border-bottom:1px solid var(--border);">
                             <td style="padding:12px 16px; text-align:center; font-weight:700; color:var(--yellow);">${o.order_number}</td>
+                            <td style="padding:12px 16px; text-align:center;"><span style="background:${o.role === 'مستلم' ? '#f59e0b' : '#3b82f6'};color:white;padding:2px 8px;border-radius:12px;font-size:11px;">${o.role}</span></td>
                             <td style="padding:12px 16px; text-align:center;">${statusBadge(o.status)}</td>
                             <td style="padding:12px 16px; text-align:center; font-weight:600;">${parseFloat(o.total).toFixed(2)} ج</td>
                             <td style="padding:12px 16px; text-align:center; font-size:12px; color:var(--text-muted);">${formatDate(o.created_at)}</td>
-                        </tr>`).join('') || '<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);">لا توجد طلبات سابقة</td></tr>'}
+                        </tr>`).join('') || '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-muted);">لا توجد طلبات سابقة</td></tr>'}
                     </tbody>
                 </table>
             </div>

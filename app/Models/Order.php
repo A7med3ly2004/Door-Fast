@@ -15,7 +15,9 @@ class Order extends Model
         'client_id',
         'client_address',
         'send_to_phone',
+        'send_to_phone2',
         'send_to_address',
+        'send_to_client_id',
         'notes',
         'delivery_fee',
         'discount',
@@ -58,6 +60,11 @@ class Order extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+    
+    public function recipientClient()
+    {
+        return $this->belongsTo(Client::class, 'send_to_client_id');
     }
 
     public function items()

@@ -13,9 +13,13 @@ class ClientController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Client::withCount(['orders', 'addresses'])
+        $query = Client::withCount(['orders', 'recipientOrders', 'addresses'])
             ->withSum(['orders' => fn($q) => $q->where('status', 'delivered')], 'total')
-            ->with(['orders' => fn($q) => $q->latest()->take(1)])
+            ->withSum(['recipientOrders' => fn($q) => $q->where('status', 'delivered')], 'total')
+            ->with([
+                'orders' => fn($q) => $q->latest()->take(1),
+                'recipientOrders' => fn($q) => $q->latest()->take(1)
+            ])
             ->latest();
 
         if ($request->filled('search')) {
@@ -40,7 +44,25 @@ class ClientController extends Controller
         }
 
         if ($request->wantsJson()) {
-            return response()->json($query->paginate(15));
+            return response()->json($query->paginate(15)->through(fn($c) => [
+                'id'              => $c->id,
+                'name'            => $c->name,
+                'phone'           => $c->phone,
+                'phone2'          => $c->phone2,
+                'code'            => $c->code,
+                'orders_count'    => $c->orders_count + $c->recipient_orders_count,
+                'orders_sum_total'=> ($c->orders_sum_total ?? 0) + ($c->recipient_orders_sum_total ?? 0),
+                'addresses_count' => $c->addresses_count,
+                'created_at'      => $c->created_at->toIso8601String(),
+                'orders'          => [
+                    [
+                        'created_at' => collect([
+                            $c->orders->first()?->created_at,
+                            $c->recipientOrders->first()?->created_at,
+                        ])->filter()->max()
+                    ]
+                ]
+            ]));
         }
 
         $clients = $query->paginate(15);
@@ -87,10 +109,26 @@ class ClientController extends Controller
     {
         $client = Client::with([
             'addresses',
-            'orders' => fn($q) => $q->with(['callcenter', 'delivery'])->latest()->take(5),
-        ])->withCount('orders')
-          ->withSum(['orders' => fn($q) => $q->where('status', 'delivered')], 'total')
-          ->findOrFail($id);
+            'orders' => fn($q) => $q->with(['callcenter', 'delivery'])->latest(),
+            'recipientOrders' => fn($q) => $q->with(['callcenter', 'delivery'])->latest(),
+        ])
+        ->withCount(['orders', 'recipientOrders'])
+        ->withSum(['orders' => fn($q) => $q->where('status', 'delivered')], 'total')
+        ->withSum(['recipientOrders' => fn($q) => $q->where('status', 'delivered')], 'total')
+        ->findOrFail($id);
+
+        $primaryOrders = $client->orders->toBase()->map(fn($o) => array_merge(
+            $this->formatOrder($o), ['role' => 'عميل أساسي']
+        ));
+
+        $recipientOrders = $client->recipientOrders->toBase()->map(fn($o) => array_merge(
+            $this->formatOrder($o), ['role' => 'مستلم']
+        ));
+
+        $allOrders = $primaryOrders->merge($recipientOrders)
+            ->sortByDesc('created_at')
+            ->take(5)
+            ->values();
 
         return response()->json([
             'client' => [
@@ -99,21 +137,26 @@ class ClientController extends Controller
                 'phone'       => $client->phone,
                 'phone2'      => $client->phone2,
                 'code'        => $client->code,
-                'orders_count'=> $client->orders_count,
-                'total_spent' => $client->orders_sum_total ?? 0,
+                'orders_count'=> $client->orders_count + $client->recipient_orders_count,
+                'total_spent' => ($client->orders_sum_total ?? 0) + ($client->recipient_orders_sum_total ?? 0),
                 'created_at'  => $client->created_at->toIso8601String(),
                 'addresses'   => $client->addresses->take(5),
-                'orders'      => $client->orders->map(fn($o) => [
-                    'id'           => $o->id,
-                    'order_number' => $o->order_number,
-                    'total'        => $o->total,
-                    'status'       => $o->status,
-                    'callcenter'   => $o->callcenter?->name,
-                    'delivery'     => $o->delivery?->name,
-                    'created_at'   => $o->created_at->toIso8601String(),
-                ]),
+                'orders'      => $allOrders,
             ],
         ]);
+    }
+
+    private function formatOrder($o): array
+    {
+        return [
+            'id'           => $o->id,
+            'order_number' => $o->order_number,
+            'total'        => $o->total,
+            'status'       => $o->status,
+            'callcenter'   => $o->callcenter?->name,
+            'delivery'     => $o->delivery?->name,
+            'created_at'   => $o->created_at->toIso8601String(),
+        ];
     }
 
     public function update(Request $request, $id)
@@ -160,10 +203,13 @@ class ClientController extends Controller
 
     public function destroy($id)
     {
-        $client = Client::withCount('orders')->findOrFail($id);
+        $client = Client::withCount(['orders', 'recipientOrders'])->findOrFail($id);
 
-        if ($client->orders_count > 0) {
-            return response()->json(['success' => false, 'message' => 'لا يمكن حذف عميل لديه طلبات'], 422);
+        if ($client->orders_count > 0 || $client->recipient_orders_count > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لا يمكن حذف عميل لديه طلبات (أساسية أو كمستلم)'
+            ], 422);
         }
 
         $client->addresses()->delete();

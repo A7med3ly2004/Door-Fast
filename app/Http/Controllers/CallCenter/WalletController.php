@@ -222,6 +222,29 @@ class WalletController extends Controller
         ], 201);
     }
 
+    public function downloadTransactionPdf($id)
+    {
+        $user = auth()->user();
+        $wallet = $user->getOrCreateWallet();
+
+        $transaction = WalletTransaction::where('id', $id)
+            ->where('wallet_id', $wallet->id)
+            ->firstOrFail();
+
+        $html = view('callcenter.pdf.wallet-transaction', compact('transaction', 'user'))->render();
+
+        $Arabic = new \ArPHP\I18N\Arabic();
+        $p = $Arabic->arIdentify($html);
+        for ($i = count($p) - 1; $i >= 0; $i -= 2) {
+            $utf8ar = $Arabic->utf8Glyphs(substr($html, $p[$i - 1], $p[$i] - $p[$i - 1]));
+            $html   = substr_replace($html, $utf8ar, $p[$i - 1], $p[$i] - $p[$i - 1]);
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper('a5', 'portrait');
+
+        return $pdf->download('receipt-' . $transaction->id . '.pdf');
+    }
+
     private function messages(): array
     {
         return [

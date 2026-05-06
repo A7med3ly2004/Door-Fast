@@ -56,6 +56,7 @@ class OrderController extends Controller
             'items.*.quantity'   => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.shop_id'    => 'nullable|exists:shops,id',
+            'send_to_phone2'     => 'nullable|string|max:30',
         ], [
             'phone.required'         => 'رقم الهاتف مطلوب',
             'code.required'          => 'الكود مطلوب',
@@ -69,7 +70,7 @@ class OrderController extends Controller
             'phone2', 'is_new_address',
             'discount', 'discount_type', 'delivery_fee',
             'delivery_id', 'notes',
-            'send_to_phone', 'send_to_address', 'send_to_name',
+            'send_to_phone', 'send_to_phone2', 'send_to_address', 'send_to_name',
             'send_to_code', 'send_to_client_id',
         ]));
 
@@ -210,13 +211,13 @@ class OrderController extends Controller
 
     public function globalShow($id)
     {
-        $order = Order::with(['client', 'delivery', 'items.shop', 'logs.user'])->findOrFail($id);
+        $order = Order::with(['client.addresses', 'recipientClient.addresses', 'delivery', 'items.shop', 'logs.user'])->findOrFail($id);
         return response()->json(['order' => $this->orderDetail($order)]);
     }
 
     public function show($id)
     {
-        $order = Order::with(['client', 'delivery', 'items.shop', 'logs.user'])
+        $order = Order::with(['client.addresses', 'recipientClient.addresses', 'delivery', 'items.shop', 'logs.user'])
             ->where('callcenter_id', auth()->id())
             ->findOrFail($id);
 
@@ -276,6 +277,7 @@ class OrderController extends Controller
             'is_delivery_chosen'  => $isDeliveryChosen,
             'client_address'      => $request->client_address,
             'send_to_phone'       => $request->send_to_phone ?: null,
+            'send_to_phone2'      => $request->send_to_phone2 ?: null,
             'send_to_address'     => $request->send_to_address ?: null,
             'notes'               => $request->notes,
             'delivery_fee'        => $deliveryFee,
@@ -286,6 +288,48 @@ class OrderController extends Controller
             'accepted_at'         => $isDeliveryChosen ? Carbon::now() : null,
             'sent_to_delivery_at' => $newSentAt,
         ]);
+
+        if (!empty($request->client_address) && $order->client) {
+            $order->client->addresses()->firstOrCreate(
+                ['address' => $request->client_address],
+                ['is_default' => $order->client->addresses()->count() === 0]
+            );
+        }
+
+        if (!empty($request->send_to_phone)) {
+            $sendToClient = \App\Models\Client::where('phone', $request->send_to_phone)->first();
+            if ($sendToClient) {
+                if (!empty($request->send_to_phone2) && $sendToClient->phone2 !== $request->send_to_phone2) {
+                    $sendToClient->update(['phone2' => $request->send_to_phone2]);
+                }
+                if (!empty($request->send_to_name) && $sendToClient->name !== $request->send_to_name) {
+                    $sendToClient->update(['name' => $request->send_to_name]);
+                }
+                
+                if (!empty($request->send_to_address)) {
+                    $sendToClient->addresses()->firstOrCreate(
+                        ['address' => $request->send_to_address],
+                        ['is_default' => $sendToClient->addresses()->count() === 0]
+                    );
+                }
+                
+                $order->update(['send_to_client_id' => $sendToClient->id]);
+            } else {
+                $sendToClient = \App\Models\Client::create([
+                    'phone' => $request->send_to_phone,
+                    'phone2' => $request->send_to_phone2,
+                    'name' => $request->send_to_name ?? 'Unnamed',
+                    'code' => \App\Models\Client::generateCode()
+                ]);
+                $sendToClient->addresses()->create([
+                    'address' => $request->send_to_address ?? '',
+                    'is_default' => true,
+                ]);
+                $order->update(['send_to_client_id' => $sendToClient->id]);
+            }
+        } else {
+            $order->update(['send_to_client_id' => null]);
+        }
 
         $order->items()->delete();
         foreach ($items as $item) {
@@ -403,6 +447,8 @@ class OrderController extends Controller
             'notes'               => $order->notes,
             'client_address'      => $order->client_address,
             'send_to_phone'       => $order->send_to_phone,
+            'send_to_phone2'      => $order->send_to_phone2,
+            'send_to_name'        => $order->recipientClient?->name,
             'send_to_address'     => $order->send_to_address,
             'delivery_fee'        => $order->delivery_fee,
             'discount'            => $order->discount,
@@ -413,7 +459,23 @@ class OrderController extends Controller
             'accepted_at'         => $order->accepted_at?->toIso8601String(),
             'delivered_at'        => $order->delivered_at?->toIso8601String(),
             'client'              => $order->client
-                ? ['name' => $order->client->name, 'phone' => $order->client->phone, 'code' => $order->client->code]
+                ? [
+                    'id' => $order->client->id, 
+                    'name' => $order->client->name, 
+                    'phone' => $order->client->phone, 
+                    'phone2' => $order->client->phone2, 
+                    'code' => $order->client->code,
+                    'addresses' => $order->client->addresses->map(fn($a) => ['id' => $a->id, 'address' => $a->address])
+                  ]
+                : null,
+            'recipient_client'    => $order->recipientClient
+                ? [
+                    'id' => $order->recipientClient->id,
+                    'name' => $order->recipientClient->name,
+                    'phone' => $order->recipientClient->phone,
+                    'phone2' => $order->recipientClient->phone2,
+                    'addresses' => $order->recipientClient->addresses->map(fn($a) => ['id' => $a->id, 'address' => $a->address])
+                  ]
                 : null,
             'delivery'            => $order->delivery
                 ? ['id' => $order->delivery->id, 'name' => $order->delivery->name]

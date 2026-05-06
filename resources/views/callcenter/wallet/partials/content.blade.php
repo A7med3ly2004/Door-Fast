@@ -75,6 +75,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
                     <th style="text-align:center">مدين</th>
                     <th style="text-align:center">دائن</th>
                     <th style="text-align:center">الرصيد</th>
+                    <th style="text-align:center">إجراءات</th>
                 </tr>
             </thead>
             <tbody id="w-tbody">
@@ -258,6 +259,14 @@ resources/views/callcenter/wallet/partials/content.blade.php
                     <td style="color:var(--success);font-weight:700; text-align:center;">${tx.debit || '—'}</td>
                     <td style="color:var(--red);font-weight:700; text-align:center;">${tx.credit || '—'}</td>
                     <td style="font-weight:700;color:var(--yellow); text-align:center;">${tx.balance_after}</td>
+                    <td style="text-align:center;">
+                        <a href="/callcenter/wallet/transactions/${tx.id}/pdf" 
+                           target="_blank" 
+                           class="btn btn-sm" 
+                           style="background:#a10303;color:#fff;font-size:11px;padding:4px 8px;">
+                            📄 PDF
+                        </a>
+                    </td>
                 </tr>
             `).join('');
             } catch (e) {

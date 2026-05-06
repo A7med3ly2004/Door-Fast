@@ -88,6 +88,7 @@ class OrderService
                 'client_id'           => $client->id,
                 'client_address'      => $data['client_address'],
                 'send_to_phone'       => $data['send_to_phone'] ?? null ?: null,
+                'send_to_phone2'      => $data['send_to_phone2'] ?? null ?: null,
                 'send_to_address'     => $data['send_to_address'] ?? null ?: null,
                 'notes'               => $data['notes'] ?? null,
                 'delivery_fee'        => $deliveryFee,
@@ -201,7 +202,19 @@ class OrderService
      */
     private function resolveSendToClient(array $data, Order $order): void
     {
-        if (empty($data['send_to_phone']) || !empty($data['send_to_client_id'])) {
+        if (empty($data['send_to_phone'])) {
+            return;
+        }
+
+        if (!empty($data['send_to_client_id'])) {
+            $sendToClient = Client::find($data['send_to_client_id']);
+            if ($sendToClient) {
+                // Update if the phone2 is different
+                if (!empty($data['send_to_phone2']) && $data['send_to_phone2'] !== $sendToClient->phone2) {
+                    $sendToClient->update(['phone2' => $data['send_to_phone2']]);
+                }
+                $order->update(['send_to_client_id' => $sendToClient->id]);
+            }
             return;
         }
 
@@ -210,9 +223,15 @@ class OrderService
             [
                 'name'   => $data['send_to_name'] ?? 'Unnamed',
                 'code'   => $data['send_to_code'] ?? Client::generateCode(),
-                'phone2' => null,
+                'phone2' => $data['send_to_phone2'] ?? null,
             ]
         );
+
+        if (!$sendToClient->wasRecentlyCreated) {
+            if (!empty($data['send_to_phone2']) && $sendToClient->phone2 !== $data['send_to_phone2']) {
+                $sendToClient->update(['phone2' => $data['send_to_phone2']]);
+            }
+        }
 
         if ($sendToClient->wasRecentlyCreated) {
             $sendToClient->addresses()->create([
@@ -229,6 +248,8 @@ class OrderService
                 properties:   ['phone' => $sendToClient->phone, 'code' => $sendToClient->code]
             );
         }
+        
+        $order->update(['send_to_client_id' => $sendToClient->id]);
     }
 
     /**

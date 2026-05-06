@@ -27,6 +27,11 @@ class Client extends Model
     {
         return $this->hasMany(Order::class);
     }
+    
+    public function recipientOrders()
+    {
+        return $this->hasMany(Order::class, 'send_to_client_id');
+    }
 
     // توليد كود تلقائي
     public static function generateCode(): string

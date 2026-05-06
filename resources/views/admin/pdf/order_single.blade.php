@@ -242,6 +242,10 @@
     <div style="width: 60%; float: right;">
         <table class="totals-table">
             <tr>
+                <td class="value">{{ $order->items->count() }}</td>
+                <td class="label">{{ $ar('عدد الأصناف:') }}</td>
+            </tr>
+            <tr>
                 <td class="value">{{ number_format($order->total - $order->delivery_fee + $order->discount, 2) }}
                     {{ $ar('ج') }}
                 </td>

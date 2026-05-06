@@ -31,20 +31,25 @@ class ClientController extends Controller
                 ]);
             }
 
-            $query = Client::withCount('orders')->with(['addresses', 'orders' => fn($q) => $q->latest()->limit(1)])->latest();
+            $query = Client::withCount(['orders', 'recipientOrders'])
+                ->with(['addresses', 'orders' => fn($q) => $q->latest()->limit(1), 'recipientOrders' => fn($q) => $q->latest()->limit(1)])
+                ->latest();
 
             $s = $request->search;
             $query->where(fn($q) => $q->where('name', 'like', "%$s%")->orWhere('phone', 'like', "%$s%")->orWhere('code', 'like', "%$s%"));
 
             return response()->json($query->paginate(15)->through(fn($c) => [
-                'id'            => $c->id,
-                'name'          => $c->name,
-                'code'          => $c->code,
-                'phone'         => $c->phone,
-                'phone2'        => $c->phone2,
+                'id'              => $c->id,
+                'name'            => $c->name,
+                'code'            => $c->code,
+                'phone'           => $c->phone,
+                'phone2'          => $c->phone2,
                 'addresses_count' => $c->addresses->count(),
-                'orders_count'  => $c->orders_count,
-                'last_order_at' => $c->orders->first()?->created_at?->toIso8601String(),
+                'orders_count'    => $c->orders_count + $c->recipient_orders_count,
+                'last_order_at'   => collect([
+                    $c->orders->first()?->created_at,
+                    $c->recipientOrders->first()?->created_at,
+                ])->filter()->max()?->toIso8601String(),
             ]));
         }
 
@@ -152,7 +157,32 @@ class ClientController extends Controller
 
     public function show($id)
     {
-        $client = Client::with(['addresses', 'orders' => fn($q) => $q->with('delivery')->latest()->limit(5)])->findOrFail($id);
+        $client = Client::with([
+            'addresses',
+            'orders'          => fn($q) => $q->with('delivery')->latest()->limit(5),
+            'recipientOrders' => fn($q) => $q->with('delivery')->latest()->limit(5),
+        ])->findOrFail($id);
+
+        $primaryOrders = $client->orders->toBase()->map(fn($o) => [
+            'order_number' => $o->order_number,
+            'status'       => $o->status,
+            'total'        => $o->total,
+            'created_at'   => $o->created_at->toIso8601String(),
+            'role'         => 'عميل أساسي',
+        ]);
+
+        $recipientOrders = $client->recipientOrders->toBase()->map(fn($o) => [
+            'order_number' => $o->order_number,
+            'status'       => $o->status,
+            'total'        => $o->total,
+            'created_at'   => $o->created_at->toIso8601String(),
+            'role'         => 'مستلم',
+        ]);
+
+        $allOrders = $primaryOrders->merge($recipientOrders)
+            ->sortByDesc('created_at')
+            ->take(5)
+            ->values();
 
         return response()->json([
             'client' => [
@@ -162,14 +192,13 @@ class ClientController extends Controller
                 'phone'       => $client->phone,
                 'phone2'      => $client->phone2,
                 'created_at'  => $client->created_at->toIso8601String(),
-                'addresses'   => $client->addresses->map(fn($a) => ['id' => $a->id, 'address' => $a->address, 'is_default' => $a->is_default]),
-                'orders_count'=> $client->orders->count(),
-                'orders'      => $client->orders->map(fn($o) => [
-                    'order_number' => $o->order_number,
-                    'status'       => $o->status,
-                    'total'        => $o->total,
-                    'created_at'   => $o->created_at->toIso8601String(),
+                'addresses'   => $client->addresses->map(fn($a) => [
+                    'id'         => $a->id,
+                    'address'    => $a->address,
+                    'is_default' => $a->is_default,
                 ]),
+                'orders_count'=> $client->orders->count() + $client->recipientOrders->count(),
+                'orders'      => $allOrders,
             ],
         ]);
     }

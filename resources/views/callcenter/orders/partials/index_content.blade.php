@@ -79,18 +79,40 @@
             <div class="grid-2" style="margin-bottom:12px">
                 <div class="form-group"><label class="form-label">المندوب (تلقائي إن تُرك فارغاً)</label><select
                         class="form-select" id="edit-delivery"></select></div>
-                <div class="form-group"><label class="form-label">عنوان العميل *</label><input type="text"
-                        class="form-control" id="edit-address"></div>
+                <div class="form-group">
+                    <label class="form-label">عنوان العميل *</label>
+                    <select class="form-select" id="edit-address-select" onchange="toggleNewAddress('edit-address-select', 'edit-address-txt')"></select>
+                    <input type="text" class="form-control" id="edit-address-txt" style="display:none; margin-top:8px;" placeholder="اكتب العنوان الجديد...">
+                </div>
             </div>
-            <div
-                style="background:rgba(255,255,255,0.02);border-radius:8px;padding:12px;margin-bottom:12px;border:1px dashed var(--border)">
+            <div class="grid-2" style="margin-bottom:12px">
+                <div class="form-group">
+                    <label class="form-label">هاتف العميل</label>
+                    <input type="text" class="form-control" id="edit-client-phone" readonly dir="ltr" style="text-align:right">
+                </div>
+                <div class="form-group" id="edit-client-phone2-group" style="display:none;">
+                    <label class="form-label">هاتف 2</label>
+                    <input type="text" class="form-control" id="edit-client-phone2" readonly dir="ltr" style="text-align:right">
+                </div>
+            </div>
+            <div id="edit-send-to-section"
+                style="background:rgba(255,255,255,0.02);border-radius:8px;padding:12px;margin-bottom:12px;border:1px dashed var(--border);display:none;">
                 <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--text-muted)">↗ إرسال إلى عميل
                     آخر (اختياري)</div>
                 <div class="grid-2">
                     <div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text"
-                            class="form-control" id="edit-send-to-phone" placeholder="01xxxxxxxxx"></div>
-                    <div class="form-group"><label class="form-label">عنوان المستلم</label><input type="text"
-                            class="form-control" id="edit-send-to-address" placeholder="العنوان"></div>
+                            class="form-control" id="edit-send-to-phone" dir="ltr" style="text-align:right"></div>
+                    <div class="form-group"><label class="form-label">هاتف 2 (العميل المستلم)</label><input type="text"
+                            class="form-control" id="edit-send-to-phone2" dir="ltr" style="text-align:right" placeholder="اختياري"></div>
+                </div>
+                <div class="grid-2" style="margin-top:12px">
+                    <div class="form-group"><label class="form-label">اسم العميل المستلم</label><input type="text"
+                            class="form-control" id="edit-send-to-name"></div>
+                    <div class="form-group">
+                        <label class="form-label">عنوان المستلم</label>
+                        <select class="form-select" id="edit-send-to-address-select" onchange="toggleNewAddress('edit-send-to-address-select', 'edit-send-to-address-txt')"></select>
+                        <input type="text" class="form-control" id="edit-send-to-address-txt" style="display:none; margin-top:8px;" placeholder="اكتب العنوان الجديد...">
+                    </div>
                 </div>
             </div>
             <div class="form-group"><label class="form-label">ملاحظات</label><textarea class="form-control"
@@ -394,8 +416,68 @@
 
         try {
             const { data } = await axios.get(`/callcenter/orders/${id}`); const o = data.order;
-            document.getElementById('edit-id').value = o.id; document.getElementById('edit-num').textContent = o.order_number; document.getElementById('edit-address').value = o.client_address || ''; document.getElementById('edit-send-to-phone').value = o.send_to_phone || ''; document.getElementById('edit-send-to-address').value = o.send_to_address || ''; document.getElementById('edit-notes').value = o.notes || ''; document.getElementById('edit-fee').value = o.delivery_fee || 0; document.getElementById('edit-disc').value = o.discount || 0; document.getElementById('edit-disc-type').value = o.discount_type || 'amount';
+            document.getElementById('edit-id').value = o.id; document.getElementById('edit-num').textContent = o.order_number; document.getElementById('edit-notes').value = o.notes || ''; document.getElementById('edit-fee').value = o.delivery_fee || 0; document.getElementById('edit-disc').value = o.discount || 0; document.getElementById('edit-disc-type').value = o.discount_type || 'amount';
             if (o.delivery) document.getElementById('edit-delivery').value = o.delivery.id; else document.getElementById('edit-delivery').value = '';
+
+            let clientAddrsHtml = '<option value="">— اختر العنوان —</option>';
+            let foundPrimary = false;
+            if (o.client && o.client.addresses && o.client.addresses.length) {
+                o.client.addresses.forEach(a => {
+                    let sel = (a.address === o.client_address) ? 'selected' : '';
+                    if (sel) foundPrimary = true;
+                    clientAddrsHtml += `<option value="${a.address}" ${sel}>${a.address}</option>`;
+                });
+            }
+            if (!foundPrimary && o.client_address) {
+                clientAddrsHtml += `<option value="${o.client_address}" selected>${o.client_address}</option>`;
+            }
+            clientAddrsHtml += `<option value="new">+ اضافة عنوان جديد</option>`;
+            document.getElementById('edit-address-select').innerHTML = clientAddrsHtml;
+            document.getElementById('edit-address-txt').style.display = 'none';
+            document.getElementById('edit-address-txt').value = '';
+
+            let sendToAddrsHtml = '<option value="">— اختر العنوان —</option>';
+            let foundSendTo = false;
+            if (o.recipient_client && o.recipient_client.addresses && o.recipient_client.addresses.length) {
+                o.recipient_client.addresses.forEach(a => {
+                    let sel = (a.address === o.send_to_address) ? 'selected' : '';
+                    if (sel) foundSendTo = true;
+                    sendToAddrsHtml += `<option value="${a.address}" ${sel}>${a.address}</option>`;
+                });
+            }
+            if (!foundSendTo && o.send_to_address) {
+                sendToAddrsHtml += `<option value="${o.send_to_address}" selected>${o.send_to_address}</option>`;
+            }
+            sendToAddrsHtml += `<option value="new">+ اضافة عنوان جديد</option>`;
+            document.getElementById('edit-send-to-address-select').innerHTML = sendToAddrsHtml;
+            document.getElementById('edit-send-to-address-txt').style.display = 'none';
+            document.getElementById('edit-send-to-address-txt').value = '';
+
+            document.getElementById('edit-client-phone').value = o.client?.phone ?? '';
+            if (o.client?.phone2) {
+                document.getElementById('edit-client-phone2-group').style.display = 'block';
+                document.getElementById('edit-client-phone2').value = o.client.phone2;
+            } else {
+                document.getElementById('edit-client-phone2-group').style.display = 'none';
+            }
+
+            const hasSendTo = o.send_to_phone && o.send_to_phone.trim() !== '';
+            const sendToSection = document.getElementById('edit-send-to-section');
+            if (hasSendTo) {
+                sendToSection.style.display = 'block';
+                document.getElementById('edit-send-to-phone').value = o.send_to_phone ?? '';
+                document.getElementById('edit-send-to-phone2').value = o.send_to_phone2 ?? '';
+                document.getElementById('edit-send-to-name').value = o.send_to_name ?? '';
+                document.getElementById('edit-send-to-address-select').value = o.send_to_address ?? '';
+            } else {
+                sendToSection.style.display = 'none';
+                document.getElementById('edit-send-to-phone').value = '';
+                document.getElementById('edit-send-to-phone2').value = '';
+                document.getElementById('edit-send-to-name').value = '';
+                document.getElementById('edit-send-to-address-select').value = '';
+                document.getElementById('edit-send-to-address-txt').value = '';
+                document.getElementById('edit-send-to-address-txt').style.display = 'none';
+            }
             var tbody = document.getElementById('edit-items'); tbody.innerHTML = '';
             if (o.items && o.items.length) o.items.forEach(i => addEditRow(i.item_name, i.shop_id, i.quantity, i.unit_price)); else addEditRow();
             calcEditTotals(); document.getElementById('edit-body').style.opacity = '1';
@@ -407,6 +489,16 @@
         var shopOptions = SHOPS.map(s => `<option value="${s.id}" ${s.id == shopId ? 'selected' : ''}>${s.name}</option>`).join('');
         tr.innerHTML = `<td style="padding:2px"><input type="text" class="form-control" style="font-size:12px;padding:4px 6px" placeholder="الصنف" value="${name}" oninput="calcEditTotals()"></td><td style="padding:2px"><select class="form-select" style="font-size:12px;padding:4px 6px"><option value="">— متجر —</option>${shopOptions}</select></td><td style="padding:2px"><input type="number" class="form-control" style="font-size:12px;padding:4px 6px" min="0.01" step="1" value="${qty}" oninput="calcEditTotals()"></td><td style="padding:2px"><input type="number" class="form-control" style="font-size:12px;padding:4px 6px" min="0" step="0.5" value="${price}" oninput="calcEditTotals()"></td><td class="edit-row-total" style="padding:2px;font-size:12px;font-weight:700;color:var(--yellow);text-align:center">0 ج</td><td style="padding:2px;text-align:left"><button class="btn btn-sm" style="background:none;color:var(--text-muted);border:none" onclick="delEditRow(this)">✕</button></td>`;
         tbody.appendChild(tr); calcEditTotals();
+    }
+    function toggleNewAddress(selId, txtId) {
+        var sel = document.getElementById(selId);
+        var txt = document.getElementById(txtId);
+        if (sel.value === 'new') {
+            txt.style.display = 'block';
+            txt.focus();
+        } else {
+            txt.style.display = 'none';
+        }
     }
     function delEditRow(btn) { btn.closest('tr').remove(); calcEditTotals(); }
     function calcEditTotals() {
@@ -431,8 +523,15 @@
             if (name) items.push({ item_name: name, shop_id: sel.value || null, quantity: parseFloat(inputs[1].value) || 1, unit_price: parseFloat(inputs[2].value) || 0 });
         });
         if (!items.length) { showError('يجب إضافة صنف واحد على الأقل'); return; }
-        var address = document.getElementById('edit-address').value.trim(); if (!address) { showError('يحب إدخال عنوان العميل'); return; }
-        var payload = { delivery_id: document.getElementById('edit-delivery').value || null, client_address: address, send_to_phone: document.getElementById('edit-send-to-phone').value || null, send_to_address: document.getElementById('edit-send-to-address').value || null, notes: document.getElementById('edit-notes').value, delivery_fee: document.getElementById('edit-fee').value || 0, discount: document.getElementById('edit-disc').value || 0, discount_type: document.getElementById('edit-disc-type').value, items };
+        
+        let address = document.getElementById('edit-address-select').value;
+        if (address === 'new') address = document.getElementById('edit-address-txt').value.trim();
+        if (!address) { showError('يحب إدخال عنوان العميل'); return; }
+
+        let stAddress = document.getElementById('edit-send-to-address-select').value;
+        if (stAddress === 'new') stAddress = document.getElementById('edit-send-to-address-txt').value.trim();
+
+        var payload = { delivery_id: document.getElementById('edit-delivery').value || null, client_address: address, send_to_phone: document.getElementById('edit-send-to-phone').value || null, send_to_phone2: document.getElementById('edit-send-to-phone2').value || null, send_to_name: document.getElementById('edit-send-to-name').value || null, send_to_address: stAddress || null, notes: document.getElementById('edit-notes').value, delivery_fee: document.getElementById('edit-fee').value || 0, discount: document.getElementById('edit-disc').value || 0, discount_type: document.getElementById('edit-disc-type').value, items };
         var btn = document.getElementById('btn-save-edit'); btn.disabled = true; btn.textContent = 'جاري الحفظ...';
         try {
             const { data } = await axios.put(`/callcenter/orders/${id}`, payload);

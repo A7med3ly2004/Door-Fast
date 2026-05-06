@@ -284,7 +284,7 @@
 
             <button class="btn btn-secondary btn-sm" style="margin-bottom:8px" onclick="admToggleSendTo('${id}')">↗ إرسال إلى عميل آخر</button>
             <div class="sendto-section" id="${id}-sendto">
-                <div class="form-row"><div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="admStSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div><div class="form-group"><label class="form-label">عنوان المستلم *</label><div id="${id}-st-addr-wrap"><input type="text" class="form-control" id="${id}-st-addr-txt" placeholder="العنوان"></div></div></div>
+                <div class="form-row"><div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="admStSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div><div class="form-group"><label class="form-label">هاتف 2 (العميل المستلم)</label><input type="text" class="form-control" id="${id}-st-phone2" placeholder="اختياري" dir="ltr" style="text-align:right"></div><div class="form-group"><label class="form-label">عنوان المستلم *</label><div id="${id}-st-addr-wrap"><input type="text" class="form-control" id="${id}-st-addr-txt" placeholder="العنوان"></div></div></div>
                 <div class="form-row"><div class="form-group"><label class="form-label">الكود</label><div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" onblur="admStSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="admStGenCode('${id}')">كود جديد</button></div></div><div class="form-group"><label class="form-label">اسم المستلم</label><input type="text" class="form-control" id="${id}-st-name" placeholder="Unnamed if left blank"></div></div>
             </div>
             <input type="hidden" id="${id}-st-client-id" value="">
@@ -403,11 +403,11 @@
         };
         window.admStSearchByPhone = async function (cardId) {
             var phone = document.getElementById(cardId + '-st-phone').value.trim(); var wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!phone) return;
-            try { var { data } = await axios.get(SEARCH_URL, { params: { phone } }); if (data.found) { document.getElementById(cardId + '-st-name').value = data.name; document.getElementById(cardId + '-st-code').value = data.code; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { var html = `<select class="form-select" id="${cardId}-st-addr-txt">`; data.addresses.forEach(a => { html += `<option value="${a.address}">${a.address}</option>`; }); html += '</select>'; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-name').value = ''; document.getElementById(cardId + '-st-code').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } } catch (e) { }
+            try { var { data } = await axios.get(SEARCH_URL, { params: { phone } }); if (data.found) { document.getElementById(cardId + '-st-name').value = data.name; document.getElementById(cardId + '-st-code').value = data.code; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { var html = `<select class="form-select" id="${cardId}-st-addr-txt">`; data.addresses.forEach(a => { html += `<option value="${a.address}">${a.address}</option>`; }); html += '</select>'; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-name').value = ''; document.getElementById(cardId + '-st-code').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } } catch (e) { }
         };
         window.admStSearchByCode = async function (cardId) {
             var code = document.getElementById(cardId + '-st-code').value.trim(); var wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!code) return;
-            try { var { data } = await axios.get(SEARCH_URL, { params: { code } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { var html = `<select class="form-select" id="${cardId}-st-addr-txt">`; data.addresses.forEach(a => { html += `<option value="${a.address}">${a.address}</option>`; }); html += '</select>'; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-phone').value = ''; document.getElementById(cardId + '-st-name').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } } catch (e) { }
+            try { var { data } = await axios.get(SEARCH_URL, { params: { code } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { var html = `<select class="form-select" id="${cardId}-st-addr-txt">`; data.addresses.forEach(a => { html += `<option value="${a.address}">${a.address}</option>`; }); html += '</select>'; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-phone').value = ''; document.getElementById(cardId + '-st-name').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } } catch (e) { }
         };
         window.admStGenCode = function (cardId) { document.getElementById(cardId + '-st-code').value = String(Math.floor(10000 + Math.random() * 90000)); };
 
@@ -488,7 +488,7 @@
 
         // ─── Clear Card ───────────────────────────────────────────
         window.admClearCard = function (cardId) {
-            ['phone', 'phone2', 'code', 'name', 'notes'].forEach(function (f) {
+            ['phone', 'phone2', 'code', 'name', 'notes', 'st-phone', 'st-phone2', 'st-name', 'st-code'].forEach(function (f) {
                 var el = document.getElementById(cardId + '-' + f); if (el) el.value = '';
             });
             document.getElementById(cardId + '-client-id').value = '';
@@ -514,9 +514,10 @@
             var disc = parseFloat(document.getElementById(cardId + '-disc').value) || 0;
             var discType = document.getElementById(cardId + '-disc-type').value;
             var stOpen = document.getElementById(cardId + '-sendto')?.classList.contains('open');
-            var sendToPhone = ''; var sendToAddr = ''; var sendToCode = ''; var sendToName = ''; var sendToClientId = '';
+            var sendToPhone = ''; var sendToPhone2 = ''; var sendToAddr = ''; var sendToCode = ''; var sendToName = ''; var sendToClientId = '';
             if (stOpen) {
                 sendToPhone = document.getElementById(cardId + '-st-phone')?.value.trim() || '';
+                sendToPhone2 = document.getElementById(cardId + '-st-phone2')?.value.trim() || '';
                 var stEl = document.getElementById(cardId + '-st-addr-txt');
                 sendToAddr = stEl ? (stEl.value || (stEl.options ? stEl.options[stEl.selectedIndex]?.value : '')) : '';
                 sendToCode = document.getElementById(cardId + '-st-code')?.value.trim() || '';
@@ -565,6 +566,7 @@
                     is_new_address: isNewAddr,
                     delivery_id: delivery || null,
                     send_to_phone: sendToPhone || null,
+                    send_to_phone2: sendToPhone2 || null,
                     send_to_address: sendToAddr || null,
                     send_to_code: sendToCode || null,
                     send_to_name: sendToName || null,

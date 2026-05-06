@@ -151,7 +151,7 @@
             <td style="text-align: center;">${c.addresses_count ?? 0}</td>
             <td style="text-align: center;">${c.orders_count}</td>
             <td style="text-align: center;">${parseFloat(c.orders_sum_total || 0).toFixed(2)} ج</td>
-            <td style="font-size:12px;color:var(--text-muted);text-align: center;">${c.orders?.[0] ? formatDate(c.orders[0].created_at) : '—'}</td>
+            <td style="font-size:12px;color:var(--text-muted);text-align: center;">${c.orders?.[0]?.created_at ? formatDate(c.orders[0].created_at) : '—'}</td>
             <td><div style="display:flex;gap:6px;justify-content: center">
                 <button class="btn btn-sm btn-info" onclick="viewClient(${c.id})">عرض</button>
                 <button class="btn btn-sm btn-secondary" onclick="editClient(${c.id})">تعديل</button>
@@ -229,8 +229,8 @@
             <div>
                 <div style="font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">آخر 5 طلبات</div>
                 <div class="table-wrap" style="border-radius:10px;overflow:hidden;border:1px solid var(--border)">
-                    <table style="margin:0"><thead><tr><th style="text-align:center">رقم الطلب</th><th style="text-align:center">الإجمالي</th><th style="text-align:center">الحالة</th><th style="text-align:center">التاريخ</th></tr></thead>
-                    <tbody>${c.orders.length ? c.orders.map(o => `<tr><td style="text-align:center;color:var(--yellow);font-weight:700">${o.order_number}</td><td style="text-align:center;font-weight:600">${parseFloat(o.total).toFixed(2)} ج</td><td style="text-align:center">${statusBadge(o.status)}</td><td style="text-align:center;font-size:12px;color:var(--text-muted)">${formatDate(o.created_at)}</td></tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">لا طلبات</td></tr>'}</tbody>
+                    <table style="margin:0"><thead><tr><th style="text-align:center">رقم الطلب</th><th style="text-align:center">الدور</th><th style="text-align:center">الإجمالي</th><th style="text-align:center">الحالة</th><th style="text-align:center">التاريخ</th></tr></thead>
+                    <tbody>${c.orders.length ? c.orders.map(o => `<tr><td style="text-align:center;color:var(--yellow);font-weight:700">${o.order_number}</td><td style="text-align:center"><span style="background:${o.role === 'مستلم' ? '#f59e0b' : '#3b82f6'};color:white;padding:2px 8px;border-radius:12px;font-size:11px;">${o.role}</span></td><td style="text-align:center;font-weight:600">${parseFloat(o.total).toFixed(2)} ج</td><td style="text-align:center">${statusBadge(o.status)}</td><td style="text-align:center;font-size:12px;color:var(--text-muted)">${formatDate(o.created_at)}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">لا طلبات</td></tr>'}</tbody>
                     </table>
                 </div>
             </div>

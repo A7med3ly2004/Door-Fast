@@ -90,6 +90,7 @@ class AdminOrderController extends Controller
             'items.*.quantity'   => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.shop_id'    => 'nullable|exists:shops,id',
+            'send_to_phone2'     => 'nullable|string|max:30',
         ], [
             'phone.required'          => 'رقم الهاتف مطلوب',
             'code.required'           => 'الكود مطلوب',
@@ -103,7 +104,7 @@ class AdminOrderController extends Controller
         $data = array_merge($validated, $request->only([
             'phone2', 'is_new_address',
             'discount', 'discount_type', 'delivery_fee',
-            'notes', 'send_to_phone', 'send_to_address',
+            'notes', 'send_to_phone', 'send_to_phone2', 'send_to_address',
             'send_to_name', 'send_to_code', 'send_to_client_id',
         ]));
 

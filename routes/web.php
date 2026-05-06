@@ -203,6 +203,7 @@ Route::middleware(['auth', 'role:callcenter'])
         // Wallet (كشف حسابي)
         Route::get('/wallet', [\App\Http\Controllers\CallCenter\WalletController::class, 'index'])->name('wallet.index');
         Route::get('/wallet/statement', [\App\Http\Controllers\CallCenter\WalletController::class, 'statement'])->name('wallet.statement');
+        Route::get('/wallet/transactions/{id}/pdf', [\App\Http\Controllers\CallCenter\WalletController::class, 'downloadTransactionPdf'])->name('wallet.transaction.pdf');
         Route::post('/wallet/pay-delivery', [\App\Http\Controllers\CallCenter\WalletController::class, 'payToDelivery'])->name('wallet.pay-delivery');
         Route::post('/wallet/receive-delivery', [\App\Http\Controllers\CallCenter\WalletController::class, 'receiveFromDelivery'])->name('wallet.receive-delivery');
     });

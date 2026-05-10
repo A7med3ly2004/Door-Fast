@@ -119,7 +119,35 @@ class ReportCallCenterController extends Controller
             ->distinct('date')
             ->count('date');
 
-        // ── 5. Datatable (per_page=9999 → export all, default 15 for UI)
+        // ── 5. Tier & Profits — من القيم المحفوظة في كل طلب ────────────────────
+        $dailyBreakdown = Order::where('callcenter_id', $callcenterId)
+            ->whereBetween('created_at', [$from, $to])
+            ->selectRaw('
+                DATE(created_at)                      as order_date,
+                COUNT(*)                              as day_count,
+                MAX(cc_tier_number)                   as tier_number,
+                MAX(cc_profit)                        as unit_profit,
+                SUM(cc_profit)                        as day_profit
+            ')
+            ->groupBy('order_date')
+            ->orderBy('order_date')
+            ->get();
+
+        $totalCCProfits  = $dailyBreakdown->sum('day_profit');
+        $isSingleDay     = $from->toDateString() === $to->toDateString();
+        $ccTierNumber    = $isSingleDay
+            ? (int) ($dailyBreakdown->first()?->tier_number ?? 0)
+            : null;
+
+        $dailyBreakdownArray = $dailyBreakdown->map(fn($d) => [
+            'date'        => $d->order_date,
+            'count'       => (int)  $d->day_count,
+            'tier_number' => (int)  $d->tier_number,
+            'amount'      => (float)$d->unit_profit,
+            'profit'      => (float)$d->day_profit,
+        ])->values()->toArray();
+
+        // ── 6. Datatable (per_page=9999 → export all, default 15 for UI)
         $perPage = min((int) $request->get('per_page', 15), 5000);
         $orders = Order::with(['client:id,name', 'callcenter:id,name', 'delivery:id,name'])
             ->where('callcenter_id', $callcenterId)
@@ -142,8 +170,12 @@ class ReportCallCenterController extends Controller
                 'raw_period_safe_balance' => $periodSafeBalance, // Raw for JS coloring logic
                 'total_work_hours'    => $formattedWorkHours,
                 'total_work_days'     => $totalWorkDays,
+                'tier_number'         => $ccTierNumber,
+                'is_single_day'       => $isSingleDay,
+                'total_cc_profits'    => number_format((float) $totalCCProfits, 2),
             ],
             'orders' => $orders,
+            'daily_breakdown' => $dailyBreakdownArray,
             'agent_name' => User::find($callcenterId)->name
         ]);
     }

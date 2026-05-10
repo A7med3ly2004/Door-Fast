@@ -51,7 +51,7 @@
             <td style="text-align:center">
                 <span class="badge {{ $order->status }}">
                     @switch($order->status)
-                        @case('pending') باقي @break
+                        @case('pending') قيد الانتظار @break
                         @case('received') مسلم للمندوب @break
                         @case('delivered') تم التوصيل @break
                         @case('cancelled') ملغي @break

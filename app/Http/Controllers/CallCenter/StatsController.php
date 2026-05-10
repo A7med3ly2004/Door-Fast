@@ -34,6 +34,14 @@ class StatsController extends Controller
         $feesToday      = Order::where('callcenter_id', $me)->whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->sum('delivery_fee');
         $discountToday  = Order::where('callcenter_id', $me)->whereBetween('created_at', [$startOfToday, $endOfToday])->sum('discount');
 
+        $todayProfit = Order::where('callcenter_id', $me)
+            ->whereBetween('created_at', [$startOfToday, $endOfToday])
+            ->selectRaw('MAX(cc_tier_number) as tier_number, SUM(cc_profit) as total_profit')
+            ->first();
+
+        $ccTierNumber  = (int) ($todayProfit?->tier_number ?? 0);
+        $ccTotalProfit = (float) ($todayProfit?->total_profit ?? 0);
+
         // Bar chart: last 7 days
         $chart = [];
         for ($i = 6; $i >= 0; $i--) {
@@ -46,7 +54,7 @@ class StatsController extends Controller
         }
 
         // Per-delivery breakdown (from my orders only)
-        $deliveries = User::where('role', 'delivery')
+        $deliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->with(['deliveryOrders' => fn($q) => $q->where('callcenter_id', $me)->whereBetween('created_at', [$startOfToday, $endOfToday])])
             ->get()
             ->map(fn($d) => [
@@ -61,7 +69,13 @@ class StatsController extends Controller
             ->values();
 
         return response()->json([
-            'kpis' => compact('ordersToday', 'deliveredToday', 'cancelledToday', 'revenueToday', 'feesToday', 'discountToday'),
+            'kpis' => array_merge(
+                compact('ordersToday', 'deliveredToday', 'cancelledToday', 'revenueToday', 'feesToday', 'discountToday'),
+                [
+                    'cc_tier_number'  => $ccTierNumber,
+                    'cc_total_profit' => number_format($ccTotalProfit, 2),
+                ]
+            ),
             'chart'      => $chart,
             'deliveries' => $deliveries,
         ]);

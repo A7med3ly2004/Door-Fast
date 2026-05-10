@@ -1,10 +1,16 @@
 <style>
-    #activity-feed {
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE and Edge */
-    }
     #activity-feed::-webkit-scrollbar {
-        display: none; /* Chrome, Safari, and Opera */
+        width: 5px;
+    }
+    #activity-feed::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #activity-feed::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 10px;
+    }
+    #activity-feed::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
     }
 </style>
 
@@ -31,6 +37,10 @@
         <div class="kpi-value" id="v-daily">—</div>
         <div class="kpi-sub">ج.م</div>
     </div>
+    <div class="kpi-card blue">
+        <div class="kpi-label">إجمالي طلبات الشهر</div>
+        <div class="kpi-value" id="v-orders-month">—</div>
+    </div>  
     <div class="kpi-card green">
         <div class="kpi-label">إيرادات الشهر</div>
         <div class="kpi-value" id="v-monthly">—</div>
@@ -44,7 +54,7 @@
 
 <div class="grid-2" style="gap:20px; margin-bottom:20px">
     <div class="card">
-        <div class="card-title">الطلبات - آخر 7 أيام</div>
+        <div class="card-title">الطلبات - آخر 10 أيام</div>
         <div class="chart-container" style="height:220px">
             <canvas id="ordersChart"></canvas>
         </div>
@@ -90,9 +100,9 @@
             <table>
                 <thead>
                     <tr>
-                        <th>المندوب</th>
-                        <th>تم التوصيلة</th>
-                        <th>الإيراد</th>
+                        <th style="text-align:center">المندوب</th>
+                        <th style="text-align:center">تم التوصيلة</th>
+                        <th style="text-align:center">اجمالي التوصيل</th>
                     </tr>
                 </thead>
                 <tbody id="delivery-perf-body">
@@ -109,15 +119,16 @@
             <table>
                 <thead>
                     <tr>
-                        <th>الموظف</th>
-                        <th>أنشأ</th>
-                        <th>ملغاة</th>
-                        <th>الإيراد</th>
+                        <th style="text-align:center">الموظف</th>
+                        <th style="text-align:center">أنشأ</th>
+                        <th style="text-align:center">ملغاة</th>
+                        <th style="text-align:center">قيد الانتظار</th>
+                        <th style="text-align:center">الإيراد</th>
                     </tr>
                 </thead>
                 <tbody id="cc-perf-body">
                     <tr>
-                        <td colspan="4" style="text-align:center;color:var(--text-muted)">لا بيانات</td>
+                        <td colspan="5" style="text-align:center;color:var(--text-muted)">لا بيانات</td>
                     </tr>
                 </tbody>
             </table>
@@ -135,6 +146,7 @@
             if (!document.getElementById('v-orders')) return; // double check after await
             var k = data.kpis;
             document.getElementById('v-orders').textContent = k.orders_today;
+            document.getElementById('v-orders-month').textContent = k.orders_month;
             document.getElementById('v-completed').textContent = k.completed_today;
             document.getElementById('v-pending').textContent = k.pending_today;
             document.getElementById('v-cancelled').textContent = k.cancelled_today;
@@ -162,12 +174,12 @@
             var dpBody = document.getElementById('delivery-perf-body');
             dpBody.innerHTML = data.delivery_perf.length === 0
                 ? '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">لا بيانات اليوم</td></tr>'
-                : data.delivery_perf.map(d => `<tr><td>${d.name}</td><td><span class="badge badge-green">${d.completed}</span></td><td>${parseFloat(d.revenue).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td></tr>`).join('');
+                : data.delivery_perf.map(d => `<tr><td style="text-align:center">${d.name}</td><td style="text-align:center"><span class="badge badge-green">${d.completed}</span></td><td style="text-align:center">${parseFloat(d.revenue).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td></tr>`).join('');
 
             var ccBody = document.getElementById('cc-perf-body');
             ccBody.innerHTML = data.cc_perf.length === 0
-                ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">لا بيانات اليوم</td></tr>'
-                : data.cc_perf.map(cc => `<tr><td>${cc.name}</td><td>${cc.created}</td><td><span class="badge badge-red">${cc.cancelled}</span></td><td>${parseFloat(cc.revenue).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td></tr>`).join('');
+                ? '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">لا بيانات اليوم</td></tr>'
+                : data.cc_perf.map(cc => `<tr><td style="text-align:center">${cc.name}</td><td style="text-align:center">${cc.created}</td><td style="text-align:center"><span class="badge badge-red">${cc.cancelled}</span></td><td style="text-align:center"><span class="badge badge-yellow">${cc.pending}</span></td><td style="text-align:center">${parseFloat(cc.revenue).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td></tr>`).join('');
         } catch (e) { console.error('stats error', e); }
     }
 

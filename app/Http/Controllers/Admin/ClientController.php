@@ -16,6 +16,8 @@ class ClientController extends Controller
         $query = Client::withCount(['orders', 'recipientOrders', 'addresses'])
             ->withSum(['orders' => fn($q) => $q->where('status', 'delivered')], 'total')
             ->withSum(['recipientOrders' => fn($q) => $q->where('status', 'delivered')], 'total')
+            ->withSum(['orders' => fn($q) => $q->where('status', 'delivered')], 'delivery_fee')
+            ->withSum(['recipientOrders' => fn($q) => $q->where('status', 'delivered')], 'delivery_fee')
             ->with([
                 'orders' => fn($q) => $q->latest()->take(1),
                 'recipientOrders' => fn($q) => $q->latest()->take(1)
@@ -52,6 +54,7 @@ class ClientController extends Controller
                 'code'            => $c->code,
                 'orders_count'    => $c->orders_count + $c->recipient_orders_count,
                 'orders_sum_total'=> ($c->orders_sum_total ?? 0) + ($c->recipient_orders_sum_total ?? 0),
+                'orders_sum_delivery_fee'=> ($c->orders_sum_delivery_fee ?? 0) + ($c->recipient_orders_sum_delivery_fee ?? 0),
                 'addresses_count' => $c->addresses_count,
                 'created_at'      => $c->created_at->toIso8601String(),
                 'orders'          => [
@@ -115,6 +118,8 @@ class ClientController extends Controller
         ->withCount(['orders', 'recipientOrders'])
         ->withSum(['orders' => fn($q) => $q->where('status', 'delivered')], 'total')
         ->withSum(['recipientOrders' => fn($q) => $q->where('status', 'delivered')], 'total')
+        ->withSum(['orders' => fn($q) => $q->where('status', 'delivered')], 'delivery_fee')
+        ->withSum(['recipientOrders' => fn($q) => $q->where('status', 'delivered')], 'delivery_fee')
         ->findOrFail($id);
 
         $primaryOrders = $client->orders->toBase()->map(fn($o) => array_merge(
@@ -139,6 +144,7 @@ class ClientController extends Controller
                 'code'        => $client->code,
                 'orders_count'=> $client->orders_count + $client->recipient_orders_count,
                 'total_spent' => ($client->orders_sum_total ?? 0) + ($client->recipient_orders_sum_total ?? 0),
+                'total_delivery_fee' => ($client->orders_sum_delivery_fee ?? 0) + ($client->recipient_orders_sum_delivery_fee ?? 0),
                 'created_at'  => $client->created_at->toIso8601String(),
                 'addresses'   => $client->addresses->take(5),
                 'orders'      => $allOrders,

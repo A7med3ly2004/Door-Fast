@@ -19,17 +19,39 @@
     {{-- Filters --}}
     <div class="card" style="margin-bottom:20px">
         <div class="filter-bar" style="display: flex; flex-wrap: nowrap; align-items: flex-end; gap: 8px; width: 100%;">
-            <div style="width: 20%;">
+            <div style="width: 15%;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث</label>
-                <input type="text" id="filter-search" class="form-control" placeholder="بحث بالطلب / العميل / الهاتف"
+                <input type="text" id="filter-search" class="form-control" placeholder="بحث بالكود / الهاتف / كود العميل"
                     style="width: 100%; min-width: unset;">
             </div>
-            <div style="width: 12%;">
+            <div style="width: 10%;">
+                <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الدور</label>
+                <div class="relative group" style="width: 100%; z-index: 55;">
+                    <div class="form-control"
+                        style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
+                        <span id="label-filter-role" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <input type="hidden" id="filter-role" value="">
+                    <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                        style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9);">
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-role', '', 'الكل')">الكل</div>
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-role', 'primary', 'عميل اساسي')">عميل اساسي</div>
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-role', 'recipient', 'مستلم')">مستلم</div>
+                    </div>
+                </div>
+            </div>
+            <div style="width: 10%;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الحالة</label>
                 <div class="relative group" style="width: 100%; z-index: 50;">
                     <div class="form-control"
                         style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
-                        <span id="label-filter-status" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">كل الحالات</span>
+                        <span id="label-filter-status" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -38,9 +60,9 @@
                     <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
                         style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9);">
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
-                            onclick="selectDropdown('filter-status', '', 'كل الحالات')">كل الحالات</div>
+                            onclick="selectDropdown('filter-status', '', 'الكل')">الكل</div>
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
-                            onclick="selectDropdown('filter-status', 'pending', 'باقي')">باقي</div>
+                            onclick="selectDropdown('filter-status', 'pending', 'قيد الانتظار')">قيد الانتظار</div>
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
                             onclick="selectDropdown('filter-status', 'received', 'مسلم للمندوب')">مسلم للمندوب</div>
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
@@ -50,12 +72,12 @@
                     </div>
                 </div>
             </div>
-            <div style="width: 12%;">
+            <div style="width: 10%;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">كول سنتر</label>
                 <div class="relative group" style="width: 100%; z-index: 40;">
                     <div class="form-control"
                         style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
-                        <span id="label-filter-callcenter" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">كل الكول سنتر</span>
+                        <span id="label-filter-callcenter" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -64,7 +86,7 @@
                     <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
                         style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
-                            onclick="selectDropdown('filter-callcenter', '', 'كل الكول سنتر')">كل الكول سنتر</div>
+                            onclick="selectDropdown('filter-callcenter', '', 'الكل')">الكل</div>
                         @foreach($callcenters as $cc)
                             <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
                                 onclick="selectDropdown('filter-callcenter', '{{ $cc->id }}', '{{ $cc->name }}')">
@@ -74,12 +96,12 @@
                     </div>
                 </div>
             </div>
-            <div style="width: 12%;">
+            <div style="width: 10%;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الأدمن</label>
                 <div class="relative group" style="width: 100%; z-index: 35;">
                     <div class="form-control"
                         style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
-                        <span id="label-filter-admin" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">كل المديرين</span>
+                        <span id="label-filter-admin" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -88,7 +110,7 @@
                     <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
                         style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
-                            onclick="selectDropdown('filter-admin', '', 'كل المديرين')">كل المديرين</div>
+                            onclick="selectDropdown('filter-admin', '', 'الكل')">الكل</div>
                         @foreach($admins as $adm)
                             <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
                                 onclick="selectDropdown('filter-admin', '{{ $adm->id }}', '{{ $adm->name }}')">
@@ -98,12 +120,12 @@
                     </div>
                 </div>
             </div>
-            <div style="width: 12%;">
+            <div style="width: 10%;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">المندوب</label>
                 <div class="relative group" style="width: 100%; z-index: 30;">
                     <div class="form-control"
                         style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
-                        <span id="label-filter-delivery" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">كل المناديب</span>
+                        <span id="label-filter-delivery" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -112,7 +134,7 @@
                     <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
                         style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
-                            onclick="selectDropdown('filter-delivery', '', 'كل المناديب')">كل المناديب</div>
+                            onclick="selectDropdown('filter-delivery', '', 'الكل')">الكل</div>
                         @foreach($deliveries as $d)
                             <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
                                 onclick="selectDropdown('filter-delivery', '{{ $d->id }}', '{{ $d->name }}')">{{ $d->name }}
@@ -129,7 +151,7 @@
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ إلى</label>
                 <input type="date" id="filter-to" class="form-control" placeholder="إلى" style="width: 100%; min-width: unset;">
             </div>
-            <div style="display: flex; gap: 5px; margin-bottom: 2px; width: 12%;">
+            <div style="display: flex; gap: 5px; margin-bottom: 2px; width: 15%;">
                 <button class="btn btn-primary" style="flex: 1; padding: 8px 10px; min-width: unset; justify-content: center;" onclick="loadOrders(1)">بحث</button>
                 <button class="btn btn-secondary" style="flex: 1; padding: 8px 10px; min-width: unset; justify-content: center;" onclick="resetFilters()">إعادة</button>
             </div>
@@ -215,6 +237,7 @@
         function getFilters() {
             return {
                 search: document.getElementById('filter-search').value,
+                role: document.getElementById('filter-role').value,
                 status: document.getElementById('filter-status').value,
                 callcenter_id: document.getElementById('filter-callcenter').value,
                 admin_id: document.getElementById('filter-admin').value,
@@ -226,6 +249,7 @@
 
         function resetFilters() {
             document.getElementById('filter-search').value = '';
+            document.getElementById('filter-role').value = '';
             document.getElementById('filter-status').value = '';
             document.getElementById('filter-callcenter').value = '';
             document.getElementById('filter-admin').value = '';
@@ -233,10 +257,11 @@
             document.getElementById('filter-from').value = '';
             document.getElementById('filter-to').value = '';
 
-            document.getElementById('label-filter-status').innerText = 'كل الحالات';
-            document.getElementById('label-filter-callcenter').innerText = 'كل الكول سنتر';
-            document.getElementById('label-filter-admin').innerText = 'كل المديرين';
-            document.getElementById('label-filter-delivery').innerText = 'كل المناديب';
+            document.getElementById('label-filter-role').innerText = 'الكل';
+            document.getElementById('label-filter-status').innerText = 'الكل';
+            document.getElementById('label-filter-callcenter').innerText = 'الكل';
+            document.getElementById('label-filter-admin').innerText = 'الكل';
+            document.getElementById('label-filter-delivery').innerText = 'الكل';
 
             loadOrders(1);
         }
@@ -377,6 +402,7 @@
                 // جلب كل البيانات مع نفس الفلاتر الحالية بدون pagination
                 const filters = {
                     search: document.getElementById('filter-search').value,
+                    role: document.getElementById('filter-role').value,
                     status: document.getElementById('filter-status').value,
                     callcenter_id: document.getElementById('filter-callcenter').value,
                     admin_id: document.getElementById('filter-admin').value,
@@ -407,7 +433,7 @@
                 ];
 
                 // تحويل التواريخ والحالات
-                const statusMap = { pending: 'باقي', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
+                const statusMap = { pending: 'قيد الانتظار', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
                 const rows = data.data.map(o => ({
                     ...o,
                     created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',

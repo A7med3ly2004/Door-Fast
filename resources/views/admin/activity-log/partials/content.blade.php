@@ -21,21 +21,19 @@
 
 {{-- ── Filter Bar ── --}}
 <div class="card" style="margin-bottom:20px;">
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:12px;align-items:end;">
-
-
+    <div style="display:flex; gap:12px; align-items:end; flex-wrap: nowrap;">
 
         {{-- Client search --}}
-        <div>
-            <label class="form-label">بحث (اسم أو كود عميل)</label>
+        <div style="flex: 1.5; min-width: 0;">
+            <label class="form-label">بحث (كود العميل - رقم الهاتف)</label>
             <input type="text" class="form-control" id="al-client-search"
-                   placeholder="اسم العميل أو الكود…"
+                   placeholder="رقم الهاتف أو كود العميل…"
                    value="{{ $filters['client_search'] ?? '' }}"
                    oninput="alDebouncedSearch()">
         </div>
 
         {{-- Order number --}}
-        <div>
+        <div style="flex: 1; min-width: 0;">
             <label class="form-label">رقم الطلب</label>
             <input type="text" class="form-control" id="al-order-number"
                    placeholder="DF-XXXX…"
@@ -44,16 +42,16 @@
         </div>
 
         {{-- Delivery agent --}}
-        <div>
+        <div style="flex: 1; min-width: 130px;">
             <label class="form-label">المندوب</label>
-            <div class="relative group" style="min-width:160px; z-index: 50;">
+            <div class="relative group" style="z-index: 50;">
                 <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                    <span id="label-al-delivery-id">كل المناديب</span>
+                    <span id="label-al-delivery-id">الكل</span>
                     <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
                 <input type="hidden" id="al-delivery-id" value="{{ $filters['delivery_id'] ?? '' }}" onchange="alApplyFilters()">
                 <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-delivery-id', '', 'كل المناديب')">كل المناديب</div>
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-delivery-id', '', 'الكل')">الكل</div>
                     @foreach($deliveryUsers as $u)
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-delivery-id', '{{ $u->id }}', '{{ $u->name }}')">{{ $u->name }}</div>
                     @endforeach
@@ -62,16 +60,16 @@
         </div>
 
         {{-- Callcenter --}}
-        <div>
+        <div style="flex: 1; min-width: 130px;">
             <label class="form-label">الكول سنتر</label>
-            <div class="relative group" style="min-width:160px; z-index: 40;">
+            <div class="relative group" style="z-index: 40;">
                 <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                    <span id="label-al-callcenter-id">كل الكول سنتر</span>
+                    <span id="label-al-callcenter-id">الكل</span>
                     <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
                 <input type="hidden" id="al-callcenter-id" value="{{ $filters['callcenter_id'] ?? '' }}" onchange="alApplyFilters()">
                 <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-callcenter-id', '', 'كل الكول سنتر')">كل الكول سنتر</div>
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-callcenter-id', '', 'الكل')">الكل</div>
                     @foreach($callcenterUsers as $u)
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-callcenter-id', '{{ $u->id }}', '{{ $u->name }}')">{{ $u->name }}</div>
                     @endforeach
@@ -79,8 +77,26 @@
             </div>
         </div>
 
+        {{-- Admin --}}
+        <div style="flex: 1; min-width: 130px;">
+            <label class="form-label">المديرين</label>
+            <div class="relative group" style="z-index: 35;">
+                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="label-al-admin-id">الكل</span>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <input type="hidden" id="al-admin-id" value="{{ $filters['admin_id'] ?? '' }}" onchange="alApplyFilters()">
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-admin-id', '', 'الكل')">الكل</div>
+                    @foreach($adminUsers as $u)
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('al-admin-id', '{{ $u->id }}', '{{ $u->name }}')">{{ $u->name }}</div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
         {{-- Reset --}}
-        <div style="display:flex;align-items:flex-end;">
+        <div style="flex: 0.8; min-width: 100px;">
             <button class="btn btn-secondary" style="width:100%" onclick="alResetFilters()">
                 مسح الفلاتر
             </button>
@@ -185,6 +201,7 @@
             order_number:  document.getElementById('al-order-number')?.value  || '',
             delivery_id:   document.getElementById('al-delivery-id')?.value   || '',
             callcenter_id: document.getElementById('al-callcenter-id')?.value || '',
+            admin_id:      document.getElementById('al-admin-id')?.value      || '',
         };
     }
 
@@ -299,11 +316,11 @@
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
-        ['al-delivery-id','al-callcenter-id'].forEach(id => {
+        ['al-delivery-id','al-callcenter-id','al-admin-id'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
             const lbl = document.getElementById('label-' + id);
-            if (lbl) lbl.innerText = id === 'al-delivery-id' ? 'كل المناديب' : 'كل الكول سنتر';
+            if (lbl) lbl.innerText = 'الكل';
         });
         alFetch(1);
     };

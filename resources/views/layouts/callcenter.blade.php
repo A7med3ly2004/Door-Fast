@@ -48,6 +48,36 @@
             padding: 0;
         }
 
+        /* ── Custom Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+            transition: background 0.2s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #334155 transparent;
+        }
+
         body {
             font-family: 'Cairo', sans-serif;
             background: var(--bg);
@@ -898,7 +928,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
                     </svg>
-                </span> الدلفري
+                </span> المندوب
             </a>
             <a href="{{ route('callcenter.stats.index') }}" class="nav-link" data-spa="true">
                 <span class="icon">
@@ -933,6 +963,19 @@
             <div class="topbar-right">
                 <button id="cc-shift-btn" onclick="toggleCCShift()" class="btn"
                     style="display:none;font-size:12px;padding:6px 14px;border-radius:20px;font-weight:700;border:none;cursor:pointer;transition:all .2s ease;"></button>
+
+                {{-- ── Notification Bell ── --}}
+                <div style="position:relative;cursor:pointer" onclick="toggleCCNotifPanel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        style="width:24px;height:24px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span id="cc-notif-count-badge" style="display:none;position:absolute;top:-4px;left:-4px;background:var(--red);color:#fff;
+                               font-size:10px;font-weight:800;min-width:18px;height:18px;line-height:18px;
+                               text-align:center;border-radius:9px;padding:0 4px;">0</span>
+                </div>
+
                 <div class="user-badge">
                     <span class="dot"></span>
                     <span>{{ auth()->user()->name }}</span>
@@ -980,7 +1023,7 @@
         }
 
         function statusBadge(status) {
-            const map = { pending: ['باقي', 'badge-yellow'], received: ['مسلم للمندوب', 'badge-blue'], delivered: ['تم التوصيل', 'badge-green'], cancelled: ['ملغي', 'badge-red'] };
+            const map = { pending: ['قيد الانتظار', 'badge-yellow'], received: ['مسلم للمندوب', 'badge-blue'], delivered: ['تم التوصيل', 'badge-green'], cancelled: ['ملغي', 'badge-red'] };
             const [label, cls] = map[status] || [status, 'badge-gray'];
             return `<span class="badge ${cls}">${label}</span>`;
         }
@@ -1044,6 +1087,103 @@
         };
 
         document.addEventListener('DOMContentLoaded', fetchCCShiftStatus);
+    </script>
+
+    {{-- ── CallCenter Notifications Panel ── --}}
+    <div id="cc-notif-panel" style="display:none;position:fixed;top:58px;left:10px;width:400px;max-height:80vh;
+         overflow-y:auto;background:var(--card-bg);border:1px solid var(--border);border-radius:0 0 16px 16px;
+         z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.4);">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
+            <strong>التنبيهات</strong>
+            <button onclick="ccMarkAllRead()" class="btn btn-sm btn-secondary"
+                style="border:1px solid var(--border);border-radius:6px;background:none;background-color:#bd3434;cursor:pointer;padding:4px 8px;font-size:11px;">تحديد كمقروء</button>
+        </div>
+        <div id="cc-notif-list" style="padding:8px 0;"></div>
+    </div>
+
+    <script>
+        // ── CallCenter Notifications ──────────────────────────────────
+        var _ccNotifOpen  = false;
+        var _ccNotifCount = 0;
+
+        function toggleCCNotifPanel() {
+            _ccNotifOpen = !_ccNotifOpen;
+            document.getElementById('cc-notif-panel').style.display = _ccNotifOpen ? 'block' : 'none';
+            if (_ccNotifOpen) loadCCNotifications();
+        }
+
+        async function loadCCNotifications() {
+            try {
+                var res  = await axios.get('/callcenter/notifications');
+                var list = document.getElementById('cc-notif-list');
+                _ccNotifCount = res.data.unread_count;
+                updateCCNotifBadge();
+                if (!res.data.items.length) {
+                    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)">لا تنبيهات جديدة</div>';
+                    return;
+                }
+                list.innerHTML = res.data.items.map(function (n) {
+                    var bgColor = n.is_read ? 'transparent' : 'rgba(245,158,11,0.08)';
+                    var icon;
+                    if (n.type === 'cancelled') {
+                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#dc2626" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6"/></svg>';
+                    } else if (n.type === 'delayed_delivery') {
+                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>';
+                    } else {
+                        icon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>';
+                    }
+                    return '<div style="padding:12px 18px;border-bottom:1px solid var(--border);background:' + bgColor + '">' +
+                        '<div style="display:flex;align-items:flex-start;gap:10px">' +
+                        icon +
+                        '<div style="flex:1">' +
+                        '<div style="font-size:13px;font-weight:600;line-height:1.4">' + n.message + '</div>' +
+                        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">' + new Date(n.created_at).toLocaleString('ar-EG') + '</div>' +
+                        '</div></div>' +
+                        '</div>';
+                }).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        function updateCCNotifBadge() {
+            var badge = document.getElementById('cc-notif-count-badge');
+            if (_ccNotifCount > 0) { badge.style.display = 'block'; badge.textContent = _ccNotifCount; }
+            else badge.style.display = 'none';
+        }
+
+        async function ccMarkAllRead() {
+            await axios.post('/callcenter/notifications/read-all');
+            _ccNotifCount = 0;
+            updateCCNotifBadge();
+            loadCCNotifications();
+        }
+
+        // ── Polling: refresh badge count every 30s ──
+        function _refreshCCNotifCount() {
+            axios.get('/callcenter/notifications/count')
+                .then(function (r) {
+                    var prev = _ccNotifCount;
+                    _ccNotifCount = r.data.count;
+                    updateCCNotifBadge();
+                    if (_ccNotifCount > prev && _ccNotifOpen) loadCCNotifications();
+                })
+                .catch(function (e) { console.warn('cc-notif-poll error', e); });
+        }
+
+        // جلب أولي فوري عند تحميل الصفحة
+        _refreshCCNotifCount();
+
+        // ثم كل 30 ثانية
+        setInterval(_refreshCCNotifCount, 30000);
+
+        // إغلاق اللوحة عند الضغط خارجها
+        document.addEventListener('click', function(e) {
+            var panel = document.getElementById('cc-notif-panel');
+            var bell  = e.target.closest('[onclick="toggleCCNotifPanel()"]');
+            if (!bell && !panel.contains(e.target)) {
+                _ccNotifOpen = false;
+                panel.style.display = 'none';
+            }
+        });
     </script>
 
     {{-- ── SPA Navigation Engine ── --}}

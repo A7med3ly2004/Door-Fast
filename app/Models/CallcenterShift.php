@@ -28,6 +28,9 @@ class CallcenterShift extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true)->whereDate('date', today());
+        [$startOfToday] = \App\Models\Setting::businessDayRange();
+        $businessDate   = $startOfToday->toDateString();
+
+        return $query->where('is_active', true)->where('date', $businessDate);
     }
 }

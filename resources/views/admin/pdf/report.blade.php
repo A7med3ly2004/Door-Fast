@@ -61,7 +61,7 @@
                 @switch($o->status)
                     @case('delivered') تم التوصيل @break
                     @case('cancelled') ملغي @break
-                    @case('pending') باقي @break
+                    @case('pending') قيد الانتظار @break
                     @case('received') مسلم للمندوب @break
                     @default {{ $o->status }}
                 @endswitch

@@ -18,8 +18,8 @@ class ReportHopsController extends Controller
 
         if (request()->header('X-SPA-Navigation')) {
             return response()->json([
-                'html'       => view('admin.report-hops.partials.content', compact('shops'))->render(),
-                'title'      => 'تقارير الهوبز',
+                'html' => view('admin.report-hops.partials.content', compact('shops'))->render(),
+                'title' => 'تقارير المتاجر',
                 'csrf_token' => csrf_token(),
             ]);
         }
@@ -29,29 +29,29 @@ class ReportHopsController extends Controller
 
     public function data(Request $request)
     {
-        $from   = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
-        $to     = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
+        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
+        $to = $request->filled('to') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1] : \App\Models\Setting::businessDayRange(today())[1];
         $shopId = $request->shop_id;
 
         // Global KPIs
-        $allShops       = Shop::count();
-        
-        $allItems       = OrderItem::whereNotNull('shop_id')
-            ->whereHas('order', function($q) use ($from, $to) {
+        $allShops = Shop::count();
+
+        $allItems = OrderItem::whereNotNull('shop_id')
+            ->whereHas('order', function ($q) use ($from, $to) {
                 $q->whereBetween('created_at', [$from, $to])
-                  ->where('status', 'delivered');
+                    ->where('status', 'delivered');
             });
-            
+
         $totalPurchases = $allItems->clone()->sum('total');
-        $totalOrders    = Order::whereBetween('created_at', [$from, $to])
+        $totalOrders = Order::whereBetween('created_at', [$from, $to])
             ->where('status', 'delivered')
             ->whereHas('items', fn($q) => $q->whereNotNull('shop_id'))
             ->count();
 
         $topShop = OrderItem::whereNotNull('shop_id')
-            ->whereHas('order', function($q) use ($from, $to) {
+            ->whereHas('order', function ($q) use ($from, $to) {
                 $q->whereBetween('created_at', [$from, $to])
-                  ->where('status', 'delivered');
+                    ->where('status', 'delivered');
             })
             ->selectRaw('shop_id, SUM(total) as revenue')
             ->groupBy('shop_id')
@@ -62,16 +62,16 @@ class ReportHopsController extends Controller
         $avgOrderValue = $totalOrders > 0 ? round($totalPurchases / $totalOrders, 2) : 0;
 
         $global = [
-            'total_shops'    => $allShops,
-            'total_orders'   => $totalOrders,
-            'total_purchases'=> $totalPurchases,
-            'top_shop'       => ($topShop && $topShop->shop) ? ($topShop->shop->name . ' (' . number_format((float) $topShop->revenue, 2) . ' ج)') : '—',
-            'avg_order'      => $avgOrderValue,
+            'total_shops' => $allShops,
+            'total_orders' => $totalOrders,
+            'total_purchases' => $totalPurchases,
+            'top_shop' => ($topShop && $topShop->shop) ? ($topShop->shop->name . ' (' . number_format((float) $topShop->revenue, 2) . ' ج)') : '—',
+            'avg_order' => $avgOrderValue,
         ];
 
         // Shop detail
         if ($shopId) {
-            $shop       = Shop::findOrFail($shopId);
+            $shop = Shop::findOrFail($shopId);
             $shopOrders = Order::whereHas('items', fn($q) => $q->where('shop_id', $shopId))
                 ->with(['client', 'delivery', 'callcenter', 'admin', 'items' => fn($q) => $q->where('shop_id', $shopId)])
                 ->whereBetween('created_at', [$from, $to])
@@ -80,56 +80,56 @@ class ReportHopsController extends Controller
 
             $deliveredOrders = $shopOrders->where('status', 'delivered');
             $shopKpis = [
-                'orders'    => $shopOrders->count(),
+                'orders' => $shopOrders->count(),
                 'completed' => $deliveredOrders->count(),
                 'cancelled' => $shopOrders->where('status', 'cancelled')->count(),
-                'pending'   => $shopOrders->whereIn('status', ['pending', 'received', 'received_by_delivery'])->count(),
-                'revenue'   => $deliveredOrders->flatMap->items->sum('total'),
+                'pending' => $shopOrders->whereIn('status', ['pending', 'received', 'received_by_delivery'])->count(),
+                'revenue' => $deliveredOrders->flatMap->items->sum('total'),
                 'avg_order' => $deliveredOrders->count() > 0 ? round($deliveredOrders->flatMap->items->sum('total') / $deliveredOrders->count(), 2) : 0,
             ];
 
             // Daily chart
-            $days  = (int) $from->diffInDays($to) + 1;
+            $days = (int) $from->diffInDays($to) + 1;
             $chart = [];
             for ($i = 0; $i < min($days, 60); $i++) {
                 $calDay = Carbon::parse($request->filled('from') ? $request->from : today()->subDays(30))->addDays($i);
                 list($dStart, $dEnd) = \App\Models\Setting::businessDayRange($calDay);
                 $dayCount = $shopOrders->filter(fn($o) => $o->created_at->between($dStart, $dEnd))->count();
-                $chart[]  = ['label' => $calDay->format('m/d'), 'count' => $dayCount];
+                $chart[] = ['label' => $calDay->format('m/d'), 'count' => $dayCount];
             }
 
             // Top clients
             $topClients = $shopOrders->groupBy('client_id')->map(function ($group) {
                 $first = $group->first();
                 return [
-                    'name'    => $first->client?->name ?? '—',
-                    'orders'  => $group->count(),
-                    'spend'   => $group->flatMap->items->sum('total'),
+                    'name' => $first->client?->name ?? '—',
+                    'orders' => $group->count(),
+                    'spend' => $group->flatMap->items->sum('total'),
                 ];
             })->sortByDesc('orders')->take(10)->values();
 
 
             // Orders table
             $ordersTable = $shopOrders->map(fn($o) => [
-                'id'           => $o->id,
+                'id' => $o->id,
                 'order_number' => $o->order_number,
-                'created_at'   => $o->created_at->toIso8601String(),
-                'client'       => $o->client?->name ?? '—',
-                'delivery'     => $o->delivery?->name ?? '—',
-                'callcenter'   => $o->callcenter?->name ?? $o->admin?->name ?? '—',
+                'created_at' => $o->created_at->toIso8601String(),
+                'client' => $o->client?->name ?? '—',
+                'delivery' => $o->delivery?->name ?? '—',
+                'callcenter' => $o->callcenter?->name ?? $o->admin?->name ?? '—',
                 'creator_type' => $o->callcenter ? 'cc' : ($o->admin ? 'admin' : null),
-                'items_count'  => $o->items->count(),
-                'total'        => $o->items->sum('total'),
-                'status'       => $o->status,
+                'items_count' => $o->items->count(),
+                'total' => $o->items->sum('total'),
+                'status' => $o->status,
             ]);
 
             return response()->json([
-                'global'      => $global,
-                'shop'        => ['id' => $shop->id, 'name' => $shop->name, 'phone' => $shop->phone, 'address' => $shop->address],
-                'shop_kpis'   => $shopKpis,
-                'chart'       => $chart,
+                'global' => $global,
+                'shop' => ['id' => $shop->id, 'name' => $shop->name, 'phone' => $shop->phone, 'address' => $shop->address],
+                'shop_kpis' => $shopKpis,
+                'chart' => $chart,
                 'top_clients' => $topClients,
-                'orders'      => $ordersTable,
+                'orders' => $ordersTable,
             ]);
         }
 
@@ -141,7 +141,7 @@ class ReportHopsController extends Controller
         $shop = Shop::findOrFail($shopId);
 
         $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
-        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
+        $to = $request->filled('to') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1] : \App\Models\Setting::businessDayRange(today())[1];
 
         $orders = Order::whereHas('items', fn($q) => $q->where('shop_id', $shopId))
             ->with(['client', 'items' => fn($q) => $q->where('shop_id', $shopId)])
@@ -161,9 +161,9 @@ class ReportHopsController extends Controller
         $html = view('admin.pdf.shop-report', compact('shop', 'orders', 'topItems', 'filters'))->render();
         $Arabic = new \ArPHP\I18N\Arabic();
         $p = $Arabic->arIdentify($html);
-        for ($i = count($p)-1; $i >= 0; $i-=2) {
-            $utf8ar = $Arabic->utf8Glyphs(substr($html, $p[$i-1], $p[$i] - $p[$i-1]));
-            $html = substr_replace($html, $utf8ar, $p[$i-1], $p[$i] - $p[$i-1]);
+        for ($i = count($p) - 1; $i >= 0; $i -= 2) {
+            $utf8ar = $Arabic->utf8Glyphs(substr($html, $p[$i - 1], $p[$i] - $p[$i - 1]));
+            $html = substr_replace($html, $utf8ar, $p[$i - 1], $p[$i] - $p[$i - 1]);
         }
         $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
 
@@ -175,7 +175,7 @@ class ReportHopsController extends Controller
         $shop = Shop::findOrFail($shopId);
 
         $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
-        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
+        $to = $request->filled('to') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1] : \App\Models\Setting::businessDayRange(today())[1];
 
         // Only delivered orders
         $items = OrderItem::where('shop_id', $shopId)
@@ -193,7 +193,13 @@ class ReportHopsController extends Controller
         $filters = ['from' => $from->format('Y-m-d'), 'to' => $to->format('Y-m-d')];
 
         $pdf = Pdf::loadView('admin.pdf.shop_due_invoice', compact(
-            'shop', 'items', 'revenue', 'discountPercent', 'discountValue', 'finalAmount', 'filters'
+            'shop',
+            'items',
+            'revenue',
+            'discountPercent',
+            'discountValue',
+            'finalAmount',
+            'filters'
         ))->setPaper('a4', 'portrait');
 
         return $pdf->download('due-invoice-' . $shop->name . '-' . now()->format('Y-m-d') . '.pdf');

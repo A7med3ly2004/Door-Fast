@@ -295,6 +295,7 @@ class OrderService
                 'order_number' => $order->order_number,
                 'client_name'  => $client->name,
                 'client_code'  => $client->code,
+                'client_phone' => $client->phone,
                 'total'        => $order->total,
                 'delivery_id'  => $order->delivery_id,
             ]

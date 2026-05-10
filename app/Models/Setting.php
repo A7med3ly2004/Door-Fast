@@ -27,18 +27,42 @@ class Setting extends Model
 
     /**
      * Get the bounds of the current business day.
-     * The day runs from 00:00:00 to 23:59:59.
-     * 
+     *
+     * When business_day_start_hour = 0 (default), the day runs 00:00:00 → 23:59:59
+     * (identical to the old behaviour — no breaking change).
+     *
+     * When a non-zero hour is configured (e.g. 5), the day slides:
+     *   - 03:00 on 5/5  →  start = 4/5 05:00,  end = 5/5 04:59
+     *   - 10:00 on 5/5  →  start = 5/5 05:00,  end = 6/5 04:59
+     *   - 23:30 on 5/5  →  start = 5/5 05:00,  end = 6/5 04:59
+     *
      * @param \Carbon\Carbon|null $date
      * @return array [\Carbon\Carbon $start, \Carbon\Carbon $end]
      */
     public static function businessDayRange(\Carbon\Carbon $date = null): array
     {
-        $date = $date ? $date->copy() : now();
+        $date      = $date ? $date->copy() : now();
+        $startHour = (int) static::get('business_day_start_hour', 0);
 
-        $start = $date->copy()->startOfDay();           // 00:00:00
-        $end   = $date->copy()->endOfDay();              // 23:59:59
+        if ($startHour === 0) {
+            // الوضع الافتراضي — منتصف الليل (سلوك مطابق للسابق)
+            return [
+                $date->copy()->startOfDay(),  // 00:00:00
+                $date->copy()->endOfDay(),    // 23:59:59
+            ];
+        }
 
-        return [$start, $end];
+        // يوم العمل المنزلق
+        // إذا الوقت الحالي قبل startHour، فنحن لا نزال في "يوم الأمس"
+        if ($date->hour < $startHour) {
+            $dayStart = $date->copy()->subDay()->setTime($startHour, 0, 0);
+        } else {
+            $dayStart = $date->copy()->setTime($startHour, 0, 0);
+        }
+
+        // نهاية اليوم = بداية اليوم التالي - ثانية واحدة
+        $dayEnd = $dayStart->copy()->addDay()->subSecond();
+
+        return [$dayStart, $dayEnd];
     }
 }

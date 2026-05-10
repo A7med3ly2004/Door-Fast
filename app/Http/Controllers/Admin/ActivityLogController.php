@@ -27,8 +27,9 @@ class ActivityLogController extends Controller
         // Users for select dropdowns in the filter bar
         $deliveryUsers   = User::deliveries()->active()->orderBy('name')->get(['id', 'name']);
         $callcenterUsers = User::callcenters()->active()->orderBy('name')->get(['id', 'name']);
+        $adminUsers      = User::where('role', 'admin')->active()->orderBy('name')->get(['id', 'name']);
 
-        $data = compact('initialLogs', 'deliveryUsers', 'callcenterUsers', 'filters');
+        $data = compact('initialLogs', 'deliveryUsers', 'callcenterUsers', 'adminUsers', 'filters');
 
         if ($request->header('X-SPA-Navigation')) {
             return response()->json([
@@ -93,6 +94,7 @@ class ActivityLogController extends Controller
             'order_number' => $request->input('order_number'),
             'delivery_id'  => $request->input('delivery_id') ? (int) $request->input('delivery_id') : null,
             'callcenter_id'=> $request->input('callcenter_id') ? (int) $request->input('callcenter_id') : null,
+            'admin_id'     => $request->input('admin_id') ? (int) $request->input('admin_id') : null,
         ];
     }
 
@@ -115,6 +117,12 @@ class ActivityLogController extends Controller
         if ($filters['callcenter_id']) {
             $query->where('causer_id', $filters['callcenter_id'])
                   ->where('causer_role', 'callcenter');
+        }
+
+        // Admin filter
+        if ($filters['admin_id']) {
+            $query->where('causer_id', $filters['admin_id'])
+                  ->where('causer_role', 'admin');
         }
 
         return $query;

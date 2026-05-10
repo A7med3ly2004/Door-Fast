@@ -1,7 +1,13 @@
 <style>
     /* إخفاء سكرول بار - مُحسَّن: بدون محدد * العام */
-    .page-content::-webkit-scrollbar { display: none; }
-    .page-content { scrollbar-width: none; -ms-overflow-style: none; }
+    .page-content::-webkit-scrollbar {
+        display: none;
+    }
+
+    .page-content {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
 </style>
 
 <div class="filter-bar" style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px; padding: 10px;
@@ -59,6 +65,8 @@
             Excel</button>
     </div>
 </div>
+
+<div id="rtb-period-badge" style="margin-bottom:12px; text-align:right;"></div>
 
 <div class="kpi-grid" id="rtb-kpis" style="margin-top: 10px; grid-template-columns: repeat(3, 1fr);">
     <div class="kpi-card yellow">
@@ -166,7 +174,7 @@
         } else {
             filteredRows.forEach(row => {
                 let color = '';
-                if (row.type === 'callcenter' && row.balance < 0) color = 'color:var(--red);font-weight:bold;';
+                if (row.type === 'callcenter' && row.balance > 0) color = 'color:var(--red);font-weight:bold;';
                 if (row.type === 'delivery' && row.balance > 0) color = 'color:var(--red);font-weight:bold;';
 
                 let nameHtml = row.name;
@@ -204,9 +212,21 @@
             const data = rtbCurrentData;
             const period = data.period;
 
-            if (!from && !to && period) {
+            if (data.is_always) {
+                document.getElementById('rtb-from').value = '';
+                document.getElementById('rtb-to').value = '';
+            } else if (period.from && period.to) {
                 document.getElementById('rtb-from').value = period.from;
                 document.getElementById('rtb-to').value = period.to;
+            }
+
+
+
+            const colHeader = document.querySelector('#rtb-tbody').closest('table').querySelector('thead th:last-child');
+            if (colHeader) {
+                colHeader.textContent = data.is_always
+                    ? 'الرصيد الحالي'
+                    : `صافي الفترة (${period.from} → ${period.to})`;
             }
 
             renderTable();

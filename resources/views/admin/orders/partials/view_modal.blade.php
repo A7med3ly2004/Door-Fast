@@ -8,15 +8,15 @@
         <div class="modal-body" id="modal-order-body">
             <div style="text-align:center;padding:40px;color:var(--text-muted)">جاري التحميل...</div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--border);background:var(--bg);border-radius:0 0 18px 18px;">
+        <div
+            style="display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--border);background:var(--bg);border-radius:0 0 18px 18px;">
             <button class="btn btn-secondary" onclick="closeModal('modal-view-order')">إغلاق</button>
-            <a id="modal-pdf-btn" href="#" target="_blank"
-               class="btn"
-               style="background:var(--red);color:#fff;gap:6px;text-decoration:none;"
-               onclick="if(this.href==='#'){event.preventDefault();}">
+            <a id="modal-pdf-btn" href="#" target="_blank" class="btn"
+                style="background:var(--red);color:#fff;gap:6px;text-decoration:none;"
+                onclick="if(this.href==='#'){event.preventDefault();}">
                 <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 إنشاء PDF
             </a>
@@ -26,7 +26,7 @@
 
 <script>
     if (typeof window.viewOrder !== 'function') {
-        window.viewOrder = async function(id) {
+        window.viewOrder = async function (id) {
             openModal('modal-view-order');
             document.getElementById('modal-order-body').innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;padding:40px;color:var(--text-muted);"><div class="spin" style="margin-bottom:16px;"></div><div>جاري تحميل التفاصيل...</div></div>';
             document.getElementById('modal-pdf-btn').href = `/admin/orders/${id}/pdf`;
@@ -34,7 +34,7 @@
                 const { data } = await axios.get(`/admin/orders/${id}`);
                 const o = data.order;
                 document.getElementById('modal-order-num').textContent = o.order_number;
-                
+
                 let html = `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin-bottom: 20px;">`;
                 html += `<div style="background:var(--bg); border-radius:12px; padding:16px; border:1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                     <div style="font-size:14px; font-weight:700; color:var(--text-muted); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
@@ -79,7 +79,7 @@
                         </div>
                         ${parseFloat(o.discount) > 0 ? `<div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px; border-bottom:1px solid var(--border);">
                             <span style="color:var(--text-muted); font-size:13px;">الخصم</span>
-                            <span style="font-weight:600; color:var(--red);">${parseFloat(o.discount).toFixed(2)} ${o.discount_type==='percent'?'%':'ج'}</span>
+                            <span style="font-weight:600; color:var(--red);">${parseFloat(o.discount).toFixed(2)} ${o.discount_type === 'percent' ? '%' : 'ج'}</span>
                         </div>` : ''}
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
                             <span style="font-size:14px; font-weight:700;">الإجمالي النهائي</span>
@@ -87,6 +87,31 @@
                         </div>
                     </div>
                 </div></div>`;
+                // ── عرض بيانات العميل المستلم (إن وُجد) ──
+                if (o.recipient_client) {
+                    html += `<div style="display:flex; align-items:flex-start; gap:12px; background:rgba(245,158,11,0.05); border:1px dashed var(--yellow); border-radius:10px; padding:14px; margin-bottom:20px;">
+                        <div style="color:var(--yellow); margin-top:2px; flex-shrink:0;">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                        </div>
+                        <div style="flex:1">
+                            <div style="font-size:12px; font-weight:700; color:var(--yellow); margin-bottom:10px;">↗ إرسال إلى عميل آخر</div>
+                            <div style="display:flex; flex-direction:column; gap:7px; font-size:13px;">
+                                <div style="display:flex; justify-content: flex-start; gap: 10px; align-items:center; padding-bottom:6px; border-bottom:1px solid rgba(245,158,11,0.2);">
+                                    <span style="color:var(--text-muted);">الاسم</span>
+                                    <span style="font-weight:600;">${o.recipient_client.name ?? '—'} <span style="color:var(--text-muted); font-size:12px;">(${o.recipient_client.code ?? ''})</span></span>
+                                </div>
+                                <div style="display:flex; justify-content: flex-start; gap: 10px; align-items:center; padding-bottom:6px; border-bottom:1px solid rgba(245,158,11,0.2);">
+                                    <span style="color:var(--text-muted);">الهاتف</span>
+                                    <span style="font-weight:600; direction:ltr;">${o.send_to_phone ?? '—'}${o.recipient_client.phone2 ? ' / ' + o.recipient_client.phone2 : ''}</span>
+                                </div>
+                                <div style="display:flex; justify-content: flex-start; gap: 10px; align-items:center;">
+                                    <span style="color:var(--text-muted);">العنوان</span>
+                                    <span style="font-weight:600;">${o.send_to_address ?? '—'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }
                 if (o.notes) {
                     html += `<div style="display:flex; align-items:flex-start; gap:12px; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:20px;">
                         <div style="color:var(--text-muted); margin-top:2px;">
@@ -150,7 +175,7 @@
                     </div>`;
                 }
                 document.getElementById('modal-order-body').innerHTML = html;
-            } catch(e) {
+            } catch (e) {
                 document.getElementById('modal-order-body').innerHTML = `<div style="padding:40px; text-align:center;">
                     <div style="display:inline-flex; align-items:center; justify-content:center; width:64px; height:64px; border-radius:50%; background:rgba(255,0,0, 0.1); color:var(--red); margin-bottom:16px;">
                         <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>

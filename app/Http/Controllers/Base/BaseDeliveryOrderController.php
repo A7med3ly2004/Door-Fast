@@ -24,7 +24,7 @@ abstract class BaseDeliveryOrderController extends Controller
      */
     protected function acceptLogAction(): string
     {
-        return 'تم قبول الطلب من الدلفري';
+        return 'تم قبول الطلب من المندوب';
     }
 
     /**
@@ -159,8 +159,11 @@ abstract class BaseDeliveryOrderController extends Controller
 
     public function deliver($id)
     {
+        $deliveredOrder = null;
+        $deliveryUser   = null;
+
         try {
-            DB::transaction(function () use ($id) {
+            DB::transaction(function () use ($id, &$deliveredOrder, &$deliveryUser) {
                 $delivery = auth()->user();
                 $order    = Order::where('id', $id)
                     ->where('delivery_id', $delivery->id)
@@ -176,6 +179,9 @@ abstract class BaseDeliveryOrderController extends Controller
                     'status'       => 'delivered',
                     'delivered_at' => Carbon::now(),
                 ]);
+
+                $deliveredOrder = $order;
+                $deliveryUser   = $delivery;
 
                 // تسجيل رسوم التوصيل في خزينة المندوب
                 if ($order->delivery_fee > 0) {
@@ -200,6 +206,11 @@ abstract class BaseDeliveryOrderController extends Controller
                 $this->afterDeliver($order, $delivery);
                 event(new OrderStatusUpdated($order));
             });
+
+            if ($deliveredOrder && $deliveryUser) {
+                app(\App\Services\DeliveryProfitService::class)
+                    ->recalculateDayProfits($deliveryUser, $deliveredOrder);
+            }
 
             return response()->json(['success' => true]);
         } catch (Exception $e) {
@@ -237,7 +248,7 @@ abstract class BaseDeliveryOrderController extends Controller
                 OrderLog::create([
                     'order_id' => $order->id,
                     'user_id'  => $delivery->id,
-                    'action'   => 'تم إلغاء الطلب من الدلفري: ' . $request->reason,
+                    'action'   => 'تم إلغاء الطلب من المندوب: ' . $request->reason,
                 ]);
 
                 $this->afterCancel($order, $request, $delivery);
@@ -280,7 +291,7 @@ abstract class BaseDeliveryOrderController extends Controller
     public function downloadInvoice($id)
     {
         $delivery = auth()->user();
-        $order    = Order::with(['items.shop', 'client'])
+        $order    = Order::with(['items.shop', 'client', 'recipientClient'])
             ->where('id', $id)
             ->where('delivery_id', $delivery->id)
             ->firstOrFail();

@@ -7,15 +7,22 @@
         <div style="flex:1;min-width:200px;">
             <label class="form-label">المندوب <span style="color:var(--red)">*</span></label>
             <div class="relative group" style="z-index: 50;">
-                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <div class="form-control"
+                    style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
                     <span id="label-filter-delivery-id">اختر المندوب</span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </div>
                 <input type="hidden" id="filter-delivery-id" value="">
-                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-delivery-id', '', 'اختر المندوب')">اختر المندوب</div>
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                    style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                        onclick="selectDropdown('filter-delivery-id', '', 'اختر المندوب')">اختر المندوب</div>
                     @foreach($deliveries as $d)
-                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-delivery-id', '{{ $d->id }}', '{{ $d->name }}')">{{ $d->name }}</div>
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-delivery-id', '{{ $d->id }}', '{{ $d->name }}')">{{ $d->name }}
+                        </div>
                     @endforeach
                 </div>
             </div>
@@ -61,7 +68,7 @@
                 <div class="kpi-sub">ج.م</div>
             </div>
             <div class="kpi-card cyan">
-                <div class="kpi-label">إجمالي الطلبات الموصلة</div>
+                <div class="kpi-label">إجمالي تحصيل الطلبات المكتملة</div>
                 <div class="kpi-value" id="kpi-total-revenue">0</div>
                 <div class="kpi-sub">ج.م</div>
             </div>
@@ -105,6 +112,38 @@
                 <div class="kpi-value" id="kpi-total-work-days" style="color:lightblue">0</div>
                 <div class="kpi-sub">يوم عمل</div>
             </div>
+        </div>
+    </div>
+
+    <!-- Daily Tier Breakdown — يظهر فقط إذا كانت الفترة أكثر من يوم -->
+    <div class="card" id="daily-breakdown-card" style="margin-bottom:20px; display:none;">
+        <div
+            style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:15px; font-weight:700;">تفصيل الشرائح اليومية</span>
+            <span style="font-size:13px; color:var(--text-muted);">كل يوم يُحسب بشريحته المستقلة</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align:center;">التاريخ</th>
+                        <th style="text-align:center;">عدد الطلبات</th>
+                        <th style="text-align:center;">رقم الشريحة</th>
+                        <th style="text-align:center;">مبلغ الطلب</th>
+                        <th style="text-align:center;">ربح اليوم</th>
+                    </tr>
+                </thead>
+                <tbody id="daily-breakdown-body"></tbody>
+                <tfoot>
+                    <tr style="background:#f8fafc; font-weight:800;">
+                        <td colspan="4" style="text-align:center; padding:12px; color:#475569;">إجمالي الأرباح</td>
+                        <td style="text-align:center; padding:12px; color:#a855f7; font-size:16px;" id="daily-breakdown-total">0 ج</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div style="padding:16px; border-top:1px solid var(--border); display:none;" id="daily-breakdown-pagination-wrapper">
+            <div id="daily-breakdown-pagination" class="pagination"></div>
         </div>
     </div>
 
@@ -176,7 +215,7 @@
                     document.getElementById('export-delivery-excel-btn').style.display = 'inline-flex';
                     document.getElementById('report-delivery-name').textContent = 'تقارير الأداء: ' + data.delivery_name;
 
-                    fillKpis(data.kpis);
+                    fillKpis(data.kpis, data.daily_breakdown);
                     renderTable(data.orders);
                 })
                 .catch(function (e) {
@@ -190,7 +229,7 @@
         };
 
         // ── Fill KPI cards ──────────────────────────────────────────────
-        function fillKpis(kpis) {
+        function fillKpis(kpis, dailyBreakdown) {
             document.getElementById('kpi-total-orders').textContent = kpis.total_orders;
             document.getElementById('kpi-total-fees').textContent = kpis.total_fees;
             document.getElementById('kpi-cancelled').textContent = kpis.cancelled;
@@ -198,7 +237,33 @@
             document.getElementById('kpi-total-discounts').textContent = kpis.total_discounts;
             document.getElementById('kpi-creditor').textContent = kpis.creditor;
             document.getElementById('kpi-debtor').textContent = kpis.debtor;
-            document.getElementById('kpi-tier-number').textContent = kpis.tier_number > 0 ? 'الشريحة ' + kpis.tier_number : '— لا يوجد';
+            // رقم الشريحة — يُظهر فقط إذا كانت الفترة يوم واحد
+            var tierEl = document.getElementById('kpi-tier-number');
+            if (!kpis.is_single_day) {
+                tierEl.textContent = '— حسب كل يوم';
+                tierEl.style.fontSize = '14px';
+                tierEl.style.color = '#94a3b8';
+            } else if (kpis.tier_number > 0) {
+                tierEl.textContent = 'الشريحة ' + kpis.tier_number;
+                tierEl.style.fontSize = '';
+                tierEl.style.color = '#a855f7';
+            } else {
+                tierEl.textContent = '— لا يوجد';
+                tierEl.style.fontSize = '';
+                tierEl.style.color = '#94a3b8';
+            }
+
+            // تفصيل الشرائح اليومية
+            var breakdownCard = document.getElementById('daily-breakdown-card');
+
+            if (!kpis.is_single_day && dailyBreakdown && dailyBreakdown.length > 0) {
+                breakdownCard.style.display = 'block';
+                renderDailyBreakdown(dailyBreakdown, 1);
+            } else {
+                breakdownCard.style.display = 'none';
+                document.getElementById('daily-breakdown-body').innerHTML = '';
+                document.getElementById('daily-breakdown-pagination-wrapper').style.display = 'none';
+            }
             document.getElementById('kpi-total-profits').textContent = kpis.total_profits;
             document.getElementById('kpi-total-work-hours').textContent = kpis.total_work_hours;
 
@@ -259,7 +324,70 @@
             renderPagination(payload);
         }
 
-        // ── Pagination ──────────────────────────────────────────────────
+        // ── Daily Breakdown Pagination ───────────────────────────────────
+        var _dailyBreakdownData = [];
+        var DAILY_PER_PAGE = 10;
+
+        window.loadDailyBreakdownPage = function (page) {
+            renderDailyBreakdown(_dailyBreakdownData, page);
+        };
+
+        function renderDailyBreakdown(data, page) {
+            _dailyBreakdownData = data;
+            var perPage = DAILY_PER_PAGE;
+            var totalPages = Math.ceil(data.length / perPage);
+            page = Math.max(1, Math.min(page, totalPages));
+
+            var start = (page - 1) * perPage;
+            var slice = data.slice(start, start + perPage);
+
+            var breakdownBody = document.getElementById('daily-breakdown-body');
+            breakdownBody.innerHTML = slice.map(function (day) {
+                var tierLabel = day.tier_number > 0
+                    ? '<span style="color:#7c3aed;padding:2px 8px;border-radius:12px;font-weight:700;">شريحة ' + day.tier_number + '</span>'
+                    : '— لا شريحة';
+                return '<tr>'
+                    + '<td style="text-align:center; font-weight:700;">' + day.date + '</td>'
+                    + '<td style="text-align:center;">' + day.count + ' طلب</td>'
+                    + '<td style="text-align:center;">' + tierLabel + '</td>'
+                    + '<td style="text-align:center;">' + day.amount.toFixed(2) + ' ج</td>'
+                    + '<td style="text-align:center; font-weight:800; color:#a855f7;">' + day.profit.toFixed(2) + ' ج</td>'
+                    + '</tr>';
+            }).join('');
+
+            var grandTotal = data.reduce(function (sum, day) { return sum + day.profit; }, 0);
+            var totalEl = document.getElementById('daily-breakdown-total');
+            if (totalEl) totalEl.textContent = grandTotal.toFixed(2) + ' ج';
+
+            // Pagination bar
+            var wrap = document.getElementById('daily-breakdown-pagination-wrapper');
+            var pag  = document.getElementById('daily-breakdown-pagination');
+
+            if (totalPages <= 1) {
+                wrap.style.display = 'none';
+                return;
+            }
+            wrap.style.display = 'block';
+
+            var html = '';
+            html += page > 1
+                ? '<a href="#" onclick="event.preventDefault();loadDailyBreakdownPage(' + (page - 1) + ')">«</a>'
+                : '<span class="disabled">«</span>';
+
+            for (var p = 1; p <= totalPages; p++) {
+                html += p === page
+                    ? '<span class="active">' + p + '</span>'
+                    : '<a href="#" onclick="event.preventDefault();loadDailyBreakdownPage(' + p + ')">' + p + '</a>';
+            }
+
+            html += page < totalPages
+                ? '<a href="#" onclick="event.preventDefault();loadDailyBreakdownPage(' + (page + 1) + ')">»</a>'
+                : '<span class="disabled">»</span>';
+
+            pag.innerHTML = html;
+        }
+
+        // ── Orders Pagination ───────────────────────────────────────────────
         function renderPagination(payload) {
             var wrap = document.getElementById('pagination-wrapper');
             var pag = document.getElementById('datatable-pagination');
@@ -340,27 +468,75 @@
                 per_page: 9999,
             };
             const res = await axios.get('{{ route("admin.report-delivery.data") }}', { params });
-            const columns = [
-                { header: 'رقم الطلب', key: 'order_number', width: 18 },
-                { header: 'التاريخ', key: 'created_at', width: 20 },
-                { header: 'العميل', key: 'client.name', width: 22 },
-                { header: 'تم انشاؤه', key: 'creator_name', width: 18 },
-                { header: 'رسوم التوصيل', key: 'delivery_fee', width: 16 },
-                { header: 'الخصم', key: 'discount', width: 12 },
-                { header: 'الإجمالي', key: 'total', width: 14 },
-                { header: 'الحالة', key: 'status', width: 14 },
+            const orders = res.data.orders.data || [];
+            const dailyBreakdown = res.data.kpis.daily_breakdown || [];
+
+            const statusMap = { pending: 'قيد الانتظار', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
+
+            // Constructing AOAs (Array of Arrays) for XLSX
+            const wsData = [];
+
+            // Row 1: Titles
+            const titleRow = Array(14).fill("");
+            titleRow[0] = "تفاصيل الطلبات";
+            titleRow[9] = "تفصيل الشرائح اليومية";
+            wsData.push(titleRow);
+
+            // Row 2: Headers
+            const headerRow = [
+                'رقم الطلب', 'التاريخ', 'العميل', 'تم انشاؤه', 'رسوم التوصيل', 'الخصم', 'الإجمالي', 'الحالة',
+                '', // Space Column I
+                'التاريخ', 'عدد الطلبات', 'رقم الشريحة', 'مبلغ الطلب', 'ربح اليوم'
             ];
-            const statusMap = { pending: 'باقي', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
-            const rows = res.data.orders.data.map(o => ({
-                ...o,
-                creator_name: o.callcenter ? o.callcenter.name : (o.admin ? o.admin.name : '—'),
-                created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',
-                status: statusMap[o.status] || o.status,
-            }));
-            exportToExcel(rows, columns, 'delivery-report-' + res.data.delivery_name + '-' + new Date().toISOString().slice(0, 10), 'تقرير المندوب');
-            if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+            wsData.push(headerRow);
+
+            // Data Rows
+            const maxRows = Math.max(orders.length, dailyBreakdown.length);
+            for (let i = 0; i < maxRows; i++) {
+                const row = Array(14).fill("");
+                const o = orders[i];
+                const d = dailyBreakdown[i];
+
+                if (o) {
+                    row[0] = o.order_number || ('#' + o.id);
+                    row[1] = o.created_at ? new Date(o.created_at).toLocaleString('en-GB') : '—';
+                    row[2] = o.client ? o.client.name : '—';
+                    row[3] = o.callcenter ? o.callcenter.name : (o.admin ? o.admin.name : '—');
+                    row[4] = o.delivery_fee;
+                    row[5] = o.discount;
+                    row[6] = o.total;
+                    row[7] = statusMap[o.status] || o.status;
+                }
+
+                if (d) {
+                    row[9] = d.date; // d.date is usually Y-m-d string from backend
+                    row[10] = d.count + ' طلب';
+                    row[11] = d.tier_number > 0 ? ('شريحة ' + d.tier_number) : '— لا شريحة';
+                    row[12] = d.amount.toFixed(2);
+                    row[13] = d.profit.toFixed(2);
+                }
+                wsData.push(row);
+            }
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+            // Apply Merges for Row 1 titles
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }, // Merge A1:H1
+                { s: { r: 0, c: 9 }, e: { r: 0, c: 13 } } // Merge J1:N1
+            ];
+
+            // Adjust Column Widths
+            const colWidths = [18, 15, 20, 15, 12, 10, 12, 15, 5, 15, 12, 15, 12, 12];
+            ws['!cols'] = colWidths.map(w => ({ wch: w }));
+
+            XLSX.utils.book_append_sheet(wb, ws, 'تقرير المندوب');
+            XLSX.writeFile(wb, 'delivery-report-' + res.data.delivery_name + '-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+
+            if (typeof showSuccess === 'function') showSuccess('تم التصدير بنجاح ✓');
         } catch (e) {
-            if (typeof showError === 'function') showError('حدث خطأ');
+            if (typeof showError === 'function') showError('حدث خطأ أثناء التصدير');
             console.error(e);
         }
     };

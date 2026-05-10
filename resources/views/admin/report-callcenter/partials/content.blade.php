@@ -106,6 +106,43 @@
                 <div class="kpi-value" id="kpi-total-work-days" style="color:lightblue">0</div>
                 <div class="kpi-sub">يوم عمل</div>
             </div>
+            
+            <div class="kpi-card" style="border-right:4px solid #a855f7;">
+                <div class="kpi-label">الشريحة المحققة</div>
+                <div class="kpi-value" id="kpi-cc-tier-number" style="color:#a855f7">—</div>
+            </div>
+            <div class="kpi-card" style="border-right:4px solid #a855f7;">
+                <div class="kpi-label">إجمالي الأرباح</div>
+                <div class="kpi-value" id="kpi-total-cc-profits" style="color:#a855f7">0</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="cc-daily-breakdown-card" style="margin-bottom:20px; display:none;">
+        <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:15px; font-weight:700;">📊 تفصيل الشرائح اليومية</span>
+            <span style="font-size:13px; color:var(--text-muted);">كل يوم محسوب بشريحته المستقلة</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align:center;">التاريخ</th>
+                        <th style="text-align:center;">عدد الطلبات</th>
+                        <th style="text-align:center;">الشريحة</th>
+                        <th style="text-align:center;">مبلغ الطلب</th>
+                        <th style="text-align:center;">ربح اليوم</th>
+                    </tr>
+                </thead>
+                <tbody id="cc-daily-breakdown-body"></tbody>
+                <tfoot>
+                    <tr style="background:#f8fafc; font-weight:800;">
+                        <td colspan="4" style="text-align:center; padding:12px; color:#475569;">إجمالي الأرباح</td>
+                        <td style="text-align:center; padding:12px; color:#a855f7; font-size:16px;" id="cc-daily-breakdown-total">0 ج</td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
 
@@ -176,7 +213,7 @@
                     document.getElementById('export-cc-excel-btn').style.display = 'inline-flex';
                     document.getElementById('report-agent-name').textContent = 'تقارير أداء الموظف: ' + data.agent_name;
 
-                    fillKpis(data.kpis);
+                    fillKpis(data.kpis, data.daily_breakdown);
                     renderTable(data.orders);
                 })
                 .catch(function (e) {
@@ -189,7 +226,7 @@
                 });
         };
 
-        function fillKpis(kpis) {
+        function fillKpis(kpis, dailyBreakdown) {
             document.getElementById('kpi-total-orders').textContent = kpis.total_orders;
             document.getElementById('kpi-pending').textContent = kpis.pending;
             document.getElementById('kpi-total-received').textContent = kpis.total_received;
@@ -221,6 +258,50 @@
             } else if (kpis.raw_period_safe_balance < 0) {
                 safeBalanceCard.style.borderLeftColor = 'var(--text)';
                 safeBalanceVal.style.color = 'var(--text)';
+            }
+
+            // الشريحة والأرباح
+            var tierEl = document.getElementById('kpi-cc-tier-number');
+            if (!kpis.is_single_day) {
+                tierEl.textContent  = '— حسب كل يوم';
+                tierEl.style.color  = '#94a3b8';
+                tierEl.style.fontSize = '14px';
+            } else if (kpis.tier_number > 0) {
+                tierEl.textContent  = 'الشريحة ' + kpis.tier_number;
+                tierEl.style.color  = '#a855f7';
+                tierEl.style.fontSize = '';
+            } else {
+                tierEl.textContent  = '— لا يوجد';
+                tierEl.style.color  = '#94a3b8';
+                tierEl.style.fontSize = '';
+            }
+            document.getElementById('kpi-total-cc-profits').textContent = kpis.total_cc_profits;
+
+            // جدول التفصيل اليومي
+            var breakdownCard = document.getElementById('cc-daily-breakdown-card');
+            var breakdownBody = document.getElementById('cc-daily-breakdown-body');
+
+            if (!kpis.is_single_day && dailyBreakdown && dailyBreakdown.length > 0) {
+                breakdownCard.style.display = 'block';
+                var grandTotal = 0;
+                breakdownBody.innerHTML = dailyBreakdown.map(function(day) {
+                    grandTotal += day.profit;
+                    var tierBadge = day.tier_number > 0
+                        ? `<span style="background:#ede9fe;color:#7c3aed;padding:2px 10px;border-radius:12px;font-weight:700;font-size:12px;">شريحة ${day.tier_number}</span>`
+                        : '<span style="color:#94a3b8;">—</span>';
+                    return `
+                        <tr>
+                            <td style="text-align:center;font-weight:700;">${day.date}</td>
+                            <td style="text-align:center;">${day.count} طلب</td>
+                            <td style="text-align:center;">${tierBadge}</td>
+                            <td style="text-align:center;">${Number(day.amount).toFixed(2)} ج</td>
+                            <td style="text-align:center;font-weight:800;color:#a855f7;">${Number(day.profit).toFixed(2)} ج</td>
+                        </tr>`;
+                }).join('');
+                document.getElementById('cc-daily-breakdown-total').textContent = grandTotal.toFixed(2) + ' ج';
+            } else {
+                breakdownCard.style.display = 'none';
+                breakdownBody.innerHTML = '';
             }
         }
 
@@ -318,7 +399,7 @@
                         };
                         axios.get(DATA_URL, { params: params })
                             .then(function (res) {
-                                fillKpis(res.data.kpis);
+                                fillKpis(res.data.kpis, res.data.daily_breakdown);
                                 renderTable(res.data.orders);
                             })
                             .catch(function (e) { console.warn('Polling error', e); });
@@ -350,7 +431,7 @@
                 { header: 'الإجمالي', key: 'total', width: 14 },
                 { header: 'الحالة', key: 'status', width: 14 },
             ];
-            const statusMap = { pending: 'باقي', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
+            const statusMap = { pending: 'قيد الانتظار', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
             const rows = res.data.orders.data.map(o => ({
                 ...o,
                 created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',

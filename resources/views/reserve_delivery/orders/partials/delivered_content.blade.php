@@ -267,6 +267,113 @@
         margin-top: 2px;
     }
 
+    /* Shop Group Styles */
+    .shop-group {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 14px;
+        overflow: hidden;
+    }
+
+    .shop-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .shop-group-header {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e8f4fd 100%);
+        padding: 10px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .shop-group-name {
+        font-weight: 800;
+        font-size: 14px;
+        color: #1e3a5f;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .shop-group-total-badge {
+        background: #1e40af;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+    }
+
+    .shop-group-items {
+        background: #ffffff;
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .shop-group-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 4px;
+        border-bottom: 1px dashed #f1f5f9;
+    }
+
+    .shop-group-item:last-child {
+        border-bottom: none;
+    }
+
+    .shop-item-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .shop-item-qty {
+        background: #e0f2fe;
+        color: #0369a1;
+        font-weight: 800;
+        font-size: 13px;
+        padding: 3px 7px;
+        border-radius: 6px;
+        min-width: 32px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .shop-item-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .shop-item-price {
+        font-weight: 800;
+        font-size: 14px;
+        color: var(--primary);
+        white-space: nowrap;
+    }
+
+    .shop-group-footer {
+        background: #f8fafc;
+        padding: 8px 14px;
+        text-align: left;
+        border-top: 1px solid #e2e8f0;
+        font-size: 13px;
+        color: #475569;
+        font-weight: 700;
+    }
+
+    .shop-group-footer span {
+        color: #1e40af;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
     .money-total {
         font-size: 26px;
         font-weight: 800;
@@ -618,7 +725,7 @@
             clientSectionHtml = `
             <div class="two-party-info" style="margin-bottom:20px; font-size:15px">
                 <div class="party sender">
-                    <div class="party-label" style="font-size:13px">العميل المالك (المرسل)</div>
+                    <div class="party-label" style="font-size:13px">العميل (المرسل)</div>
                     <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon">👤</span> <strong>${clientName}</strong></div>
                     <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon">📞</span> ${phoneHtml}</div>
                     ${primaryWaButtonsHtml}
@@ -643,22 +750,72 @@
             </div>`;
         }
 
-        var itemsHtml = '';
-        if (order.items && order.items.length > 0) {
-            var rows = order.items.map(i => {
-                var unitPrice = i.unit_price ? parseFloat(i.unit_price) : 0;
-                var totalPrice = i.total ? parseFloat(i.total) : (unitPrice * i.quantity);
-                return `
-            <div class="item-row">
-                <div class="item-main">
-                    <div class="item-qty">${i.quantity}×</div>
-                    <div class="item-details"><div class="item-name">${i.item_name}</div><div class="item-shop">🏪 ${i.shop?.name ?? 'بدون متجر'}</div></div>
-                </div>
-                <div class="item-pricing"><div class="item-total">${totalPrice} ج</div><div class="item-unit">للوحدة: ${unitPrice} ج</div></div>
-            </div>`;
-            }).join('');
-            itemsHtml = `<div class="items-list-container"><div class="items-list-header">🛒 قائمة المنتجات (${order.items.length})</div><div class="items-list-body">${rows}</div></div>`;
+        // ── تجميع الأصناف حسب المتجر ──────────────────────────────
+        function groupItemsByShop(items) {
+            const groups = {};
+            items.forEach(i => {
+                const shopKey = i.shop?.name ?? 'بدون متجر';
+                if (!groups[shopKey]) {
+                    groups[shopKey] = { name: shopKey, items: [], total: 0 };
+                }
+                const itemTotal = i.total ? parseFloat(i.total) : (parseFloat(i.unit_price || 0) * parseFloat(i.quantity || 1));
+                groups[shopKey].items.push({ ...i, computedTotal: itemTotal });
+                groups[shopKey].total += itemTotal;
+            });
+            return Object.values(groups);
         }
+
+        function buildGroupedItemsHtml(items) {
+            if (!items || items.length === 0) {
+                return `
+                    <div class="items-list-container">
+                        <div class="items-list-header">🛒 قائمة المنتجات (0)</div>
+                        <div class="items-list-body">
+                            <div style="text-align:center; padding:10px; color:var(--text-muted);">لا توجد أصناف</div>
+                        </div>
+                    </div>`;
+            }
+
+            const groups = groupItemsByShop(items);
+            const totalUniqueItems = items.length;
+
+            const groupsHtml = groups.map(group => {
+                const itemsRows = group.items.map(i => `
+                    <div class="shop-group-item">
+                        <div class="shop-item-left">
+                            <div class="shop-item-qty">${i.quantity}×</div>
+                            <div class="shop-item-name">${i.item_name}</div>
+                        </div>
+                        <div class="shop-item-price">${i.computedTotal.toFixed(2)} ج</div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="shop-group">
+                        <div class="shop-group-header">
+                            <div class="shop-group-name">${group.name}</div>
+                            <div class="shop-group-total-badge">${group.total.toFixed(2)} ج</div>
+                        </div>
+                        <div class="shop-group-items">
+                            ${itemsRows}
+                        </div>
+                        <div class="shop-group-footer">
+                            مجموع المتجر: <span>${group.total.toFixed(2)} ج</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="items-list-container">
+                    <div class="items-list-header">🛒 قائمة المنتجات (${totalUniqueItems} صنف)</div>
+                    <div class="items-list-body" style="gap:0; padding:12px;">
+                        ${groupsHtml}
+                    </div>
+                </div>`;
+        }
+
+        var itemsHtml = buildGroupedItemsHtml(order.items);
 
         const modalContent = document.getElementById('delivered-modal-content');
         modalContent.innerHTML = `
@@ -669,7 +826,10 @@
         <div class="modal-body">
             ${clientSectionHtml}
             ${itemsHtml}
-            <div class="money-total">الإجمالي النهائي: ${order.total} ج</div>
+            <div class="money-total">
+                الإجمالي النهائي: ${order.total} ج
+                <div style="font-size:13px;color:var(--text-muted);font-weight:600;margin-top:8px;">( يشمل توصيل: ${order.delivery_fee} ج | خصم: ${order.discount} ${order.discount_type === 'percent' ? '%' : 'ج'} )</div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn-invoice" style="width:100%; flex:none;" onclick="sendInvoice(${order.id}, '${order.order_number}', '${order.send_to_phone || clientPhone}', this)">
@@ -681,7 +841,7 @@
     }
 
     function closeDeliveredModal() { document.getElementById('delivered-details-modal').classList.remove('open'); }
-    document.getElementById('delivered-details-modal').addEventListener('click', function(e) { if (e.target === this) closeDeliveredModal(); });
+    document.getElementById('delivered-details-modal').addEventListener('click', function (e) { if (e.target === this) closeDeliveredModal(); });
 
     async function sendInvoice(orderId, orderNumber, phoneStr, btnElement) {
         var dlUrl = '/reserve/orders/' + orderId + '/invoice/download';
@@ -697,7 +857,7 @@
             const blob = await response.blob();
             const fileName = 'Invoice_ORD-' + orderNumber + '.pdf';
             const file = new File([blob], fileName, { type: 'application/pdf' });
-            var msg = "مرحباً،\n\nإليك فاتورة طلبك رقم #" + orderNumber + " من DoorFast 📦.\n\nشكراً لثقتك بنا!";
+            var msg = "مرحباً،\n\nإليك فاتورة طلبك رقم #" + orderNumber + " من DoorFast .\n\nشكراً لثقتك بنا!";
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({ files: [file], title: 'فاتورة طلب #' + orderNumber, text: msg });
             } else {

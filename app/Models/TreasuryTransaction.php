@@ -138,11 +138,25 @@ class TreasuryTransaction extends Model
      * @param string|null $to    End of date range (Y-m-d)
      * @return array{total_income: string, total_expense: string, balance: string}
      */
-    public static function calculateKpis(?string $from = null, ?string $to = null): array
+    public static function calculateKpis(?string $from = null, ?string $to = null, ?int $userId = null): array
     {
         // Single query — group by type, sum amounts
         $rows = static::query()
             ->withinDateRange($from, $to)
+            ->when($userId, function ($q) use ($userId) {
+                $q->where(function ($sub) use ($userId) {
+                    $sub->where('recorded_by', $userId)
+                        ->orWhere(function ($s1) use ($userId) {
+                            $s1->where('source_type', 'manual')
+                               ->whereIn('type', ['pay_to_user', 'receive_from_user', 'dain'])
+                               ->where('source_id', $userId);
+                        })
+                        ->orWhere(function ($s2) use ($userId) {
+                            $s2->where('source_type', 'settlement')
+                               ->whereHas('settlement', fn($s) => $s->where('callcenter_id', $userId));
+                        });
+                });
+            })
             ->selectRaw('type, SUM(amount) as total')
             ->groupBy('type')
             ->pluck('total', 'type');

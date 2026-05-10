@@ -110,6 +110,11 @@ class OrderController extends Controller
         // ── Delegate to service ──────────────────────────────────────
         $result = $this->orderService->createOrder($data, auth()->id(), adminMode: false);
 
+        // بعد إنشاء الطلب بنجاح
+        $callcenter = auth()->user();
+        app(\App\Services\CallcenterProfitService::class)
+            ->recalculateDayProfits($callcenter, $result['order']);
+
         return response()->json([
             'success'      => true,
             'order_number' => $result['order']->order_number,
@@ -229,7 +234,7 @@ class OrderController extends Controller
         $order = Order::where('callcenter_id', auth()->id())->where('status', 'pending')->findOrFail($id);
 
         if (now()->gte($order->sent_to_delivery_at)) {
-            return response()->json(['success' => false, 'message' => 'انتهت مهلة التعديل — تم إرسال الطلب للدلفري'], 422);
+            return response()->json(['success' => false, 'message' => 'انتهت مهلة التعديل — تم إرسال الطلب للمندوب'], 422);
         }
 
         $items        = $request->items ?? [];
@@ -408,7 +413,7 @@ class OrderController extends Controller
     {
         $order = Order::where('callcenter_id', auth()->id())->where('status', 'pending')->findOrFail($id);
         $order->update(['sent_to_delivery_at' => now()]);
-        OrderLog::create(['order_id' => $order->id, 'user_id' => auth()->id(), 'action' => 'إرسال مبكر للدلفري']);
+        OrderLog::create(['order_id' => $order->id, 'user_id' => auth()->id(), 'action' => 'إرسال مبكر للمندوب']);
 
         ActivityLog::log(
             event:        'order.sent_early',
@@ -423,12 +428,12 @@ class OrderController extends Controller
         } catch (\Throwable) {
         }
 
-        return response()->json(['success' => true, 'message' => 'تم إرسال الطلب للدلفري الآن']);
+        return response()->json(['success' => true, 'message' => 'تم إرسال الطلب للمندوب الآن']);
     }
 
     public function downloadPdf($id)
     {
-        $order = Order::with(['client', 'callcenter', 'delivery', 'items.shop', 'logs.user'])->findOrFail($id);
+        $order = Order::with(['client', 'recipientClient', 'callcenter', 'admin', 'delivery', 'items.shop', 'logs.user'])->findOrFail($id);
         $pdf   = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.order_single', compact('order'))->setPaper('a4', 'portrait');
         return $pdf->download($order->order_number . '.pdf');
     }

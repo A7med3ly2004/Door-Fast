@@ -1,7 +1,7 @@
 {{-- Admin Clients page as SPA-injectable partial --}}
 <div class="section-header">
-    <h2>👥 إدارة العملاء</h2>
-    <button class="btn btn-primary" onclick="openModal('modal-add-client')">➕ إضافة عميل</button>
+    <h2>إدارة العملاء</h2>
+    <button class="btn btn-primary" onclick="openModal('modal-add-client')">إضافة عميل</button>
 </div>
 
 <div class="card" style="margin-bottom:20px">
@@ -20,8 +20,8 @@
             <input type="date" id="filter-to" class="form-control">
         </div>
         <div style="display: flex; gap: 5px; margin-bottom: 2px;">
-            <button class="btn btn-primary" onclick="loadClients(1)">🔍 بحث</button>
-            <button class="btn btn-secondary" onclick="resetFilters()">↺ إعادة</button>
+            <button class="btn btn-primary" onclick="loadClients(1)">بحث</button>
+            <button class="btn btn-secondary" onclick="resetFilters()">إعادة</button>
             <button class="btn btn-success" onclick="exportClientsExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
         </div>
     </div>
@@ -42,13 +42,14 @@
                     <th style="text-align: center;">العناوين</th>
                     <th style="text-align: center;">الطلبات</th>
                     <th style="text-align: center;">إجمالي الإنفاق</th>
+                    <th style="text-align: center;">اجمالي التوصيل</th>
                     <th style="text-align: center;">آخر طلب</th>
                     <th style="text-align: center;">إجراءات</th>
                 </tr>
             </thead>
             <tbody id="clients-body">
                 <tr>
-                    <td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">جاري التحميل...</td>
+            <td colspan="10" style="text-align:center;color:var(--text-muted);padding:40px">جاري التحميل...</td>
                 </tr>
             </tbody>
         </table>
@@ -59,20 +60,20 @@
 <div class="modal-overlay" id="modal-add-client">
     <div class="modal">
         <div class="modal-header">
-            <h3>➕ إضافة عميل جديد</h3><button class="btn-close" onclick="closeModal('modal-add-client')">✕</button>
+            <h3>إضافة عميل جديد</h3><button class="btn-close" onclick="closeModal('modal-add-client')">✕</button>
         </div>
         <div class="modal-body">
             <div class="form-row">
                 <div class="form-group"><label class="form-label">الاسم *</label><input id="add-name" type="text"
                         class="form-control"></div>
-                <div class="form-group"><label class="form-label">الهاتف *</label><input id="add-phone" type="text"
-                        class="form-control"></div>
+                <div class="form-group"><label class="form-label">الكود (يتولد تلقائياً)</label><input id="add-code"
+                        type="text" class="form-control" placeholder="تلقائي..." readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
             </div>
             <div class="form-row">
+                <div class="form-group"><label class="form-label">الهاتف *</label><input id="add-phone" type="text"
+                        class="form-control"></div>
                 <div class="form-group"><label class="form-label">هاتف 2</label><input id="add-phone2" type="text"
                         class="form-control"></div>
-                <div class="form-group"><label class="form-label">الكود (يتولد تلقائياً)</label><input id="add-code"
-                        type="text" class="form-control" placeholder="00001"></div>
             </div>
             <div class="form-group"><label class="form-label">العنوان الأول *</label><input id="add-address" type="text"
                     class="form-control"></div>
@@ -139,7 +140,7 @@
             });
             var body = document.getElementById('clients-body');
             if (!data.data.length) {
-                body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">لا عملاء</td></tr>';
+                body.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:40px">لا عملاء</td></tr>';
                 document.getElementById('pagination-wrap').innerHTML = '';
                 return;
             }
@@ -151,6 +152,7 @@
             <td style="text-align: center;">${c.addresses_count ?? 0}</td>
             <td style="text-align: center;">${c.orders_count}</td>
             <td style="text-align: center;">${parseFloat(c.orders_sum_total || 0).toFixed(2)} ج</td>
+            <td style="text-align: center;">${parseFloat(c.orders_sum_delivery_fee || 0).toFixed(2)} ج</td>
             <td style="font-size:12px;color:var(--text-muted);text-align: center;">${c.orders?.[0]?.created_at ? formatDate(c.orders[0].created_at) : '—'}</td>
             <td><div style="display:flex;gap:6px;justify-content: center">
                 <button class="btn btn-sm btn-info" onclick="viewClient(${c.id})">عرض</button>
@@ -206,9 +208,10 @@
                 <div style="flex:1"><div style="font-size:17px;font-weight:700">${c.name}</div><div style="font-size:12px;color:var(--text-muted);margin-top:3px">منذ ${formatDate(c.created_at)}</div></div>
                 <code style="background:rgba(245,158,11,.12);color:var(--yellow);padding:5px 12px;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:1px">${c.code}</code>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px">
                 <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:6px">إجمالي الطلبات</div><div style="font-size:22px;font-weight:800;color:var(--yellow)">${c.orders_count}</div></div>
                 <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:6px">إجمالي الإنفاق</div><div style="font-size:22px;font-weight:800;color:#34d399">${parseFloat(c.total_spent).toFixed(2)} ج</div></div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:6px">اجمالي التوصيل</div><div style="font-size:22px;font-weight:800;color:#f59e0b">${parseFloat(c.total_delivery_fee || 0).toFixed(2)} ج</div></div>
                 <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:6px">العناوين المسجلة</div><div style="font-size:22px;font-weight:800;color:#60a5fa">${c.addresses.length}</div></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
@@ -354,6 +357,7 @@
                 { header: 'عدد العناوين',    key: 'addresses_count',   width: 14 },
                 { header: 'عدد الطلبات',     key: 'orders_count',      width: 14 },
                 { header: 'إجمالي الإنفاق', key: 'orders_sum_total',  width: 16 },
+                { header: 'اجمالي التوصيل', key: 'orders_sum_delivery_fee', width: 16 },
                 { header: 'تاريخ التسجيل',  key: 'created_at',        width: 20 },
             ];
 
@@ -361,6 +365,7 @@
                 ...c,
                 created_at: c.created_at ? new Date(c.created_at).toLocaleDateString('ar-EG') : '—',
                 orders_sum_total: parseFloat(c.orders_sum_total || 0).toFixed(2),
+                orders_sum_delivery_fee: parseFloat(c.orders_sum_delivery_fee || 0).toFixed(2),
             }));
 
             exportToExcel(rows, columns, 'clients-' + new Date().toISOString().slice(0, 10), 'العملاء');

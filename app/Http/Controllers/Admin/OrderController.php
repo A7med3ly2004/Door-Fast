@@ -15,7 +15,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         if ($request->header('X-SPA-Navigation')) {
-            $deliveries   = User::where('role', 'delivery')->orderBy('name')->get(['id', 'name']);
+            $deliveries   = User::whereIn('role', ['delivery', 'reserve_delivery'])->orderBy('name')->get(['id', 'name']);
             $callcenters  = User::where('role', 'callcenter')->orderBy('name')->get(['id', 'name']);
             $admins       = User::where('role', 'admin')->orderBy('name')->get(['id', 'name']);
             return response()->json([
@@ -50,9 +50,24 @@ class OrderController extends Controller
             }
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('order_number', 'like', "%$search%")
-                      ->orWhereHas('client', fn($c) => $c->where('name', 'like', "%$search%")->orWhere('phone', 'like', "%$search%"));
+                $role   = $request->get('role');
+
+                $query->where(function ($q) use ($search, $role) {
+                    $q->where('order_number', 'like', "%$search%");
+                    
+                    if (!$role || $role === 'primary') {
+                        $q->orWhereHas('client', fn($c) => $c->where('phone', 'like', "%$search%")
+                            ->orWhere('phone2', 'like', "%$search%")
+                            ->orWhere('code', 'like', "%$search%"));
+                    }
+                    
+                    if (!$role || $role === 'recipient') {
+                        $q->orWhere('send_to_phone', 'like', "%$search%")
+                          ->orWhere('send_to_phone2', 'like', "%$search%")
+                          ->orWhereHas('recipientClient', fn($c) => $c->where('phone', 'like', "%$search%")
+                            ->orWhere('phone2', 'like', "%$search%")
+                            ->orWhere('code', 'like', "%$search%"));
+                    }
                 });
             }
 
@@ -61,7 +76,7 @@ class OrderController extends Controller
             return response()->json($orders);
         }
 
-        $deliveries   = User::where('role', 'delivery')->orderBy('name')->get(['id', 'name']);
+        $deliveries   = User::whereIn('role', ['delivery', 'reserve_delivery'])->orderBy('name')->get(['id', 'name']);
         $callcenters  = User::where('role', 'callcenter')->orderBy('name')->get(['id', 'name']);
         $admins       = User::where('role', 'admin')->orderBy('name')->get(['id', 'name']);
         return view('admin.orders.index', compact('deliveries', 'callcenters', 'admins'));
@@ -69,7 +84,7 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::with(['client', 'callcenter', 'delivery', 'items.shop', 'logs.user'])
+        $order = Order::with(['client', 'recipientClient', 'callcenter', 'delivery', 'items.shop', 'logs.user'])
             ->findOrFail($id);
 
         return response()->json([
@@ -86,9 +101,15 @@ class OrderController extends Controller
                 'discount_type'  => $order->discount_type,
                 'total'          => $order->total,
                 'created_at'     => $order->created_at->toIso8601String(),
-                'client'         => $order->client ? ['name' => $order->client->name, 'phone' => $order->client->phone] : null,
-                'callcenter'     => $order->callcenter ? ['name' => $order->callcenter->name] : null,
-                'delivery'       => $order->delivery ? ['name' => $order->delivery->name] : null,
+                'client'           => $order->client ? ['name' => $order->client->name, 'phone' => $order->client->phone, 'code' => $order->client->code] : null,
+                'recipient_client' => $order->recipientClient ? [
+                    'name'   => $order->recipientClient->name,
+                    'phone'  => $order->recipientClient->phone,
+                    'phone2' => $order->recipientClient->phone2,
+                    'code'   => $order->recipientClient->code,
+                ] : null,
+                'callcenter'       => $order->callcenter ? ['name' => $order->callcenter->name] : null,
+                'delivery'         => $order->delivery ? ['name' => $order->delivery->name] : null,
                 'items'          => $order->items->map(fn($item) => [
                     'item_name'  => $item->item_name,
                     'shop'       => $item->shop?->name ?? '—',
@@ -155,9 +176,24 @@ class OrderController extends Controller
         if ($request->filled('admin_id'))      $query->where('admin_id', $request->admin_id);
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('order_number', 'like', "%$search%")
-                  ->orWhereHas('client', fn($c) => $c->where('name', 'like', "%$search%")->orWhere('phone', 'like', "%$search%"));
+            $role   = $request->get('role');
+
+            $query->where(function ($q) use ($search, $role) {
+                $q->where('order_number', 'like', "%$search%");
+                
+                if (!$role || $role === 'primary') {
+                    $q->orWhereHas('client', fn($c) => $c->where('phone', 'like', "%$search%")
+                        ->orWhere('phone2', 'like', "%$search%")
+                        ->orWhere('code', 'like', "%$search%"));
+                }
+                
+                if (!$role || $role === 'recipient') {
+                    $q->orWhere('send_to_phone', 'like', "%$search%")
+                      ->orWhere('send_to_phone2', 'like', "%$search%")
+                      ->orWhereHas('recipientClient', fn($c) => $c->where('phone', 'like', "%$search%")
+                        ->orWhere('phone2', 'like', "%$search%")
+                        ->orWhere('code', 'like', "%$search%"));
+                }
             });
         }
 
@@ -178,7 +214,7 @@ class OrderController extends Controller
 
     public function downloadPdf($id)
     {
-        $order = Order::with(['client', 'callcenter', 'delivery', 'items.shop', 'logs.user'])
+        $order = Order::with(['client', 'recipientClient', 'callcenter', 'admin', 'delivery', 'items.shop', 'logs.user'])
             ->findOrFail($id);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.order_single', compact('order'))->setPaper('a4', 'portrait');

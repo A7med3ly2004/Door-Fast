@@ -1,6 +1,6 @@
 {{-- Admin Shops page as SPA-injectable partial --}}
 <div class="section-header">
-    <h2>🏪 إدارة المتاجر</h2>
+    <h2>إدارة المتاجر</h2>
     <div style="display:flex;gap:10px">
         <button class="btn btn-secondary" onclick="openModal('modal-add-category')">📁 إضافة فئة</button>
         <button class="btn btn-primary" onclick="openModal('modal-add-shop')">➕ إضافة متجر</button>
@@ -76,7 +76,7 @@
                 <div class="form-group"><label class="form-label">الاسم *</label><input id="add-name" type="text"
                         class="form-control"></div>
                 <div class="form-group"><label class="form-label">الكود</label><input id="add-code" type="text"
-                        class="form-control" placeholder="اختياري"></div>
+                        class="form-control" placeholder="تلقائي..." readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -104,7 +104,7 @@
 <div class="modal-overlay" id="modal-edit-shop">
     <div class="modal">
         <div class="modal-header">
-            <h3>✏️ تعديل متجر</h3><button class="btn-close" onclick="closeModal('modal-edit-shop')">✕</button>
+            <h3>تعديل متجر</h3><button class="btn-close" onclick="closeModal('modal-edit-shop')">✕</button>
         </div>
         <div class="modal-body">
             <input type="hidden" id="edit-id">
@@ -157,7 +157,7 @@
 <div class="modal-overlay" id="modal-view-shop">
     <div class="modal modal-lg">
         <div class="modal-header">
-            <h3>👁 تفاصيل المتجر — <span id="view-shop-name"></span></h3>
+            <h3>تفاصيل المتجر — <span id="view-shop-name"></span></h3>
             <button class="btn-close" onclick="closeModal('modal-view-shop')">✕</button>
         </div>
         <div class="modal-body">

@@ -36,6 +36,7 @@ class CallCenterManagementController extends Controller
                     'created' => $cc->createdOrders->count(),
                     'revenue' => $cc->createdOrders->where('status', 'delivered')->sum('total'),
                     'code' => $cc->code,
+                    'incentive_slices' => $cc->incentive_slices ?? [],
                 ];
             });
 
@@ -130,6 +131,8 @@ class CallCenterManagementController extends Controller
             'is_active' => 'boolean',
             'password' => 'nullable|string|min:6',
             'code' => 'nullable|string|max:50',
+            'incentive_slices'   => 'nullable|array',
+            'incentive_slices.*' => 'array',
         ]);
 
         $updateData = [
@@ -137,6 +140,7 @@ class CallCenterManagementController extends Controller
             'phone' => $data['phone'] ?? $user->phone,
             'code' => $data['code'] ?? $user->code,
             'is_active' => $data['is_active'] ?? $user->is_active,
+            'incentive_slices' => $data['incentive_slices'] ?? $user->incentive_slices,
         ];
 
         if (!empty($data['password'])) {

@@ -169,8 +169,14 @@
     <div class="info-section">
         <table class="info-table">
             <tr>
-                <td>({{ $order->client->phone ?? '' }}) {{ $ar($order->client->name ?? 'غير محدد') }}</td>
-                <td class="info-label">{{ $ar('العميل المالك:') }}</td>
+                <td>
+                    ({{ $order->client->phone ?? '' }})
+                    @if($order->client->phone2 ?? null)
+                        / ({{ $order->client->phone2 }})
+                    @endif
+                    {{ $ar($order->client->name ?? 'غير محدد') }}
+                </td>
+                <td class="info-label">{{ $ar('العميل:') }}</td>
             </tr>
             <tr>
                 <td>{{ $ar($order->client_address ?? 'غير محدد') }}</td>
@@ -179,18 +185,26 @@
             @if($order->delivery)
                 <tr>
                     <td>{{ $ar($order->delivery->name) }}</td>
-                    <td class="info-label">{{ $ar('المندوب:') }}</td>
+                    <td class="info-label" style="color: #0d7200ff;">{{ $ar('المندوب:') }}</td>
                 </tr>
             @endif
-            @if($order->callcenter)
+            @if($order->callcenter || $order->admin)
                 <tr>
-                    <td>{{ $ar($order->callcenter->name) }}</td>
-                    <td class="info-label">{{ $ar('كول سنتر:') }}</td>
+                    <td>{{ $ar(($order->callcenter ?? $order->admin)->name) }}</td>
+                    <td class="info-label" style="color: #725d00ff;">{{ $ar('تم إنشائه:') }}</td>
                 </tr>
             @endif
             @if($order->send_to_phone)
                 <tr>
-                    <td>({{ $order->send_to_phone }})</td>
+                    <td>
+                        ({{ $order->send_to_phone }})
+                        @if($order->send_to_phone2 ?? ($order->recipientClient->phone2 ?? null))
+                            / ({{ $order->send_to_phone2 ?? $order->recipientClient->phone2 }})
+                        @endif
+                        @if($order->recipientClient)
+                            {{ $ar($order->recipientClient->name) }}
+                        @endif
+                    </td>
                     <td class="info-label">{{ $ar('العميل المستلم:') }}</td>
                 </tr>
                 <tr>
@@ -198,12 +212,7 @@
                     <td class="info-label">{{ $ar('عنوان التوصيل:') }}</td>
                 </tr>
             @endif
-            @if($order->notes)
-                <tr>
-                    <td>{{ $ar($order->notes) }}</td>
-                    <td class="info-label">{{ $ar('ملاحظات:') }}</td>
-                </tr>
-            @endif
+
         </table>
     </div>
 
@@ -213,8 +222,8 @@
                 <th style="text-align: center">{{ $ar('الإجمالي') }}</th>
                 <th style="text-align: center">{{ $ar('سعر الوحدة') }}</th>
                 <th style="text-align: center">{{ $ar('الكمية') }}</th>
-                <th style="text-align: center">{{ $ar('المتجر') }}</th>
-                <th style="text-align: center">{{ $ar('المنتج') }}</th>
+                <th>{{ $ar('المتجر') }}</th>
+                <th>{{ $ar('المنتج') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -228,8 +237,8 @@
                         {{ $item->unit_price ? $ar('ج') : '' }}
                     </td>
                     <td style="text-align: center">{{ $item->quantity }}</td>
-                    <td style="text-align: center">{{ $ar($item->shop->name ?? 'بدون متجر') }}</td>
-                    <td style="text-align: center">{{ $ar($item->item_name) }}</td>
+                    <td>{{ $ar($item->shop->name ?? 'بدون متجر') }}</td>
+                    <td>{{ $ar($item->item_name) }}</td>
                 </tr>
             @empty
                 <tr>
@@ -242,27 +251,28 @@
     <div style="width: 60%; float: right;">
         <table class="totals-table">
             <tr>
-                <td class="value">{{ $order->items->count() }}</td>
+                <td class="value"><span dir="ltr">{{ $order->items->count() }}</span></td>
                 <td class="label">{{ $ar('عدد الأصناف:') }}</td>
             </tr>
             <tr>
-                <td class="value">{{ number_format($order->total - $order->delivery_fee + $order->discount, 2) }}
-                    {{ $ar('ج') }}
-                </td>
-                <td class="label">{{ $ar('إجمالي المنتجات:') }}</td>
+                <td class="value"><span dir="ltr">ج {{ number_format($order->items->sum('total'), 2) }}</span></td>
+                <td class="label">{{ $ar('الإجمالي:') }}</td>
             </tr>
             <tr>
-                <td class="value">{{ number_format($order->delivery_fee, 2) }} {{ $ar('ج') }}</td>
+                <td class="value"><span dir="ltr">ج {{ number_format($order->delivery_fee, 2) }}</span></td>
                 <td class="label">{{ $ar('رسوم التوصيل:') }}</td>
             </tr>
             @if($order->discount > 0)
                 <tr>
-                    <td class="value" style="color: #dc2626">-{{ number_format($order->discount, 2) }} {{ $ar('ج') }}</td>
+                    <td class="value" style="color: #dc2626">
+                        <span dir="ltr">{{ $order->discount_type === 'percent' ? '%' : 'ج' }}
+                            {{ number_format($order->discount, 2) }}</span>
+                    </td>
                     <td class="label" style="color: #dc2626">{{ $ar('الخصم:') }}</td>
                 </tr>
             @endif
             <tr class="grand-total">
-                <td class="value">{{ number_format($order->total, 2) }} {{ $ar('ج') }}</td>
+                <td class="value"><span dir="ltr">{{ number_format($order->total, 2) }} ج</span></td>
                 <td class="label">{{ $ar('المطلوب تحصيله:') }}</td>
             </tr>
         </table>

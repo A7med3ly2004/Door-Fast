@@ -80,6 +80,8 @@ class ActivityLog extends Model
                 $q->where('description', 'like', "%{$search}%")
                   ->orWhere('subject_label', 'like', "%{$search}%")
                   ->orWhereJsonContains('properties->client_code', $search)
+                  ->orWhereJsonContains('properties->phone', $search)
+                  ->orWhereJsonContains('properties->client_phone', $search)
                   ->orWhere(function ($q2) use ($search) {
                       $q2->whereJsonContains('properties->client_name', $search);
                   });

@@ -458,7 +458,7 @@
             padding: 9px 12px;
             color: var(--text);
             font-family: 'Cairo', sans-serif;
-            font-size: 13px;
+            font-size: 11px;
             outline: none;
             transition: border-color 0.2s;
         }
@@ -670,7 +670,7 @@
             border: 1px solid var(--border);
             border-radius: 20px;
             width: 90%;
-            max-width: 600px;
+            max-width: 700px;
             max-height: 90vh;
             overflow-y: auto;
             animation: modalIn 0.25s ease;
@@ -1284,17 +1284,17 @@
             return parseFloat(val || 0).toLocaleString('ar-EG', { minimumFractionDigits: 2 }) + ' ج';
         }
 
-        // Format date Arabic
+        // Format date English
         function formatDate(str) {
             if (!str) return '—';
             const d = new Date(str);
-            return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return d.toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
         }
 
         // Status badge
         function statusBadge(status) {
             const map = {
-                pending: ['باقي', 'badge-yellow'],
+                pending: ['قيد الانتظار', 'badge-yellow'],
                 received: ['مسلم للمندوب', 'badge-blue'],
                 delivered: ['تم التوصيل', 'badge-green'],
                 cancelled: ['ملغي', 'badge-red'],

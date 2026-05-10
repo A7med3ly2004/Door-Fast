@@ -16,7 +16,7 @@
     <div class="filter-bar" style="align-items: flex-end;">
         <div>
             <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث</label>
-            <input type="text" id="filter-search" class="form-control" placeholder="بحث بالاسم" style="min-width:220px">
+            <input type="text" id="filter-search" class="form-control" placeholder="بحث بالاسم أو الكود أو رقم الهاتف" style="min-width:280px" onkeydown="if(event.key==='Enter') loadShops(1)">
         </div>
         <div>
             <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الفئة</label>
@@ -46,10 +46,20 @@
     <div class="table-wrap">
         <table>
             <thead>
-                <tr><th style="text-align: center;">الكود</th><th style="text-align: center;">الاسم</th><th style="text-align: center;">الفئة</th><th style="text-align: center;">الهاتف</th><th style="text-align: right;">العنوان</th><th style="text-align: center;">عدد الطلبات</th><th style="text-align: center;">إجمالي المبيعات</th><th style="text-align: center;">الحالة</th><th style="text-align: center;">إجراءات</th></tr>
+                <tr>
+                    <th style="text-align: center;">الكود</th>
+                    <th style="text-align: center;">الاسم</th>
+                    <th style="text-align: center;">الفئة</th>
+                    <th style="text-align: center;">الهاتف</th>
+                    <th style="text-align: right;">العنوان</th>
+                    <th style="text-align: center;">عدد الطلبات</th>
+                    <th style="text-align: center;">إجمالي المبيعات</th>
+                    <th style="text-align: center;">الحالة</th>
+                    <th style="text-align: center;">إجراءات</th>
+                </tr>
             </thead>
             <tbody id="shops-body">
-                <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">جاري التحميل...</td></tr>
+                <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">جاري التحميل...</td></tr>
             </tbody>
         </table>
     </div>
@@ -63,7 +73,7 @@
         <div class="modal-body">
             <div class="form-row">
                 <div class="form-group"><label class="form-label">الاسم *</label><input id="add-name" type="text" class="form-control"></div>
-                <div class="form-group"><label class="form-label">الكود</label><input id="add-code" type="text" class="form-control" placeholder="اختياري"></div>
+                <div class="form-group"><label class="form-label">الكود</label><input id="add-code" type="text" class="form-control" placeholder="تلقائي..." readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -75,9 +85,8 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">الهاتف</label><input id="add-phone" type="text" class="form-control"></div>
+                <div class="form-group"><label class="form-label">العنوان</label><input id="add-address" type="text" class="form-control"></div>
             </div>
-            <div class="form-group"><label class="form-label">العنوان</label><input id="add-address" type="text" class="form-control"></div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('modal-add-shop')">إلغاء</button>
@@ -88,13 +97,13 @@
 
 {{-- Edit Modal --}}
 <div class="modal-overlay" id="modal-edit-shop">
-    <div class="modal">
-        <div class="modal-header"><h3>✏️ تعديل متجر</h3><button class="btn-close" onclick="closeModal('modal-edit-shop')">✕</button></div>
+    <div class="modal" style="max-width:620px">
+        <div class="modal-header"><h3>تعديل متجر</h3><button class="btn-close" onclick="closeModal('modal-edit-shop')">✕</button></div>
         <div class="modal-body">
             <input type="hidden" id="edit-id">
             <div class="form-row">
                 <div class="form-group"><label class="form-label">الاسم *</label><input id="edit-name" type="text" class="form-control"></div>
-                <div class="form-group"><label class="form-label">الكود</label><input id="edit-code" type="text" class="form-control"></div>
+                <div class="form-group"><label class="form-label">الكود</label><input id="edit-code" type="text" class="form-control" readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -106,13 +115,35 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">الهاتف</label><input id="edit-phone" type="text" class="form-control"></div>
+                <div class="form-group"><label class="form-label">العنوان</label><input id="edit-address" type="text" class="form-control"></div>
             </div>
-            <div class="form-group"><label class="form-label">العنوان</label><input id="edit-address" type="text" class="form-control"></div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">الهاتف الأساسي</label><input id="edit-phone" type="text" class="form-control" placeholder="الهاتف الرئيسي"></div>
+                <div class="form-group"><label class="form-label">هاتف 2</label><input id="edit-phone2" type="text" class="form-control" placeholder="اختياري"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">هاتف 3</label><input id="edit-phone3" type="text" class="form-control" placeholder="اختياري"></div>
+                <div class="form-group"><label class="form-label">هاتف 4</label><input id="edit-phone4" type="text" class="form-control" placeholder="اختياري"></div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('modal-edit-shop')">إلغاء</button>
             <button class="btn btn-primary" onclick="saveShop()">حفظ التعديلات</button>
+        </div>
+    </div>
+</div>
+
+{{-- View Modal --}}
+<div class="modal-overlay" id="modal-view-shop">
+    <div class="modal" style="max-width:680px">
+        <div class="modal-header">
+            <h3><span id="view-shop-name">—</span></h3>
+            <button class="btn-close" onclick="closeModal('modal-view-shop')">✕</button>
+        </div>
+        <div class="modal-body" id="view-modal-body">
+            <div style="display:flex;align-items:center;justify-content:center;padding:30px">
+                <div class="spin"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -180,7 +211,10 @@ async function loadShops(page = 1) {
                 </button>
             </td>
             <td style="text-align: center;">
-                <button class="btn btn-sm btn-secondary" onclick="openEdit(${s.id},'${s.name.replace(/'/g,"\\'")}','${(s.phone??'').replace(/'/g,"\\'")}','${(s.address??'').replace(/'/g,"\\'")}','${(s.shop_category_id??'')}','${(s.code??'').replace(/'/g,"\\'")}')">تعديل</button>
+                <div style="display:inline-flex;gap:6px;align-items:center;">
+                    <button class="btn btn-sm btn-secondary" onclick="viewShop(${s.id},'${s.name.replace(/'/g,"\\'")}')">عرض</button>
+                    <button class="btn btn-sm btn-secondary" onclick="openEdit(${s.id},'${s.name.replace(/'/g,"\\'")}','${(s.phone??'').replace(/'/g,"\\'")}','${(s.phone2??'').replace(/'/g,"\\'")}','${(s.phone3??'').replace(/'/g,"\\'")}','${(s.phone4??'').replace(/'/g,"\\'")}','${(s.address??'').replace(/'/g,"\\'")}','${(s.shop_category_id??'')}','${(s.code??'').replace(/'/g,"\\'")}')">تعديل</button>
+                </div>
             </td>
         </tr>`).join('');
         renderPagination(data.last_page, data.current_page);
@@ -205,7 +239,6 @@ async function addShop() {
         const { data } = await axios.post('{{ route("admin.shops.store") }}', {
             name: document.getElementById('add-name').value,
             code: document.getElementById('add-code').value,
-            phone: document.getElementById('add-phone').value,
             address: document.getElementById('add-address').value,
             shop_category_id: document.getElementById('add-category').value,
         });
@@ -230,11 +263,14 @@ async function addCategory() {
     } catch(e) { showError('حدث خطأ أو الفئة موجودة بالفعل'); }
 }
 
-function openEdit(id, name, phone, address, categoryId, code) {
+function openEdit(id, name, phone, phone2, phone3, phone4, address, categoryId, code) {
     document.getElementById('edit-id').value = id;
     document.getElementById('edit-name').value = name;
     document.getElementById('edit-code').value = code;
     document.getElementById('edit-phone').value = phone;
+    document.getElementById('edit-phone2').value = phone2;
+    document.getElementById('edit-phone3').value = phone3;
+    document.getElementById('edit-phone4').value = phone4;
     document.getElementById('edit-address').value = address;
     document.getElementById('edit-category').value = categoryId;
     openModal('modal-edit-shop');
@@ -247,11 +283,53 @@ async function saveShop() {
             name: document.getElementById('edit-name').value,
             code: document.getElementById('edit-code').value,
             phone: document.getElementById('edit-phone').value,
+            phone2: document.getElementById('edit-phone2').value,
+            phone3: document.getElementById('edit-phone3').value,
+            phone4: document.getElementById('edit-phone4').value,
             address: document.getElementById('edit-address').value,
             shop_category_id: document.getElementById('edit-category').value,
         });
         showSuccess(data.message); closeModal('modal-edit-shop'); loadShops(currentPage);
     } catch(e) { showError('حدث خطأ'); }
+}
+
+async function viewShop(id, name) {
+    document.getElementById('view-shop-name').textContent = name;
+    document.getElementById('view-modal-body').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:30px"><div class="spin"></div></div>';
+    openModal('modal-view-shop');
+    try {
+        const { data } = await axios.get(`/admin/shops/${id}`);
+        const s = data.shop;
+        const phones = [s.phone, s.phone2, s.phone3, s.phone4].filter(Boolean);
+        const phonesHtml = phones.length
+            ? phones.map(p => `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:6px;padding:4px 10px;font-size:13px;">📞 ${p}</span>`).join('')
+            : '<span style="color:var(--text-muted)">—</span>';
+
+        document.getElementById('view-modal-body').innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+                <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:14px;text-align:center">
+                    <div style="font-size:22px;font-weight:700;color:#3b82f6">${s.orders_count ?? 0}</div>
+                    <div style="font-size:12px;color:var(--text-muted)">عدد الطلبات (30 يوم)</div>
+                </div>
+                <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:10px;padding:14px;text-align:center">
+                    <div style="font-size:22px;font-weight:700;color:var(--success)">${parseFloat(s.total_purchases||0).toFixed(2)} ج</div>
+                    <div style="font-size:12px;color:var(--text-muted)">إجمالي المشتريات (30 يوم)</div>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+                <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">الحالة</div>
+                    <span style="display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;${s.is_active ? 'background:rgba(34,197,94,.15);color:var(--success)' : 'background:rgba(220,38,38,.12);color:var(--red)'}">${s.is_active ? '✓ نشط' : '✗ غير نشط'}</span>
+                </div>
+                <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">العنوان</div>
+                    <div style="font-size:13px">${s.address || '—'}</div>
+                </div>
+            </div>
+            <div style="margin-bottom:14px">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">أرقام الهواتف</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">${phonesHtml}</div>
+            </div>
+            ${s.notes ? `<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">ملاحظات</div><div style="font-size:13px;background:var(--bg-light);border-radius:6px;padding:8px 12px">${s.notes}</div></div>` : ''}`;
+    } catch(e) { console.error(e); document.getElementById('view-modal-body').innerHTML = '<p style="color:var(--red);text-align:center;padding:20px">حدث خطأ في التحميل</p>'; }
 }
 
 async function toggleShop(id, btn) {
@@ -298,6 +376,9 @@ async function exportShopsExcel() {
             { header: 'الكود',             key: 'code',                    width: 12 },
             { header: 'الفئة',             key: 'category.name',           width: 18 },
             { header: 'الهاتف',            key: 'phone',                   width: 16 },
+            { header: 'هاتف 2',            key: 'phone2',                  width: 16 },
+            { header: 'هاتف 3',            key: 'phone3',                  width: 16 },
+            { header: 'هاتف 4',            key: 'phone4',                  width: 16 },
             { header: 'العنوان',           key: 'address',                 width: 28 },
             { header: 'عدد الطلبات',     key: 'orders_count',            width: 14 },
             { header: 'إجمالي المبيعات', key: 'order_items_sum_total',   width: 18 },

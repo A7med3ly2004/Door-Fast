@@ -97,19 +97,106 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         <div>
             <div class="form-label" style="margin-bottom:4px;">نوع المعاملة</div>
             <div class="relative group" style="min-width:160px; z-index: 50;">
-                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <div class="form-control"
+                    style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
                     <span id="label-filter-type">الكل</span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </div>
                 <input type="hidden" id="filter-type" value="{{ $filters['type'] ?? '' }}">
-                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-type', '', 'الكل')">الكل</div>
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-type', 'expense', 'مصروف')">مصروف</div>
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-type', 'pay_to_user', 'ايصال دفع')">ايصال دفع</div>
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-type', 'receive_from_user', 'ايصال استلام')">ايصال استلام</div>
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                    style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                        onclick="selectDropdown('filter-type', '', 'الكل')">الكل</div>
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                        onclick="selectDropdown('filter-type', 'expense', 'مصروف')">مصروف</div>
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                        onclick="selectDropdown('filter-type', 'pay_to_user', 'ايصال دفع')">ايصال دفع</div>
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                        onclick="selectDropdown('filter-type', 'receive_from_user', 'ايصال استلام')">ايصال استلام</div>
                 </div>
             </div>
         </div>
+        {{-- ── كول سنتر --}}
+        <div>
+            <div class="form-label" style="margin-bottom:4px;">كول سنتر</div>
+            <div class="relative group" style="min-width:160px; z-index: 49;">
+                <div class="form-control"
+                    style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="label-filter-cc">الكل</span>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <input type="hidden" id="filter-cc-id" value="">
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                    style="border:1px solid var(--border); background-color:rgba(255,255,255,0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                        onclick="selectUserFilter('cc', '', 'الكل')">الكل</div>
+                    @foreach($callcenters as $cc)
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectUserFilter('cc', '{{ $cc->id }}', '{{ $cc->name }}')">
+                            {{ $cc->name }}
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        {{-- ── مناديب --}}
+        <div>
+            <div class="form-label" style="margin-bottom:4px;">مندوب</div>
+            <div class="relative group" style="min-width:160px; z-index: 48;">
+                <div class="form-control"
+                    style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="label-filter-delivery">الكل</span>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <input type="hidden" id="filter-delivery-id" value="">
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                    style="border:1px solid var(--border); background-color:rgba(255,255,255,0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                        onclick="selectUserFilter('delivery', '', 'الكل')">الكل</div>
+                    @foreach($deliveries as $d)
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectUserFilter('delivery', '{{ $d->id }}', '{{ $d->name }}')">
+                            {{ $d->name }}
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        {{-- ── مديرين --}}
+        @if(isset($admins) && $admins->count())
+            <div>
+                <div class="form-label" style="margin-bottom:4px;">مدير</div>
+                <div class="relative group" style="min-width:160px; z-index: 47;">
+                    <div class="form-control"
+                        style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                        <span id="label-filter-admin">الكل</span>
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <input type="hidden" id="filter-admin-id" value="">
+                    <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                        style="border:1px solid var(--border); background-color:rgba(255,255,255,0.9); max-height:200px; overflow-y:auto;">
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectUserFilter('admin', '', 'الكل')">الكل</div>
+                        @foreach($admins as $adm)
+                            <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                                onclick="selectUserFilter('admin', '{{ $adm->id }}', '{{ $adm->name }}')">
+                                {{ $adm->name }}
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
         <div style="display:flex;gap:8px;align-self:flex-end;">
             <button class="btn btn-primary" onclick="applyFilters()">بحث</button>
             <button class="btn btn-secondary" onclick="resetFilters()" title="إعادة ضبط">إعادة ضبط</button>
@@ -156,7 +243,8 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                         <td style="font-weight:700;text-align:center;">{{ number_format((float) $tx->amount, 2) }}</td>
                         <td style="text-align:right;">{{ $tx->recordedBy?->name ?? '—' }}</td>
                         <td style="color:var(--text-muted);font-size:12px;text-align:right;">
-                            {{ Str::limit($tx->note ?? '—', 40) }}</td>
+                            {{ Str::limit($tx->note ?? '—', 40) }}
+                        </td>
                         <td style="text-align:center;">
                             <div style="display:flex;gap:6px;justify-content:center;">
                                 <button class="btn btn-sm btn-info" onclick="showDetail({{ $tx->id }})"
@@ -549,7 +637,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 <div class="modal-overlay" id="modal-edit-transaction">
     <div class="modal">
         <div class="modal-header" style="background:rgba(245,158,11,.08);border-bottom:0;">
-            <h3 style="color:var(--yellow);">✏️ تعديل معاملة مالية</h3>
+            <h3 style="color:var(--yellow);">تعديل معاملة مالية</h3>
             <button class="btn-close" onclick="closeModal('modal-edit-transaction')">✕</button>
         </div>
         <div class="modal-body" id="edit-tx-body">
@@ -612,11 +700,39 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         let currentPage = {{ $initialTransactions->currentPage() }};
 
         // ── Collect active filter values ─────────────────────────────
+        window.selectUserFilter = function (source, value, label) {
+            const groups = {
+                cc: { inputId: 'filter-cc-id', labelId: 'label-filter-cc' },
+                delivery: { inputId: 'filter-delivery-id', labelId: 'label-filter-delivery' },
+                admin: { inputId: 'filter-admin-id', labelId: 'label-filter-admin' },
+            };
+            Object.entries(groups).forEach(([key, g]) => {
+                const inp = document.getElementById(g.inputId);
+                const lbl = document.getElementById(g.labelId);
+                if (key === source) {
+                    if (inp) inp.value = value;
+                    if (lbl) lbl.innerText = label || 'الكل';
+                } else {
+                    if (inp) inp.value = '';
+                    if (lbl) lbl.innerText = 'الكل';
+                }
+            });
+            applyFilters();
+        };
+
+        function getActiveUserId() {
+            return document.getElementById('filter-cc-id')?.value
+                || document.getElementById('filter-delivery-id')?.value
+                || document.getElementById('filter-admin-id')?.value
+                || null;
+        }
+
         function getFilters() {
             return {
                 from: document.getElementById('filter-from').value || null,
                 to: document.getElementById('filter-to').value || null,
                 type: document.getElementById('filter-type').value || null,
+                user_id: getActiveUserId(),
             };
         }
 
@@ -626,6 +742,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             if (f.from) p.from = f.from;
             if (f.to) p.to = f.to;
             if (f.type) p.type = f.type;
+            if (f.user_id) p.user_id = f.user_id;
             return Object.assign(p, extra);
         }
 
@@ -889,6 +1006,13 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             document.getElementById('filter-from').value = '';
             document.getElementById('filter-to').value = '';
             document.getElementById('filter-type').value = '';
+            // مسح فلاتر الموظفين
+            ['filter-cc-id', 'filter-delivery-id', 'filter-admin-id'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            ['label-filter-cc', 'label-filter-delivery', 'label-filter-admin'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.innerText = 'الكل';
+            });
             const typeLabel = document.getElementById('label-filter-type');
             if (typeLabel) typeLabel.innerText = 'الكل';
             applyFilters();
@@ -916,7 +1040,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             if (tx.type === 'income') { badgeBg = 'rgba(34,197,94,.15)'; badgeText = 'var(--success)'; badgeLabel = 'إيراد'; }
             else if (tx.type === 'expense') { badgeBg = 'rgba(220,38,38,.12)'; badgeText = 'var(--red)'; badgeLabel = 'مصروف'; }
             else if (tx.type === 'settlement') { badgeBg = 'rgba(245,158,11,.15)'; badgeText = 'var(--yellow)'; badgeLabel = 'تسوية'; }
-            else if (tx.type === 'pay_to_user') { badgeBg = 'rgba(8,145,178,.15)'; badgeText = '#0891b2'; badgeLabel = 'ايصال صرف نقدى'; }
+            else if (tx.type === 'pay_to_user') { badgeBg = 'rgba(8,145,178,.15)'; badgeText = '#0891b2'; badgeLabel = 'ايصال دفع نقدى'; }
             else if (tx.type === 'receive_from_user') { badgeBg = 'rgba(5,150,105,.15)'; badgeText = '#059669'; badgeLabel = 'ايصال استلام نقدى'; }
             else if (tx.type === 'dain') { badgeBg = 'rgba(79,70,229,.15)'; badgeText = 'var(--indigo)'; badgeLabel = 'دائن'; }
 
@@ -962,7 +1086,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
                 <div>
                     <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">رقم المعاملة</div>
-                    <code style="background:rgba(245,158,11,.12);color:var(--yellow);padding:4px 10px;border-radius:6px;font-size:15px;font-weight:700;letter-spacing:1px">#${tx.id}</code>
+                    <code style="background:rgba(245,158,11,.12);color:var(--yellow);padding:4px 10px;border-radius:6px;font-size:15px;font-weight:700;letter-spacing:1px">${tx.id}</code>
                 </div>
                 <div style="text-align:center;">
                     <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">القيمة</div>
@@ -983,13 +1107,12 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                     </div>
                     <div style="display:flex;flex-direction:column;gap:16px;">
                         <div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">تمت بواسطة (العميل / المستفيد / المندوب)</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">تمت بواسطة</div>
                             <div style="font-weight:600;font-size:14px">${escHtml(tx.by_whom)}</div>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">مُنشئ المعاملة (الموظف)</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">مُنشئ المعاملة</div>
                             <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px">
-                                <span style="width:20px;height:20px;background:var(--border);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${(tx.recorded_by || '').charAt(0)}</span>
                                 ${escHtml(tx.recorded_by)}
                             </div>
                         </div>
@@ -998,16 +1121,16 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                 <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;">
                     <div style="font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px">
                         <svg style="width:16px;height:16px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        التواريخ
+                        التاريخ و الوقت
                     </div>
                     <div style="display:flex;flex-direction:column;gap:16px;">
                         <div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">تاريخ المعاملة (الاستحقاق)</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">تاريخ المعاملة</div>
                             <div style="font-weight:600;font-size:14px">${escHtml(tx.transaction_date)}</div>
                         </div>
                         <div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">وقت الإنشاء الفعلي بالنظام</div>
-                            <div style="font-size:13px;font-family:monospace;color:var(--text-main)">${escHtml(tx.created_at)}</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">وقت الإنشاء الفعلي</div>
+                            <div style="font-weight:600;font-size:14px">${escHtml(tx.transaction_time)}</div>
                         </div>
                     </div>
                 </div>
@@ -1223,9 +1346,10 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                 const from = document.getElementById('filter-from')?.value || '';
                 const to = document.getElementById('filter-to')?.value || '';
                 const type = document.getElementById('filter-type')?.value || '';
+                const user_id = getActiveUserId();
 
                 const { data } = await axios.get('/admin/treasury/data', {
-                    params: { from, to, type, per_page: 9999 }
+                    params: { from, to, type, user_id, per_page: 9999 }
                 });
 
                 const columns = [

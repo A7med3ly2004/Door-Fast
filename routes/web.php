@@ -187,6 +187,7 @@ Route::middleware(['auth', 'role:callcenter'])
         Route::get('/shops/active', [CCShops::class, 'active'])->name('shops.active');
         Route::get('/shops', [CCShops::class, 'index'])->name('shops.index');
         Route::post('/shops', [CCShops::class, 'store'])->name('shops.store');
+        Route::get('/shops/{id}', [CCShops::class, 'show'])->name('shops.show');
         Route::post('/shop-categories', [CCShops::class, 'storeCategory'])->name('shop-categories.store');
 
         // Delivery
@@ -206,6 +207,11 @@ Route::middleware(['auth', 'role:callcenter'])
         Route::get('/wallet/transactions/{id}/pdf', [\App\Http\Controllers\CallCenter\WalletController::class, 'downloadTransactionPdf'])->name('wallet.transaction.pdf');
         Route::post('/wallet/pay-delivery', [\App\Http\Controllers\CallCenter\WalletController::class, 'payToDelivery'])->name('wallet.pay-delivery');
         Route::post('/wallet/receive-delivery', [\App\Http\Controllers\CallCenter\WalletController::class, 'receiveFromDelivery'])->name('wallet.receive-delivery');
+
+        // CallCenter Notifications
+        Route::get('/notifications', [\App\Http\Controllers\CallCenter\CallCenterNotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/count', [\App\Http\Controllers\CallCenter\CallCenterNotificationController::class, 'count'])->name('notifications.count');
+        Route::post('/notifications/read-all', [\App\Http\Controllers\CallCenter\CallCenterNotificationController::class, 'markAllRead'])->name('notifications.read-all');
     });
 
 // ── Delivery ──

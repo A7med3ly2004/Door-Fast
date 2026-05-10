@@ -8,7 +8,6 @@ use Carbon\Carbon;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\TreasuryTransaction;
-use App\Models\CallcenterSettlement;
 
 class ReportTrialBalanceController extends Controller
 {
@@ -46,32 +45,32 @@ class ReportTrialBalanceController extends Controller
 
         $totalExpenses = $safeRows['expense'] ?? 0;
 
-        // 2. CALLCENTER ROWS (كول سنتر)
-        $ccAgents = User::callcenters()->get(['id', 'name', 'code']);
-        
-        $ordersQuery = Order::where('status', 'delivered')->whereNotNull('callcenter_id');
-        if (!$isAlways) $ordersQuery->whereBetween('created_at', [$from, $to]);
-        $deliveredTotals = $ordersQuery->selectRaw('callcenter_id, SUM(total) as sum_total')->groupBy('callcenter_id')->pluck('sum_total', 'callcenter_id');
-            
-        $settledQuery = CallcenterSettlement::query();
-        if (!$isAlways) $settledQuery->whereBetween('settled_at', [$from, $to]);
-        $settledTotals = $settledQuery->selectRaw('callcenter_id, SUM(amount) as sum_amount')->groupBy('callcenter_id')->pluck('sum_amount', 'callcenter_id');
-            
-        $dainQuery = TreasuryTransaction::where('type', 'dain')->whereNotNull('source_id');
-        if (!$isAlways) $dainQuery->whereBetween('transaction_date', [$from->toDateString(), $to->toDateString()]);
-        $dainTotals = $dainQuery->selectRaw('source_id, SUM(amount) as sum_amount')->groupBy('source_id')->pluck('sum_amount', 'source_id');
+        // 2. CALLCENTER ROWS (كول سنتر) — يعتمد على رصيد المحفظة مثل المناديب والمديرين
+        $ccAgents = User::callcenters()->with('wallet')->get(['id', 'name', 'code']);
 
-        $ccRows = $ccAgents->map(function ($cc) use ($deliveredTotals, $settledTotals, $dainTotals) {
-            $deliveredTotal = $deliveredTotals[$cc->id] ?? 0;
-            $settled = $settledTotals[$cc->id] ?? 0;
-            $dain = $dainTotals[$cc->id] ?? 0;
-            
-            $balance = $deliveredTotal - $settled - $dain;
-            
+        $ccWalletIds = $ccAgents->pluck('wallet.id')->filter();
+
+        $ccPeriodNet = [];
+        if (!$isAlways && $ccWalletIds->isNotEmpty()) {
+            $ccPeriodNet = \App\Models\WalletTransaction::whereIn('wallet_id', $ccWalletIds)
+                ->whereBetween('transaction_date', [$from->toDateString(), $to->toDateString()])
+                ->selectRaw("wallet_id, SUM(CASE WHEN direction='debit' THEN amount ELSE -amount END) as net")
+                ->groupBy('wallet_id')
+                ->pluck('net', 'wallet_id');
+        }
+
+        $ccRows = $ccAgents->map(function ($cc) use ($isAlways, $ccPeriodNet) {
+            if ($isAlways) {
+                $balance = $cc->wallet ? $cc->wallet->balance : 0;
+            } else {
+                $walletId = $cc->wallet ? $cc->wallet->id : 0;
+                $balance  = $ccPeriodNet[$walletId] ?? 0;
+            }
+
             return [
-                'id' => $cc->id,
-                'name' => $cc->name,
-                'code' => $cc->code,
+                'id'      => $cc->id,
+                'name'    => $cc->name,
+                'code'    => $cc->code,
                 'balance' => round($balance, 2),
             ];
         });
@@ -152,6 +151,7 @@ class ReportTrialBalanceController extends Controller
             'delivery_rows' => $deliveryRows->values(),
             'admin_rows' => $adminRows->values(),
             'total_discounts' => round($totalDiscounts, 2),
+            'is_always' => $isAlways,
             'period' => [
                 'from' => $isAlways ? '' : $from->format('Y-m-d'),
                 'to' => $isAlways ? '' : $to->format('Y-m-d'),

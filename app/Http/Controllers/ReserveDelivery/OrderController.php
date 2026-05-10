@@ -15,7 +15,7 @@ class OrderController extends BaseDeliveryOrderController
 
     protected function acceptLogAction(): string
     {
-        return 'تم قبول الطلب من الدلفري الاحتياطي';
+        return 'تم قبول الطلب من المندوب الاحتياطي';
     }
 
     /**

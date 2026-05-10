@@ -32,9 +32,12 @@ class ShiftController extends Controller
             ], 422);
         }
 
+        [$startOfToday] = Setting::businessDayRange();
+        $businessDate   = $startOfToday->toDateString();
+
         $shift = Shift::create([
             'delivery_id' => $delivery->id,
-            'date'        => now()->toDateString(),
+            'date'        => $businessDate,
             'started_at'  => Carbon::now(),
             'is_active'   => true,
         ]);

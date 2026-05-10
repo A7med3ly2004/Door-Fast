@@ -1,6 +1,5 @@
 {{-- Delivery New Orders SPA partial --}}
 <style>
-.top-info-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:white; padding:15px 20px; border-radius:12px; border:1px solid var(--border-color); box-shadow:0 2px 4px rgba(0,0,0,0.05); }
 .orders-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
 .order-card { background:white; border-radius:12px; padding:20px; border:1px solid var(--border-color); box-shadow:0 2px 4px rgba(0,0,0,0.05); display:flex; flex-direction:column; position:relative; }
 .order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
@@ -40,14 +39,10 @@ function fetchNewOrders() {
     if (!isShiftActive) return;
     axios.get('{{ route("delivery.orders.new-data") }}').then(res => {
         currentOrders = res.data.orders;
-        updateDashboardCapacity();
         renderNewOrders();
     });
 }
 
-function updateDashboardCapacity() {
-    // Capacity tracking removed as per user request
-}
 
 function renderNewOrders() {
     var grid = document.getElementById('new-orders-grid');
@@ -66,7 +61,7 @@ function renderNewOrders() {
                 <div style="font-size:14px;color:var(--text-muted);font-weight:bold" class="order-timer" data-time="${order.sent_to_delivery_at || order.created_at}">00:00</div>
             </div>
             <div class="hidden-zone">
-                <div class="blur-overlay"><span>🔒</span><span>تفاصيل العميل مخفية</span></div>
+                <div class="blur-overlay"><span>🔒</span></div>
                 <div class="hidden-content"><strong>الاسم:</strong> ${order.client?.name ?? ''}<br><strong>الهاتف:</strong> ${order.client?.phone ?? ''}<br><strong>العنوان:</strong> ${order.client_address ?? ''}</div>
             </div>
             <button class="btn-accept" onclick="acceptOrder(${order.id})">✔ قبول الطلب</button>
@@ -82,7 +77,7 @@ function acceptOrder(id) {
             if (res.data.success) {
                 Swal.fire({ icon: 'success', title: 'تم قبول الطلب', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
                 currentOrders = currentOrders.filter(o => o.id !== id);
-                renderNewOrders(); updateDashboardCapacity(); checkNewOrdersBadge();
+                renderNewOrders(); checkNewOrdersBadge();
             } else { Swal.fire('خطأ', res.data.message, 'error'); fetchNewOrders(); }
         }).catch(() => { Swal.fire('خطأ', 'حدث خطأ في النظام', 'error'); });
     });

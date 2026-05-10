@@ -28,6 +28,10 @@ class Order extends Model
         'sent_to_delivery_at',
         'accepted_at',
         'delivered_at',
+        'delivery_tier_number',
+        'delivery_profit',
+        'cc_tier_number',
+        'cc_profit',
     ];
 
     protected $casts = [
@@ -36,9 +40,13 @@ class Order extends Model
         'delivery_fee'        => 'decimal:2',
         'discount'            => 'decimal:2',
         'total'               => 'decimal:2',
-        'sent_to_delivery_at' => 'datetime',
-        'accepted_at'         => 'datetime',
-        'delivered_at'        => 'datetime',
+        'sent_to_delivery_at'  => 'datetime',
+        'accepted_at'          => 'datetime',
+        'delivered_at'         => 'datetime',
+        'delivery_profit'      => 'decimal:2',
+        'delivery_tier_number' => 'integer',
+        'cc_tier_number'       => 'integer',
+        'cc_profit'            => 'decimal:2',
     ];
 
     // Relationships

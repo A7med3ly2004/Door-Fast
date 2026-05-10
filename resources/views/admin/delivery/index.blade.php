@@ -152,7 +152,7 @@
                     <div class="form-group"><label class="form-label">الاسم *</label><input id="add-name" type="text"
                             class="form-control"></div>
                     <div class="form-group"><label class="form-label">كود المندوب</label><input id="add-code" type="text"
-                            class="form-control" placeholder="تلقائي إذا ترك فارغاً"></div>
+                            class="form-control" placeholder="تلقائي..." readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
                     <div class="form-group"><label class="form-label">اسم المستخدم *</label><input id="add-username"
                             type="text" class="form-control"></div>
                 </div>

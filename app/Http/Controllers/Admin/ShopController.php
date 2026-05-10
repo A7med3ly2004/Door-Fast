@@ -20,9 +20,14 @@ class ShopController extends Controller
             ->latest();
 
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('code', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('code',   $search)
+                  ->orWhere('phone',  $search)
+                  ->orWhere('phone2', $search)
+                  ->orWhere('phone3', $search)
+                  ->orWhere('phone4', $search);
             });
         }
 
@@ -53,6 +58,9 @@ class ShopController extends Controller
             'name'             => 'required|string|max:255',
             'code'             => 'nullable|string|max:50|unique:shops,code',
             'phone'            => 'nullable|string|max:30',
+            'phone2'           => 'nullable|string|max:30',
+            'phone3'           => 'nullable|string|max:30',
+            'phone4'           => 'nullable|string|max:30',
             'address'          => 'nullable|string|max:500',
             'shop_category_id' => 'required|exists:shop_categories,id',
             'notes'            => 'nullable|string',
@@ -102,6 +110,9 @@ class ShopController extends Controller
                 'id'             => $shop->id,
                 'name'           => $shop->name,
                 'phone'          => $shop->phone,
+                'phone2'         => $shop->phone2,
+                'phone3'         => $shop->phone3,
+                'phone4'         => $shop->phone4,
                 'address'        => $shop->address,
                 'notes'          => $shop->notes,
                 'is_active'      => $shop->is_active,
@@ -120,6 +131,9 @@ class ShopController extends Controller
             'name'             => 'required|string|max:255',
             'code'             => 'nullable|string|max:50|unique:shops,code,' . $id,
             'phone'            => 'nullable|string|max:30',
+            'phone2'           => 'nullable|string|max:30',
+            'phone3'           => 'nullable|string|max:30',
+            'phone4'           => 'nullable|string|max:30',
             'address'          => 'nullable|string|max:500',
             'shop_category_id' => 'required|exists:shop_categories,id',
             'notes'            => 'nullable|string',

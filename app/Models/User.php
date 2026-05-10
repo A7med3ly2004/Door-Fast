@@ -77,7 +77,7 @@ class User extends Authenticatable
         return $this->hasMany(Order::class, 'callcenter_id');
     }
 
-    // علاقات الدلفري
+    // علاقات المندوب
     public function deliveryOrders()
     {
         return $this->hasMany(Order::class, 'delivery_id');
@@ -90,9 +90,12 @@ class User extends Authenticatable
 
     public function activeShift()
     {
+        [$startOfToday] = \App\Models\Setting::businessDayRange();
+        $businessDate   = $startOfToday->toDateString();
+
         return $this->hasOne(Shift::class, 'delivery_id')
                     ->where('is_active', true)
-                    ->whereDate('date', today());
+                    ->where('date', $businessDate);
     }
 
     // Scopes

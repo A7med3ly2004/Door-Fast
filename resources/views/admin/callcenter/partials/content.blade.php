@@ -77,7 +77,7 @@
                 <div class="form-group"><label class="form-label">الاسم *</label><input id="add-name" type="text"
                         class="form-control"></div>
                 <div class="form-group"><label class="form-label">كود الموظف</label><input id="add-code" type="text"
-                        class="form-control" placeholder="تلقائي إذا ترك فارغاً"></div>
+                        class="form-control" placeholder="تلقائي..." readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
                 <div class="form-group"><label class="form-label">اسم المستخدم *</label><input id="add-username"
                         type="text" class="form-control"></div>
             </div>
@@ -124,7 +124,44 @@
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('modal-edit-cc')">إلغاء</button>
+            <button class="btn btn-warning" onclick="openCCIncentiveModal()"
+                    style="background:#f59e0b;color:#fff;border:none;">
+                🏆 إعدادات شرائح الحوافز
+            </button>
             <button class="btn btn-primary" onclick="saveCC()">حفظ التعديلات</button>
+        </div>
+    </div>
+</div>
+
+{{-- CC Incentive Slices Modal --}}
+<div class="modal-overlay" id="modal-cc-incentive-slices">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3>🏆 شرائح الحوافز — <span id="cc-inc-name"></span></h3>
+            <button class="btn-close" onclick="closeModal('modal-cc-incentive-slices')">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:15px">
+                تنبيه: ستبدأ الشريحة الأولى من رقم 1، وكل شريحة تالية تتبع نهاية التي تسبقها.
+                الحساب يعتمد على عدد الطلبات المُنشأة في يوم العمل.
+            </p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:100px">رقم الشريحة</th>
+                            <th>من (عدد طلبات)</th>
+                            <th>إلى (عدد طلبات)</th>
+                            <th>المبلغ (لكل طلب بالجنيه)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cc-slices-body"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('modal-cc-incentive-slices')">رجوع</button>
+            <button class="btn btn-primary" onclick="confirmCCIncentiveSlices()">موافق</button>
         </div>
     </div>
 </div>
@@ -134,6 +171,87 @@
 <script>
     (function () {
         'use strict';
+
+        let _ccTempSlices = [];
+
+        window.openCCIncentiveModal = function () {
+            renderCCSlicesForm();
+            openModal('modal-cc-incentive-slices');
+        };
+
+        function renderCCSlicesForm() {
+            const body = document.getElementById('cc-slices-body');
+            body.innerHTML = '';
+
+            let slices = _ccTempSlices;
+            if (!slices || slices.length === 0) {
+                slices = [
+                    { from: 1,  to: 20,     amount: 0 },
+                    { from: 21, to: 40,     amount: 0 },
+                    { from: 41, to: 60,     amount: 0 },
+                    { from: 61, to: 80,     amount: 0 },
+                    { from: 81, to: 999999, amount: 0 },
+                ];
+            }
+
+            for (let i = 1; i <= 5; i++) {
+                const s       = slices[i - 1] || { from: 0, to: 0, amount: 0 };
+                const fromVal = (i === 1) ? 1 : (parseInt(slices[i - 2].to) + 1);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>الشريحة ${i}</td>
+                    <td><input type="number" class="form-control cc-slice-from" data-idx="${i - 1}" value="${fromVal}" readonly disabled></td>
+                    <td>
+                        ${i < 5
+                            ? `<input type="number" class="form-control cc-slice-to" data-idx="${i - 1}" value="${s.to}" oninput="updateCCSlicesRanges()">`
+                            : `<input type="text" class="form-control" value="∞ (إلى ما لا نهاية)" disabled>`
+                        }
+                    </td>
+                    <td><input type="number" class="form-control cc-slice-amount" data-idx="${i - 1}" value="${s.amount}" step="0.1"></td>
+                `;
+                body.appendChild(tr);
+            }
+        }
+
+        window.updateCCSlicesRanges = function () {
+            const sliceToInputs   = document.querySelectorAll('.cc-slice-to');
+            const sliceFromInputs = document.querySelectorAll('.cc-slice-from');
+            
+            for (let i = 0; i < sliceToInputs.length; i++) {
+                const currentTo = parseInt(sliceToInputs[i].value) || 0;
+                
+                // تحديث خانة "من" للشريحة التالية
+                if (sliceFromInputs[i + 1]) {
+                    sliceFromInputs[i + 1].value = currentTo + 1;
+                }
+            }
+        };
+
+        window.confirmCCIncentiveSlices = function () {
+            const sliceToInputs    = document.querySelectorAll('.cc-slice-to');
+            const sliceAmtInputs   = document.querySelectorAll('.cc-slice-amount');
+            const newSlices        = [];
+            let lastTo             = 0;
+
+            for (let i = 0; i < 5; i++) {
+                const toVal  = i < 4 ? parseInt(sliceToInputs[i]?.value || 0) : 999999;
+                const amount = parseFloat(sliceAmtInputs[i]?.value || 0);
+                const from   = lastTo + 1;
+
+                if (i < 4 && toVal <= lastTo) {
+                    showError(`الشريحة ${i + 1}: يجب أن يكون "إلى" أكبر من ${lastTo}`);
+                    return;
+                }
+
+                newSlices.push({ from, to: toVal, amount });
+                lastTo = toVal;
+            }
+
+            _ccTempSlices = newSlices;
+            closeModal('modal-cc-incentive-slices');
+            showSuccess('تم حفظ الشرائح مؤقتاً — اضغط "حفظ التعديلات" لتأكيدها');
+        };
 
         window.addCC = async function () {
             try {
@@ -167,6 +285,8 @@
             document.getElementById('edit-phone').value = cc.phone ?? '';
             document.getElementById('edit-password').value = '';
             document.getElementById('edit-active').value = cc.is_active ? '1' : '0';
+            _ccTempSlices = cc.incentive_slices || [];
+            document.getElementById('cc-inc-name').textContent = cc.name;
             openModal('modal-edit-cc');
         };
 
@@ -179,6 +299,7 @@
                     code: document.getElementById('edit-code').value,
                     password: document.getElementById('edit-password').value,
                     is_active: document.getElementById('edit-active').value,
+                    incentive_slices:  _ccTempSlices,
                 });
                 if (typeof showSuccess === 'function') showSuccess(data.message);
                 else if (typeof showToast === 'function') showToast(data.message, 'success');

@@ -263,9 +263,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
                         <a href="/callcenter/wallet/transactions/${tx.id}/pdf" 
                            target="_blank" 
                            class="btn btn-sm" 
-                           style="background:#a10303;color:#fff;font-size:11px;padding:4px 8px;">
-                            📄 PDF
-                        </a>
+                           style="background:#dc2626;color:#fff;font-size:12px;padding:5px 10px;">تصدير PDF</a>
                     </td>
                 </tr>
             `).join('');

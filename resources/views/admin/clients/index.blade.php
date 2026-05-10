@@ -72,14 +72,14 @@
                 <div class="form-row">
                     <div class="form-group"><label class="form-label">الاسم *</label><input id="add-name" type="text"
                             class="form-control"></div>
-                    <div class="form-group"><label class="form-label">الهاتف *</label><input id="add-phone" type="text"
-                            class="form-control"></div>
+                    <div class="form-group"><label class="form-label">الكود (يتولد تلقائياً)</label><input id="add-code"
+                            type="text" class="form-control" placeholder="تلقائي..." readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
                 </div>
                 <div class="form-row">
+                    <div class="form-group"><label class="form-label">الهاتف *</label><input id="add-phone" type="text"
+                            class="form-control"></div>
                     <div class="form-group"><label class="form-label">هاتف 2</label><input id="add-phone2" type="text"
                             class="form-control"></div>
-                    <div class="form-group"><label class="form-label">الكود (يتولد تلقائياً)</label><input id="add-code"
-                            type="text" class="form-control" placeholder="0001"></div>
                 </div>
                 <div class="form-group"><label class="form-label">العنوان الأول *</label><input id="add-address" type="text"
                         class="form-control"></div>

@@ -153,7 +153,7 @@ class OrderController extends Controller
                 OrderLog::create([
                     'order_id' => $order->id,
                     'user_id'  => $delivery->id,
-                    'action'   => 'تم قبول الطلب من الدلفري (موبايل)',
+                    'action'   => 'تم قبول الطلب من المندوب (موبايل)',
                 ]);
 
                 ActivityLog::log(
@@ -183,8 +183,10 @@ class OrderController extends Controller
     {
         $delivery = $request->user();
 
+        $deliveredOrder = null;
+
         try {
-            DB::transaction(function () use ($id, $delivery) {
+            DB::transaction(function () use ($id, $delivery, &$deliveredOrder) {
                 $order = Order::where('id', $id)
                     ->where('delivery_id', $delivery->id)
                     ->where('status', 'received')
@@ -199,6 +201,8 @@ class OrderController extends Controller
                     'status'       => 'delivered',
                     'delivered_at' => Carbon::now(),
                 ]);
+
+                $deliveredOrder = $order;
 
                 if ($order->delivery_fee > 0) {
                     $wallet = $delivery->getOrCreateWallet();
@@ -231,6 +235,11 @@ class OrderController extends Controller
 
                 event(new OrderStatusUpdated($order));
             });
+
+            if (isset($deliveredOrder)) {
+                app(\App\Services\DeliveryProfitService::class)
+                    ->recalculateDayProfits($delivery, $deliveredOrder);
+            }
 
             return response()->json(['success' => true, 'message' => 'تم توصيل الطلب بنجاح']);
         } catch (Exception $e) {
@@ -275,7 +284,7 @@ class OrderController extends Controller
                 OrderLog::create([
                     'order_id' => $order->id,
                     'user_id'  => $delivery->id,
-                    'action'   => 'تم إلغاء الطلب من الدلفري (موبايل): ' . $request->reason,
+                    'action'   => 'تم إلغاء الطلب من المندوب (موبايل): ' . $request->reason,
                 ]);
 
                 ActivityLog::log(

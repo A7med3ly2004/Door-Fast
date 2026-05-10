@@ -238,7 +238,7 @@
                 { header: 'الحالة', key: 'status', width: 14 },
             ];
 
-            const statusMap = { pending: 'باقي', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
+            const statusMap = { pending: 'قيد الانتظار', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
             const rows = data.orders.map(o => ({
                 ...o,
                 created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',

@@ -120,30 +120,41 @@ class ReportDeliveryController extends Controller
             ->distinct('date')
             ->count('date');
 
-        // ── 4. Tier & Profits (Computed in PHP, no extra queries)
+        // ── 4. Tier & Profits — Daily Calculation ────────────────────────────────
         $delivery = User::find($deliveryId);
-        $deliveredCount = Order::where('delivery_id', $deliveryId)
-            ->whereBetween('created_at', [$from, $to])
+
+        // جلب تفصيل يومي من القيم المحفوظة في الطلبات
+        $dailyBreakdown = Order::where('delivery_id', $deliveryId)
+            ->whereBetween('delivered_at', [$from, $to])
             ->where('status', 'delivered')
-            ->count();
+            ->selectRaw('
+                DATE(delivered_at)               as delivery_date,
+                COUNT(*)                         as day_count,
+                MAX(delivery_tier_number)        as tier_number,
+                MAX(delivery_profit)             as unit_profit,
+                (MAX(delivery_profit) * COUNT(*)) as day_profit
+            ')
+            ->groupBy('delivery_date')
+            ->orderBy('delivery_date')
+            ->get();
 
-        $slices = collect($delivery->incentive_slices ?? []);
-        $matchedSlice = $slices->first(function ($s) use ($deliveredCount) {
-            return $deliveredCount >= $s['from'] && $deliveredCount <= $s['to'];
-        });
+        $totalProfits        = $dailyBreakdown->sum('day_profit');
+        $totalDeliveredCount = $dailyBreakdown->sum('day_count');
 
-        $tierNumber = 0;
-        if ($matchedSlice) {
-            // Find index + 1
-            foreach ($slices->values() as $index => $s) {
-                if ($s === $matchedSlice) {
-                    $tierNumber = $index + 1;
-                    break;
-                }
-            }
-        }
-        $tierAmount = $matchedSlice['amount'] ?? 0;
-        $totalProfits = $deliveredCount * $tierAmount;
+        // رقم الشريحة — يُظهر فقط عند اختيار يوم واحد
+        $isSingleDay = $from->toDateString() === $to->toDateString();
+        $tierNumber  = $isSingleDay
+            ? (int) ($dailyBreakdown->first()?->tier_number ?? 0)
+            : null;
+
+        // تحويل daily_breakdown لمصفوفة للـ frontend
+        $dailyBreakdownArray = $dailyBreakdown->map(fn($d) => [
+            'date'        => $d->delivery_date,
+            'count'       => (int) $d->day_count,
+            'tier_number' => (int) $d->tier_number,
+            'amount'      => (float) $d->unit_profit,
+            'profit'      => (float) $d->day_profit,
+        ])->values()->toArray();
 
         // ── 5. Datatable (per_page=9999 → export all, default 15 for UI)
         $perPage = min((int) $request->get('per_page', 15), 5000);
@@ -164,11 +175,13 @@ class ReportDeliveryController extends Controller
                 'debtor'          => number_format((float) $debtor, 2),
                 'period_safe_balance' => number_format((float) $periodSafeBalance, 2),
                 'raw_period_safe_balance' => $periodSafeBalance,
-                'tier_number'     => $tierNumber,
-                'total_profits'   => number_format((float) $totalProfits, 2),
+                'tier_number'      => $tierNumber,
+                'is_single_day'    => $isSingleDay,
+                'total_profits'    => number_format((float) $totalProfits, 2),
                 'total_work_hours' => $formattedWorkHours,
                 'total_work_days'  => $totalWorkDays,
             ],
+            'daily_breakdown' => $dailyBreakdownArray,
             'orders' => $orders,
             'delivery_name' => $delivery->name
         ]);

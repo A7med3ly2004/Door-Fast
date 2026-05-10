@@ -36,11 +36,14 @@ class DashboardController extends Controller
         $monthlyRevenue   = Order::whereYear('created_at', $startOfToday->year)
                                  ->whereMonth('created_at', $startOfToday->month)
                                  ->where('status', 'delivered')->sum('total');
+        $ordersMonth      = Order::whereYear('created_at', $startOfToday->year)
+                                 ->whereMonth('created_at', $startOfToday->month)
+                                 ->count();
         $totalClients     = Client::count();
 
-        // Bar chart: last 7 days
+        // Bar chart: last 10 days
         $chartData = [];
-        for ($i = 6; $i >= 0; $i--) {
+        for ($i = 9; $i >= 0; $i--) {
             $day = Carbon::today()->subDays($i);
             $dayRange = \App\Models\Setting::businessDayRange($day);
             $chartData[] = [
@@ -51,13 +54,13 @@ class DashboardController extends Controller
         }
 
         // Delivery performance today
-        $deliveryPerf = User::where('role', 'delivery')
+        $deliveryPerf = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->with(['deliveryOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
             ->get()
             ->map(fn($d) => [
                 'name'      => $d->name,
                 'completed' => $d->deliveryOrders->where('status', 'delivered')->count(),
-                'revenue'   => $d->deliveryOrders->where('status', 'delivered')->sum('total'),
+                'revenue'   => $d->deliveryOrders->where('status', 'delivered')->sum('delivery_fee'),
             ])
             ->filter(fn($d) => $d['completed'] > 0)
             ->values();
@@ -69,6 +72,7 @@ class DashboardController extends Controller
             ->map(fn($cc) => [
                 'name'      => $cc->name,
                 'created'   => $cc->createdOrders->count(),
+                'pending'   => $cc->createdOrders->where('status', 'pending')->count(),
                 'cancelled' => $cc->createdOrders->where('status', 'cancelled')->count(),
                 'revenue'   => $cc->createdOrders->where('status', 'delivered')->sum('total'),
             ])
@@ -78,6 +82,7 @@ class DashboardController extends Controller
         return response()->json([
             'kpis' => [
                 'orders_today'    => $ordersToday,
+                'orders_month'    => $ordersMonth,
                 'completed_today' => $completedToday,
                 'pending_today'   => $pendingToday,
                 'cancelled_today' => $cancelledToday,

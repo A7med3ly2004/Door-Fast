@@ -6,7 +6,7 @@
     <div class="filter-bar"><input type="text" id="f-search" class="form-control"
             placeholder="رقم الطلب / العميل / الهاتف" style="min-width:200px"><select id="f-status" class="form-select">
             <option value="">كل الحالات</option>
-            <option value="pending">باقي</option>
+            <option value="pending">قيد الانتظار</option>
             <option value="received">مسلم للمندوب</option>
             <option value="delivered">تم التوصيل</option>
             <option value="cancelled">ملغي</option>
@@ -48,8 +48,7 @@
         <div class="modal-header">
             <div style="display:flex;align-items:center;gap:12px;">
                 <h3>تفاصيل الطلب — <span id="view-num"></span></h3><a id="modal-pdf-btn" href="#" target="_blank"
-                    class="btn btn-sm btn-secondary" onclick="if(this.href==='#'){event.preventDefault();}">إنشاء
-                    PDF</a>
+                    class="btn btn-sm btn-secondary" onclick="if(this.href==='#'){event.preventDefault();}" style="background-color: #c92f2f;">إنشاء PDF</a>
             </div><button class="btn-close" onclick="closeModal('modal-view')">✕</button>
         </div>
         <div class="modal-body" id="view-body"></div>
@@ -316,7 +315,7 @@
         </div>`;
             const timelineEvents = [
                 { label: 'تاريخ الإنشاء', time: o.created_at, icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>' },
-                { label: 'إرسال للدلفري', time: o.sent_to_delivery_at, icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>' },
+                { label: 'إرسال للمندوب', time: o.sent_to_delivery_at, icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>' },
                 { label: 'قبول المندوب', time: o.accepted_at, icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>' },
                 { label: 'تم التوصيل', time: o.delivered_at, icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>' }
             ].filter(e => e.time);
@@ -357,7 +356,7 @@
         catch (e) { showError(e.response?.data?.message ?? 'حدث خطأ'); }
     }
     async function sendEarly(id) {
-        var ok = await confirmAction('إرسال مبكر', 'هل تريد إرسال الطلب للدلفري الآن؟', 'نعم أرسل'); if (!ok) return;
+        var ok = await confirmAction('إرسال مبكر', 'هل تريد إرسال الطلب للمندوب الآن؟', 'نعم أرسل'); if (!ok) return;
         try { const { data } = await axios.patch(`/callcenter/orders/${id}/send-early`); showSuccess(data.message); loadList(currentPage); } catch (e) { showError(e.response?.data?.message ?? 'حدث خطأ'); }
     }
 

@@ -31,9 +31,10 @@ class TreasuryController extends Controller
     private function filterRules(): array
     {
         return [
-            'from' => ['nullable', 'date_format:Y-m-d'],
-            'to'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
-            'type' => ['nullable', 'in:income,expense,settlement,dain,pay_to_user,receive_from_user'],
+            'from'    => ['nullable', 'date_format:Y-m-d'],
+            'to'      => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'type'    => ['nullable', 'in:income,expense,settlement,dain,pay_to_user,receive_from_user'],
+            'user_id' => ['nullable', 'exists:users,id'],
         ];
     }
 
@@ -70,12 +71,13 @@ class TreasuryController extends Controller
      */
     public function index(Request $request): View|JsonResponse
     {
-        $from = $request->input('from');
-        $to   = $request->input('to');
-        $type = $request->input('type');
+        $from     = $request->input('from');
+        $to       = $request->input('to');
+        $type     = $request->input('type');
+        $userId   = $request->input('user_id');
 
-        $initialStats        = TreasuryTransaction::calculateKpis($from, $to);
-        $initialTransactions = $this->buildLedgerQuery($from, $to, $type)
+        $initialStats        = TreasuryTransaction::calculateKpis($from, $to, $userId);
+        $initialTransactions = $this->buildLedgerQuery($from, $to, $type, $userId)
             ->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc')
             ->paginate(15);
@@ -83,7 +85,7 @@ class TreasuryController extends Controller
         $data = [
             'initialStats'        => $initialStats,
             'initialTransactions' => $initialTransactions,
-            'filters'             => compact('from', 'to', 'type'),
+            'filters'             => compact('from', 'to', 'type', 'userId'),
             'callcenters'         => \App\Models\User::callcenters()->active()->with('wallet')->get(['id', 'name']),
             'deliveries'          => \App\Models\User::whereIn('role', ['delivery', 'reserve_delivery'])->active()->with('wallet')->get(['id', 'name']),
             'admins'              => \App\Models\User::where('role', 'admin')->where('is_active', true)->where('id', '!=', auth()->id())->with('wallet')->get(['id', 'name']),
@@ -107,14 +109,16 @@ class TreasuryController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $request->validate([
-            'from' => ['nullable', 'date_format:Y-m-d'],
-            'to'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'from'    => ['nullable', 'date_format:Y-m-d'],
+            'to'      => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'user_id' => ['nullable', 'exists:users,id'],
         ]);
 
         return response()->json(
             TreasuryTransaction::calculateKpis(
                 $request->input('from'),
-                $request->input('to')
+                $request->input('to'),
+                $request->input('user_id')
             )
         );
     }
@@ -130,9 +134,10 @@ class TreasuryController extends Controller
         $from    = $request->input('from');
         $to      = $request->input('to');
         $type    = $request->input('type');
+        $userId  = $request->input('user_id');
         $perPage = min((int) $request->get('per_page', 15), 5000);
 
-        $paginator = $this->buildLedgerQuery($from, $to, $type)
+        $paginator = $this->buildLedgerQuery($from, $to, $type, $userId)
             ->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc')
             ->paginate($perPage);
@@ -187,6 +192,7 @@ class TreasuryController extends Controller
             'note'             => $transaction->note ?? '—',
             'recorded_by'      => $transaction->recordedBy?->name ?? '—',
             'created_at'       => $transaction->created_at->format('d/m/Y H:i'),
+            'transaction_time' => $transaction->created_at->format('H:i'),
             'is_settlement'    => $transaction->source_type === 'settlement',
             'settlement'       => $transaction->source_type === 'settlement' && $transaction->settlement
                 ? [
@@ -375,11 +381,25 @@ class TreasuryController extends Controller
      * Build the base ledger query with all filters applied.
      * Reused by index() and data().
      */
-    private function buildLedgerQuery(?string $from, ?string $to, ?string $type)
+    private function buildLedgerQuery(?string $from, ?string $to, ?string $type, ?string $userId = null)
     {
         return TreasuryTransaction::query()
             ->withinDateRange($from, $to)
             ->ofType($type)
+            ->when($userId, function ($q) use ($userId) {
+                $q->where(function ($sub) use ($userId) {
+                    $sub->where('recorded_by', $userId)
+                        ->orWhere(function ($s1) use ($userId) {
+                            $s1->where('source_type', 'manual')
+                               ->whereIn('type', ['pay_to_user', 'receive_from_user', 'dain'])
+                               ->where('source_id', $userId);
+                        })
+                        ->orWhere(function ($s2) use ($userId) {
+                            $s2->where('source_type', 'settlement')
+                               ->whereHas('settlement', fn($s) => $s->where('callcenter_id', $userId));
+                        });
+                });
+            })
             ->with('recordedBy:id,name')
             ->select([
                 'id', 'type', 'source_type', 'source_id',

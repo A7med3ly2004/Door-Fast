@@ -79,6 +79,20 @@ abstract class BaseDeliveryDashboardController extends Controller
         $totalDeliveryFee = $deliveredOrders->sum('delivery_fee');
         $totalDiscount    = $deliveredOrders->sum('discount');
 
+        // ── Tier & Profits Calculation ──
+        $slices = collect($delivery->incentive_slices ?? []);
+        $tierNumber = 0;
+        $profitPerOrder = 0;
+
+        foreach ($slices->values() as $index => $s) {
+            if ($deliveredCount >= (int)$s['from'] && $deliveredCount <= (int)$s['to']) {
+                $tierNumber = $index + 1;
+                $profitPerOrder = (float)($s['amount'] ?? 0);
+                break;
+            }
+        }
+        $totalProfits = $deliveredCount * $profitPerOrder;
+
         $base = [
             'started_at'               => $started_at,
             'started_timestamp'        => $started_timestamp,
@@ -89,6 +103,8 @@ abstract class BaseDeliveryDashboardController extends Controller
             'total_collected'          => $totalCollected,
             'total_delivery_fee'       => $totalDeliveryFee,
             'total_discount'           => $totalDiscount,
+            'tier_number'              => $tierNumber,
+            'total_profits'            => number_format($totalProfits, 2),
         ];
 
         return response()->json(array_merge($base, $this->extraData($base)));

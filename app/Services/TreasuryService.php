@@ -52,40 +52,6 @@ class TreasuryService
         return $transaction;
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // addExpense — إضافة مصروف في الخزينة
-    // ──────────────────────────────────────────────────────────────
-
-    /**
-     * @param array{by_whom: string, amount: float|string, note: ?string, date: ?string} $data
-     * @param int $recordedBy  auth()->id()
-     */
-    public function addExpense(array $data, int $recordedBy): TreasuryTransaction
-    {
-        $transaction = TreasuryTransaction::createManual(
-            type:            'expense',
-            byWhom:          $data['by_whom'],
-            amount:          (float) $data['amount'],
-            note:            $data['note'] ?? null,
-            recordedBy:      $recordedBy,
-            transactionDate: $data['date'] ?? null,
-        );
-
-        ActivityLog::log(
-            event:        'treasury.expense',
-            description:  'تم إضافة مصروف في الخزينة — ' . $data['by_whom'],
-            subjectType:  'treasury',
-            subjectId:    $transaction->id,
-            subjectLabel: number_format((float) $data['amount'], 2) . ' ج',
-            properties:   [
-                'by_whom' => $data['by_whom'],
-                'amount'  => $data['amount'],
-                'note'    => $data['note'] ?? null,
-            ]
-        );
-
-        return $transaction;
-    }
 
     // ──────────────────────────────────────────────────────────────
     // addDain — إضافة مديونية (صرف دين)

@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\SettingController as AdminSettings;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\ActivityLogController as AdminActivityLog;
 use App\Http\Controllers\Admin\TreasuryController;
+use App\Http\Controllers\Admin\AdminLedgerController;
 use App\Http\Controllers\CallCenter\DashboardController as CCDashboard;
 use App\Http\Controllers\CallCenter\OrderController as CCOrders;
 use App\Http\Controllers\CallCenter\ClientController as CCClients;
@@ -118,7 +119,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/treasury/stats', [App\Http\Controllers\Admin\TreasuryController::class, 'stats'])->name('treasury.stats');
         Route::get('/treasury/data', [App\Http\Controllers\Admin\TreasuryController::class, 'data'])->name('treasury.data');
         Route::post('/treasury/income', [TreasuryController::class, 'addIncome'])->name('treasury.income.store');
-        Route::post('/treasury/expense', [TreasuryController::class, 'addExpense'])->name('treasury.expense.store');
         Route::post('/treasury/dain', [TreasuryController::class, 'addDain'])->name('treasury.dain.store');
 
         Route::post('/treasury/pay-to-user', [TreasuryController::class, 'payToUser'])->name('treasury.pay-to-user');
@@ -149,6 +149,17 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/notifications', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'index'])->name('notifications.index');
         Route::get('/notifications/count', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'count'])->name('notifications.count');
         Route::post('/notifications/read-all', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'markAllRead'])->name('notifications.read-all');
+
+        // Admin Ledger (كشف حساب خاص للمدير)
+        Route::get('/admin-ledger', [AdminLedgerController::class, 'index'])->name('admin-ledger.index');
+        Route::get('/admin-ledger/statement', [AdminLedgerController::class, 'statement'])->name('admin-ledger.statement');
+        Route::get('/admin-ledger/export', [AdminLedgerController::class, 'exportExcel'])->name('admin-ledger.export');
+        Route::post('/admin-ledger/pay', [AdminLedgerController::class, 'payToEmployee'])->name('admin-ledger.pay');
+        Route::post('/admin-ledger/receive', [AdminLedgerController::class, 'receiveFromEmployee'])->name('admin-ledger.receive');
+        Route::post('/admin-ledger/expense', [AdminLedgerController::class, 'storeExpense'])->name('admin-ledger.expense');
+        Route::get('/admin-ledger/{id}/pdf', [AdminLedgerController::class, 'downloadPdf'])->name('admin-ledger.pdf');
+        Route::get('/admin-ledger/{id}', [AdminLedgerController::class, 'show'])->name('admin-ledger.show');
+        Route::put('/admin-ledger/{id}', [AdminLedgerController::class, 'update'])->name('admin-ledger.update');
     });
 
 // ── Call Center ──

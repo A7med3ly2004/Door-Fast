@@ -39,9 +39,6 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         }
     </style>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-danger" onclick="openModal('modal-expense')">
-            صرف مصروف
-        </button>
         <button class="btn" onclick="openPayToUserModal()" style="background:#0891b2;color:#fff;">
             ايصال دفع نقدي
         </button>
@@ -54,15 +51,10 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 </div>
 
 {{-- ── KPI Cards ─────────────────────────────────────────────────── --}}
-<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
+<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px;">
     <div class="kpi-card yellow">
         <div class="kpi-label">الرصيد الحالي للخزينة</div>
         <div class="kpi-value" id="kpi-balance">{{ $initialStats['balance'] }}</div>
-        <div class="kpi-sub">ج.م</div>
-    </div>
-    <div class="kpi-card red">
-        <div class="kpi-label">إجمالي المصروفات</div>
-        <div class="kpi-value" id="kpi-expenses">{{ $initialStats['total_expenses'] }}</div>
         <div class="kpi-sub">ج.م</div>
     </div>
     <div class="kpi-card cyan">
@@ -118,58 +110,6 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                 </div>
             </div>
         </div>
-        {{-- ── كول سنتر --}}
-        <div>
-            <div class="form-label" style="margin-bottom:4px;">كول سنتر</div>
-            <div class="relative group" style="min-width:160px; z-index: 49;">
-                <div class="form-control"
-                    style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                    <span id="label-filter-cc">الكل</span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </div>
-                <input type="hidden" id="filter-cc-id" value="">
-                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
-                    style="border:1px solid var(--border); background-color:rgba(255,255,255,0.9); max-height:200px; overflow-y:auto;">
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
-                        onclick="selectUserFilter('cc', '', 'الكل')">الكل</div>
-                    @foreach($callcenters as $cc)
-                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
-                            onclick="selectUserFilter('cc', '{{ $cc->id }}', '{{ $cc->name }}')">
-                            {{ $cc->name }}
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-
-        {{-- ── مناديب --}}
-        <div>
-            <div class="form-label" style="margin-bottom:4px;">مندوب</div>
-            <div class="relative group" style="min-width:160px; z-index: 48;">
-                <div class="form-control"
-                    style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                    <span id="label-filter-delivery">الكل</span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </div>
-                <input type="hidden" id="filter-delivery-id" value="">
-                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
-                    style="border:1px solid var(--border); background-color:rgba(255,255,255,0.9); max-height:200px; overflow-y:auto;">
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
-                        onclick="selectUserFilter('delivery', '', 'الكل')">الكل</div>
-                    @foreach($deliveries as $d)
-                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
-                            onclick="selectUserFilter('delivery', '{{ $d->id }}', '{{ $d->name }}')">
-                            {{ $d->name }}
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-
         {{-- ── مديرين --}}
         @if(isset($admins) && $admins->count())
             <div>
@@ -477,25 +417,13 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             </div>
 
             <div class="form-group">
-                <label for="pay-user-id" class="form-label">الموظف <span style="color:var(--red)">*</span></label>
+                <label for="pay-user-id" class="form-label">المدير <span style="color:var(--red)">*</span></label>
                 <select id="pay-user-id" class="form-select">
-                    <option value="">اختر موظف...</option>
-                    <optgroup label="كول سينتر">
-                        @foreach($callcenters as $cc)
-                            <option value="{{ $cc->id }}">{{ $cc->name }}</option>
-                        @endforeach
-                    </optgroup>
-                    <optgroup label="مناديب">
-                        @foreach($deliveries as $d)
-                            <option value="{{ $d->id }}">{{ $d->name }}</option>
-                        @endforeach
-                    </optgroup>
+                    <option value="">اختر مدير...</option>
                     @if(isset($admins) && $admins->count())
-                        <optgroup label="مديرين">
-                            @foreach($admins as $adm)
-                                <option value="{{ $adm->id }}">{{ $adm->name }}</option>
-                            @endforeach
-                        </optgroup>
+                        @foreach($admins as $adm)
+                            <option value="{{ $adm->id }}">{{ $adm->name }}</option>
+                        @endforeach
                     @endif
                 </select>
                 <div class="error-text" id="pay-user-id-error"></div>
@@ -551,29 +479,14 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             </div>
 
             <div class="form-group">
-                <label for="receive-user-id" class="form-label">الموظف <span
-                        style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري)</span></label>
+                <label for="receive-user-id" class="form-label">المدير
+                    <span style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري)</span></label>
                 <select id="receive-user-id" class="form-select" onchange="autoFillReceiveAmount()">
-                    <option value="" data-balance="0">بدون موظف (لحساب الإدارة)...</option>
-                    <optgroup label="كول سينتر">
-                        @foreach($callcenters as $cc)
-                            <option value="{{ $cc->id }}" data-balance="{{ $cc->wallet->balance ?? 0 }}">{{ $cc->name }}
-                            </option>
-                        @endforeach
-                    </optgroup>
-                    <optgroup label="مناديب">
-                        @foreach($deliveries as $d)
-                            <option value="{{ $d->id }}" data-balance="{{ $d->wallet->balance ?? 0 }}">{{ $d->name }}
-                            </option>
-                        @endforeach
-                    </optgroup>
+                    <option value="" data-balance="0">بدون (لحساب الإدارة)...</option>
                     @if(isset($admins) && $admins->count())
-                        <optgroup label="مديرين">
-                            @foreach($admins as $adm)
-                                <option value="{{ $adm->id }}" data-balance="{{ $adm->wallet->balance ?? 0 }}">{{ $adm->name }}
-                                </option>
-                            @endforeach
-                        </optgroup>
+                        @foreach($admins as $adm)
+                            <option value="{{ $adm->id }}" data-balance="{{ $adm->wallet->balance ?? 0 }}">{{ $adm->name }}</option>
+                        @endforeach
                     @endif
                 </select>
                 <div class="error-text" id="receive-user-id-error"></div>
@@ -752,7 +665,6 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                 var res = await axios.get('/admin/treasury/stats', { params: buildParams() });
                 document.getElementById('kpi-payment-receipts').textContent = res.data.payment_receipts;
                 document.getElementById('kpi-receiving-receipts').textContent = res.data.receiving_receipts;
-                document.getElementById('kpi-expenses').textContent = res.data.total_expenses;
                 document.getElementById('kpi-balance').textContent = res.data.balance;
             } catch (e) {
                 console.warn('Treasury stats fetch failed', e);

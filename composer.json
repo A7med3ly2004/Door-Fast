@@ -13,6 +13,7 @@
         "laravel/reverb": "^1.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
+        "phpoffice/phpspreadsheet": "*",
         "pusher/pusher-php-server": "^7.2"
     },
     "require-dev": {

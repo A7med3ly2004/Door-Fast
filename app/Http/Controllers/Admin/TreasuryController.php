@@ -33,7 +33,7 @@ class TreasuryController extends Controller
         return [
             'from'    => ['nullable', 'date_format:Y-m-d'],
             'to'      => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
-            'type'    => ['nullable', 'in:income,expense,settlement,dain,pay_to_user,receive_from_user'],
+            'type'    => ['nullable', 'in:income,settlement,dain,pay_to_user,receive_from_user'],
             'user_id' => ['nullable', 'exists:users,id'],
         ];
     }
@@ -86,9 +86,11 @@ class TreasuryController extends Controller
             'initialStats'        => $initialStats,
             'initialTransactions' => $initialTransactions,
             'filters'             => compact('from', 'to', 'type', 'userId'),
-            'callcenters'         => \App\Models\User::callcenters()->active()->with('wallet')->get(['id', 'name']),
-            'deliveries'          => \App\Models\User::whereIn('role', ['delivery', 'reserve_delivery'])->active()->with('wallet')->get(['id', 'name']),
+            // الخزينة تتعامل فقط مع المديرين (دفع/استلام بين المدير والمديرين الآخرين)
             'admins'              => \App\Models\User::where('role', 'admin')->where('is_active', true)->where('id', '!=', auth()->id())->with('wallet')->get(['id', 'name']),
+            // callcenters/deliveries مطلوبة لـ modal صرف المديونية (dain)
+            'callcenters'         => \App\Models\User::callcenters()->active()->get(['id', 'name']),
+            'deliveries'          => \App\Models\User::whereIn('role', ['delivery', 'reserve_delivery'])->active()->get(['id', 'name']),
         ];
 
         if ($request->header('X-SPA-Navigation')) {
@@ -228,27 +230,6 @@ class TreasuryController extends Controller
         ], 201);
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // addExpense — POST /admin/treasury/expense
-    // ──────────────────────────────────────────────────────────────
-
-    public function addExpense(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'by_whom' => ['required', 'string', 'max:100'],
-            'amount'  => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
-            'note'    => ['nullable', 'string', 'max:500'],
-            'date'    => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
-        ], $this->validationMessages());
-
-        $transaction = $this->treasury->addExpense($validated, auth()->id());
-
-        return response()->json([
-            'success'     => true,
-            'message'     => 'تم إضافة المصروف بنجاح.',
-            'transaction' => $this->formatTransaction($transaction),
-        ], 201);
-    }
 
     // ──────────────────────────────────────────────────────────────
     // addDain — POST /admin/treasury/dain

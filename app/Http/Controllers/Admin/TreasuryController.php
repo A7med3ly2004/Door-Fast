@@ -35,6 +35,7 @@ class TreasuryController extends Controller
             'to'      => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'type'    => ['nullable', 'in:income,settlement,dain,pay_to_user,receive_from_user'],
             'user_id' => ['nullable', 'exists:users,id'],
+            'search'  => ['nullable', 'string', 'max:100'],
         ];
     }
 
@@ -75,9 +76,10 @@ class TreasuryController extends Controller
         $to       = $request->input('to');
         $type     = $request->input('type');
         $userId   = $request->input('user_id');
+        $search   = $request->input('search');
 
         $initialStats        = TreasuryTransaction::calculateKpis($from, $to, $userId);
-        $initialTransactions = $this->buildLedgerQuery($from, $to, $type, $userId)
+        $initialTransactions = $this->buildLedgerQuery($from, $to, $type, $userId, $search)
             ->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc')
             ->paginate(15);
@@ -86,6 +88,7 @@ class TreasuryController extends Controller
             'initialStats'        => $initialStats,
             'initialTransactions' => $initialTransactions,
             'filters'             => compact('from', 'to', 'type', 'userId'),
+            'currentAdmin'        => auth()->user(),
             // الخزينة تتعامل فقط مع المديرين (دفع/استلام بين المدير والمديرين الآخرين)
             'admins'              => \App\Models\User::where('role', 'admin')->where('is_active', true)->where('id', '!=', auth()->id())->with('wallet')->get(['id', 'name']),
             // callcenters/deliveries مطلوبة لـ modal صرف المديونية (dain)
@@ -137,9 +140,10 @@ class TreasuryController extends Controller
         $to      = $request->input('to');
         $type    = $request->input('type');
         $userId  = $request->input('user_id');
+        $search  = $request->input('search');
         $perPage = min((int) $request->get('per_page', 15), 5000);
 
-        $paginator = $this->buildLedgerQuery($from, $to, $type, $userId)
+        $paginator = $this->buildLedgerQuery($from, $to, $type, $userId, $search)
             ->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc')
             ->paginate($perPage);
@@ -341,16 +345,10 @@ class TreasuryController extends Controller
     public function exportPdf(TreasuryTransaction $transaction)
     {
         $transaction->load('recordedBy:id,name');
-        $html = view('admin.pdf.treasury-transaction', compact('transaction'))->render();
 
-        $Arabic = new \ArPHP\I18N\Arabic();
-        $p = $Arabic->arIdentify($html);
-        for ($i = count($p) - 1; $i >= 0; $i -= 2) {
-            $utf8ar = $Arabic->utf8Glyphs(substr($html, $p[$i - 1], $p[$i] - $p[$i - 1]));
-            $html   = substr_replace($html, $utf8ar, $p[$i - 1], $p[$i] - $p[$i - 1]);
-        }
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.treasury-transaction', compact('transaction'))
+            ->setPaper('a5', 'portrait');
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper('a5', 'portrait');
         return $pdf->download('transaction-' . $transaction->id . '.pdf');
     }
 
@@ -362,7 +360,7 @@ class TreasuryController extends Controller
      * Build the base ledger query with all filters applied.
      * Reused by index() and data().
      */
-    private function buildLedgerQuery(?string $from, ?string $to, ?string $type, ?string $userId = null)
+    private function buildLedgerQuery(?string $from, ?string $to, ?string $type, ?string $userId = null, ?string $search = null)
     {
         return TreasuryTransaction::query()
             ->withinDateRange($from, $to)
@@ -378,6 +376,17 @@ class TreasuryController extends Controller
                         ->orWhere(function ($s2) use ($userId) {
                             $s2->where('source_type', 'settlement')
                                ->whereHas('settlement', fn($s) => $s->where('callcenter_id', $userId));
+                        });
+                });
+            })
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    if (is_numeric($search)) {
+                        $sub->orWhere('treasury_transactions.id', (int) $search);
+                    }
+                    $sub->orWhere('treasury_transactions.by_whom', 'LIKE', '%' . $search . '%')
+                        ->orWhereHas('recordedBy', function ($uq) use ($search) {
+                            $uq->where('name', 'LIKE', '%' . $search . '%');
                         });
                 });
             })

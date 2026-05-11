@@ -1,92 +1,211 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="ltr">
+
 <head>
-<meta charset="UTF-8">
-<style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: Arial, sans-serif; font-size:13px; color:#1a1a1a; background:#fff; direction:rtl; }
-    .page { width:100%; max-width:540px; margin:0 auto; padding:30px 20px; }
-    .header { text-align:center; margin-bottom:24px; border-bottom:2px solid #1e293b; padding-bottom:16px; }
-    .header .logo { font-size:22px; font-weight:900; color:#1e293b; letter-spacing:1px; }
-    .header .subtitle { font-size:12px; color:#64748b; margin-top:4px; }
-    .title-box { background:#f1f5f9; border-right:4px solid #1e293b; padding:10px 14px; margin-bottom:20px; border-radius:4px; }
-    .title-box h2 { font-size:15px; font-weight:700; color:#0f172a; }
-    .info-table { width:100%; border-collapse:collapse; margin-bottom:20px; }
-    .info-table tr td { padding:8px 12px; border-bottom:1px solid #e2e8f0; font-size:13px; }
-    .info-table tr td:first-child { color:#64748b; font-weight:600; width:40%; }
-    .info-table tr td:last-child { font-weight:700; color:#0f172a; }
-    .type-badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; }
-    .type-pay     { background:#fef3c7; color:#92400e; }
-    .type-receive { background:#dcfce7; color:#166534; }
-    .type-expense { background:#fee2e2; color:#991b1b; }
-    .amount-box { text-align:center; background:#0f172a; color:#f1f5f9; border-radius:8px; padding:16px; margin-bottom:20px; }
-    .amount-box .label { font-size:12px; color:#94a3b8; margin-bottom:4px; }
-    .amount-box .value { font-size:28px; font-weight:900; }
-    .footer { text-align:center; color:#94a3b8; font-size:11px; margin-top:24px; padding-top:12px; border-top:1px solid #e2e8f0; }
-</style>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>{{ $tx->id }}</title>
+    <style>
+        body {
+            font-family: 'XBRiyaz', 'DejaVu Sans', sans-serif;
+            direction: ltr;
+            text-align: right;
+            padding: 10px;
+            color: #333;
+            font-size: 12px;
+        }
+
+        @page {
+            size: A5 portrait;
+            margin: 10mm;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #a10303ff;
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .info-section {
+            margin-bottom: 25px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-table td {
+            padding: 5px;
+            vertical-align: top;
+            text-align: right;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #475569;
+            width: 150px;
+            white-space: nowrap;
+        }
+
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 40px;
+        }
+
+        .totals-table td {
+            padding: 8px;
+            text-align: right;
+        }
+
+        .totals-table .label {
+            font-weight: bold;
+            color: #000000ff;
+            width: 150px;
+        }
+
+        .totals-table .value {
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .totals-table .grand-total .label,
+        .totals-table .grand-total .value {
+            font-size: 18px;
+            color: #a10303ff;
+            border-top: 2px solid #a10303ff;
+            padding-top: 10px;
+        }
+
+        .signatures {
+            width: 100%;
+            margin-top: 80px;
+            text-align: center;
+            direction: ltr;
+        }
+
+        .signatures td {
+            width: 50%;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .signatures .lines td {
+            padding-top: 40px;
+            color: #94a3b8;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #000000ff;
+            font-size: 12px;
+            border-top: 1px solid #f0cacaff;
+            padding-top: 10px;
+        }
+    </style>
 </head>
+
 <body>
-<div class="page">
-    <div class="header">
-        <div class="logo">Door Fast</div>
-        <div class="subtitle">كشف حساب خاص — {{ $admin->name }}</div>
-    </div>
 
-    <div class="title-box">
-        <h2>{{ $typeLabel }} — رقم العملية #{{ $tx->id }}</h2>
-    </div>
-
-    <div class="amount-box">
-        <div class="label">المبلغ</div>
-        <div class="value">{{ number_format((float)$tx->amount, 2) }} ج</div>
-    </div>
-
-    <table class="info-table">
+    <table style="width: 100%; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
         <tr>
-            <td>رقم العملية</td>
-            <td>#{{ $tx->id }}</td>
-        </tr>
-        <tr>
-            <td>نوع العملية</td>
-            <td>
+            <td style="width: 30%; text-align: left; vertical-align: top;">
                 @php
-                    $cls = match($tx->type) {
-                        'admin_pay'     => 'type-pay',
-                        'admin_receive' => 'type-receive',
-                        'admin_expense' => 'type-expense',
-                        default         => ''
-                    };
+                    $logoPath = public_path('DF_logo_2026.PNG');
+                    if (file_exists($logoPath)) {
+                        $logoData = base64_encode(file_get_contents($logoPath));
+                        $logoSrc = 'data:image/png;base64,' . $logoData;
+                    } else {
+                        $logoSrc = '';
+                    }
                 @endphp
-                <span class="type-badge {{ $cls }}">{{ $typeLabel }}</span>
+                @if($logoSrc)
+                    <img src="{{ $logoSrc }}" style="max-height: 80px; max-width: 120px;" />
+                @endif
+            </td>
+            <td style="width: 40%; text-align: center;">
+                <h1 style="color: #a10303ff; margin: 0; font-size: 22px;">DoorFast</h1>
+                <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 14px;">
+                    إيصال كشف حساب خاص
+                </p>
+                <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 12px;">
+                    {{ now()->format('Y-m-d H:i') }} التاريخ:
+                </p>
+            </td>
+            <td style="width: 30%; text-align: right; vertical-align: top;">
             </td>
         </tr>
-        <tr>
-            <td>التاريخ</td>
-            <td>{{ $tx->transaction_date->format('d/m/Y') }}</td>
+    </table>
+
+    <div class="info-section">
+        <table class="info-table">
+            <tr>
+                <td style="font-weight: bold; color: #a10303ff; font-size: 16px;">{{ $tx->id }}</td>
+                <td class="info-label">رقم العملية:</td>
+            </tr>
+            <tr>
+                <td style="color: #000000ff; font-size: 14px;">{{ $tx->transaction_date->format('Y-m-d') }}</td>
+                <td class="info-label">تاريخ المعاملة:</td>
+            </tr>
+            <tr>
+                <td style="color: #000000ff; font-size: 14px;">{{ $typeLabel }}</td>
+                <td class="info-label">نوع المعاملة:</td>
+            </tr>
+            @if($relatedUser)
+            <tr>
+                <td style=" font-size: 14px; color: #000000ff;">{{ $relatedUser }}</td>
+                <td class="info-label">الموظف المرتبط:</td>
+            </tr>
+            @endif
+            <tr>
+                <td style="color: #000000ff; font-size: 14px;">{{ $tx->description ?? 'لا توجد ملاحظات' }}</td>
+                <td class="info-label">الوصف / الملاحظة:</td>
+            </tr>
+            <tr>
+                <td style="color: #000000ff; font-size: 14px;">{{ $tx->createdBy?->name ?? $admin->name }}</td>
+                <td class="info-label">سجلت بواسطة:</td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="totals-table">
+        <tr class="grand-total">
+            <td class="value">
+                ج.م <span dir="ltr">{{ number_format((float) $tx->amount, 2) }}</span>
+            </td>
+            <td class="label">قيمة المعاملة : </td>
         </tr>
+    </table>
+
+    <table class="signatures">
         <tr>
-            <td>الوصف / الملاحظة</td>
-            <td>{{ $tx->description ?? '—' }}</td>
+            <td>توقيع المدير</td>
+            <td>توقيع الطرف الثاني</td>
         </tr>
-        @if($relatedUser)
-        <tr>
-            <td>الموظف المرتبط</td>
-            <td>{{ $relatedUser }}</td>
-        </tr>
-        @endif
-        <tr>
-            <td>الرصيد بعد العملية</td>
-            <td>{{ number_format((float)$tx->balance_after, 2) }} ج</td>
-        </tr>
-        <tr>
-            <td>تاريخ التسجيل</td>
-            <td>{{ $tx->created_at->format('d/m/Y H:i') }}</td>
+        <tr class="lines">
+            <td>..............</td>
+            <td>..............</td>
         </tr>
     </table>
 
     <div class="footer">
-        DoorFast — تم الإنشاء بتاريخ {{ now()->format('d/m/Y H:i') }}
+        تم إنشاؤه بواسطة نظام دور فاست — {{ now()->format('Y-m-d H:i:s') }}
     </div>
-</div>
+
 </body>
+
 </html>

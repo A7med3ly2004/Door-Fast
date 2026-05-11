@@ -180,8 +180,9 @@ class ReportHopsController extends Controller
         // Only delivered orders
         $items = OrderItem::where('shop_id', $shopId)
             ->whereHas('order', fn($q) => $q->whereBetween('created_at', [$from, $to])->where('status', 'delivered'))
-            ->selectRaw('item_name, shop_id, unit_price, SUM(quantity) as total_qty, SUM(total) as total_value')
-            ->groupBy('item_name', 'shop_id', 'unit_price')
+            ->selectRaw('DATE(created_at) as date, item_name, shop_id, unit_price, SUM(quantity) as total_qty, SUM(total) as total_value')
+            ->groupBy('date', 'item_name', 'shop_id', 'unit_price')
+            ->orderBy('date')
             ->with('shop:id,name')
             ->get();
 

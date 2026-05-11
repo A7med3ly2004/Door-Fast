@@ -17,6 +17,7 @@ class User extends Authenticatable
         'password',
         'role',
         'phone',
+        'personal_phone',
         'code',
         'is_active',
         'cc_shift_enabled',

@@ -25,7 +25,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
         </div>
         <div>
             <div class="form-label" style="margin-bottom:4px;">مندوب</div>
-            <select id="w-filter-delivery" class="form-select">
+            <select id="w-filter-delivery" class="form-select" data-tom-select="true">
                 <option value="">الكل</option>
                 @foreach($deliveries as $d)
                     <option value="{{ $d->id }}">{{ $d->name }}</option>
@@ -102,10 +102,10 @@ resources/views/callcenter/wallet/partials/content.blade.php
             </div>
             <div class="form-group">
                 <label for="pay-delivery-id" class="form-label">المندوب <span style="color:var(--red)">*</span></label>
-                <select id="pay-delivery-id" class="form-select">
+                <select id="cc-pay-delivery-id" class="form-select" data-tom-select="true">
                     <option value="">اختر مندوب...</option>
                     @foreach($deliveries as $d)
-                        <option value="{{ $d->id }}">{{ $d->name }}</option>
+                        <option value="{{ $d->id }}" data-balance="{{ $d->wallet->balance ?? 0 }}">{{ $d->name }}</option>
                     @endforeach
                 </select>
                 <div class="error-text" id="pay-delivery-id-error"
@@ -162,7 +162,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
             </div>
             <div class="form-group">
                 <label for="rcv-delivery-id" class="form-label">المندوب <span style="color:var(--red)">*</span></label>
-                <select id="rcv-delivery-id" class="form-select" onchange="autoFillReceiveAmountCC()">
+                <select id="cc-receive-delivery-id" class="form-select" data-tom-select="true" onchange="autoFillReceiveAmountCC()">
                     <option value="" data-balance="0">اختر مندوب...</option>
                     @foreach($deliveries as $d)
                         <option value="{{ $d->id }}" data-balance="{{ $d->wallet->balance ?? 0 }}">{{ $d->name }}</option>
@@ -287,9 +287,9 @@ resources/views/callcenter/wallet/partials/content.blade.php
         window.openReceiveModal = function () { resetFields('rcv'); openModal('modal-cc-receive'); };
 
         window.autoFillReceiveAmountCC = function () {
-            var select = document.getElementById('rcv-delivery-id');
+            var select = document.getElementById('cc-receive-delivery-id');
             var selectedOption = select.options[select.selectedIndex];
-            var balance = selectedOption.getAttribute('data-balance');
+            var balance = selectedOption ? selectedOption.getAttribute('data-balance') : null;
 
             if (balance && parseFloat(balance) > 0) {
                 document.getElementById('rcv-amount').value = parseFloat(balance);
@@ -299,7 +299,11 @@ resources/views/callcenter/wallet/partials/content.blade.php
         };
 
         function resetFields(prefix) {
-            ['delivery-id', 'amount', 'date', 'description'].forEach(f => {
+            const deliverySelect = document.getElementById(prefix === 'pay' ? 'cc-pay-delivery-id' : 'cc-receive-delivery-id');
+            if (deliverySelect && deliverySelect.tomselect) {
+                deliverySelect.tomselect.setValue('');
+            }
+            ['amount', 'date', 'description'].forEach(f => {
                 const el = document.getElementById(`${prefix}-${f}`);
                 if (el) el.value = '';
             });
@@ -307,7 +311,15 @@ resources/views/callcenter/wallet/partials/content.blade.php
         }
 
         function clearErrors(prefix) {
-            ['delivery-id', 'amount', 'date', 'description'].forEach(f => {
+            const deliverySelect = document.getElementById(prefix === 'pay' ? 'cc-pay-delivery-id' : 'cc-receive-delivery-id');
+            const deliveryErr = document.getElementById(`${prefix}-delivery-id-error`);
+            
+            if (deliverySelect && deliverySelect.tomselect) {
+                deliverySelect.nextSibling.style.borderColor = 'var(--border)';
+            }
+            if (deliveryErr) deliveryErr.textContent = '';
+
+            ['amount', 'date', 'description'].forEach(f => {
                 const inp = document.getElementById(`${prefix}-${f}`);
                 const err = document.getElementById(`${prefix}-${f}-error`);
                 if (inp) inp.style.borderColor = 'var(--border)';
@@ -324,8 +336,9 @@ resources/views/callcenter/wallet/partials/content.blade.php
             if (btn) btn.disabled = true;
             if (spinner) spinner.style.display = 'inline-block';
 
+            const deliverySelect = document.getElementById(prefix === 'pay' ? 'cc-pay-delivery-id' : 'cc-receive-delivery-id');
             const payload = {
-                delivery_id: document.getElementById(`${prefix}-delivery-id`).value || null,
+                delivery_id: deliverySelect ? deliverySelect.value : null,
                 amount: document.getElementById(`${prefix}-amount`).value,
                 description: document.getElementById(`${prefix}-description`).value.trim() || null,
                 date: document.getElementById(`${prefix}-date`).value || null,
@@ -342,11 +355,18 @@ resources/views/callcenter/wallet/partials/content.blade.php
                     const errors = error.response.data.errors || {};
                     const map = { delivery_id: 'delivery-id', amount: 'amount', description: 'description', date: 'date' };
                     Object.entries(errors).forEach(([field, msgs]) => {
-                        const id = map[field] ?? field;
-                        const inp = document.getElementById(`${prefix}-${id}`);
-                        const err = document.getElementById(`${prefix}-${id}-error`);
-                        if (inp) inp.style.borderColor = 'var(--red)';
-                        if (err) err.textContent = msgs[0];
+                        if (field === 'delivery_id') {
+                            const sel = document.getElementById(prefix === 'pay' ? 'cc-pay-delivery-id' : 'cc-receive-delivery-id');
+                            const err = document.getElementById(`${prefix}-delivery-id-error`);
+                            if (sel && sel.tomselect) sel.nextSibling.style.borderColor = 'var(--red)';
+                            if (err) err.textContent = msgs[0];
+                        } else {
+                            const id = field; // amount, description, date matches
+                            const inp = document.getElementById(`${prefix}-${id}`);
+                            const err = document.getElementById(`${prefix}-${id}-error`);
+                            if (inp) inp.style.borderColor = 'var(--red)';
+                            if (err) err.textContent = msgs[0];
+                        }
                     });
                 } else {
                     const ge = document.getElementById(`${prefix}-global-error`);
@@ -380,6 +400,35 @@ resources/views/callcenter/wallet/partials/content.blade.php
         }
 
         // ── Boot ─────────────────────────────────────────────────
+        // ── Tom Select Re-initialization ──
+        window.reinitCCWalletSelects = function () {
+            document.querySelectorAll('[data-tom-select="true"]').forEach(el => {
+                if (el.tomselect) el.tomselect.destroy();
+                new TomSelect(el, {
+                    sortField: { field: "text", order: "asc" },
+                    render: {
+                        option: function (data, escape) {
+                            const balance = data.balance || 0;
+                            const balanceColor = balance > 0 ? '#22c55e' : (balance < 0 ? '#dc2626' : 'var(--text-muted)');
+                            return `
+                                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                                    <span>${escape(data.text)}</span>
+                                    <span style="font-size:11px; font-weight:700; color:${balanceColor}; background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px;">
+                                        ${parseFloat(balance).toLocaleString()} ج
+                                    </span>
+                                </div>`;
+                        },
+                        item: function (data, escape) {
+                            return `<div>${escape(data.text)}</div>`;
+                        }
+                    }
+                });
+            });
+        };
+
+        // Initial boot
+        reinitCCWalletSelects();
+
         fetchStatement();
     })();
 </script>

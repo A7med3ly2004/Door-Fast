@@ -19,16 +19,12 @@
             <input type="date" id="dc-to" class="form-control">
         </div>
 
-        {{-- Client — searchable dropdown --}}
+        {{-- General Search --}}
         <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:220px;position:relative">
-            <label style="font-size:12px;color:var(--text-muted);font-weight:600">العميل (كود أو اسم)</label>
+            <label style="font-size:12px;color:var(--text-muted);font-weight:600">بحث (كود الطلب، كود العميل، رقم العميل)</label>
             <div style="position:relative">
-                <input type="text" id="dc-client-search" class="form-control" placeholder="ابحث بالكود أو الاسم..."
-                    autocomplete="off" style="padding-left:32px">
-            </div>
-            <input type="hidden" id="dc-client-id">
-            <div id="dc-client-dropdown"
-                style="display:none;position:absolute;top:100%;right:0;left:0;z-index:200;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-height:220px;overflow-y:auto;margin-top:2px">
+                <input type="text" id="dc-search" class="form-control" placeholder="ابحث بكود الطلب أو العميل أو رقم الهاتف..."
+                    autocomplete="off" style="padding-left:32px" onkeydown="if(event.key === 'Enter') dcLoad()">
             </div>
         </div>
 
@@ -136,60 +132,13 @@
 <script>
     (function () {
 
-        // ─── Client Searchable Dropdown ───────────────────────────
-        var clientSearchTimeout = null;
-        var selectedClientId = '';
-
-        var searchInput = document.getElementById('dc-client-search');
-        var clientIdEl = document.getElementById('dc-client-id');
-        var dropdown = document.getElementById('dc-client-dropdown');
-
-        searchInput.addEventListener('input', function () {
-            clearTimeout(clientSearchTimeout);
-            var q = this.value.trim();
-            clientIdEl.value = '';
-            selectedClientId = '';
-            if (!q) { hideDropdown(); return; }
-            clientSearchTimeout = setTimeout(function () { fetchClients(q); }, 280);
-        });
-
-        searchInput.addEventListener('blur', function () {
-            setTimeout(hideDropdown, 200);
-        });
-
-        function fetchClients(q) {
-            axios.get('{{ route("admin.report-discounts.clients") }}', { params: { q } })
-                .then(function (res) {
-                    var items = res.data;
-                    if (!items.length) {
-                        dropdown.innerHTML = '<div style="padding:12px 16px;color:var(--text-muted);font-size:13px">لا نتائج</div>';
-                    } else {
-                        dropdown.innerHTML = items.map(function (c) {
-                            return '<div class="dc-client-item" data-id="' + c.id + '" style="padding:10px 16px;cursor:pointer;font-size:13px;transition:.15s" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">' + escHtml(c.text) + '</div>';
-                        }).join('');
-                        dropdown.querySelectorAll('.dc-client-item').forEach(function (el) {
-                            el.addEventListener('click', function () {
-                                clientIdEl.value = this.dataset.id;
-                                selectedClientId = this.dataset.id;
-                                searchInput.value = this.textContent.trim();
-                                hideDropdown();
-                            });
-                        });
-                    }
-                    showDropdown();
-                })
-                .catch(function () { hideDropdown(); });
-        }
-
-        function showDropdown() { dropdown.style.display = 'block'; }
-        function hideDropdown() { dropdown.style.display = 'none'; }
 
         // ─── Filters ──────────────────────────────────────────────
         function getFilters() {
             return {
                 from: document.getElementById('dc-from').value,
                 to: document.getElementById('dc-to').value,
-                client_id: document.getElementById('dc-client-id').value,
+                search: document.getElementById('dc-search').value,
                 callcenter_id: document.getElementById('dc-callcenter').value,
             };
         }
@@ -197,8 +146,7 @@
         window.dcReset = function () {
             document.getElementById('dc-from').value = '';
             document.getElementById('dc-to').value = '';
-            document.getElementById('dc-client-search').value = '';
-            document.getElementById('dc-client-id').value = '';
+            document.getElementById('dc-search').value = '';
             document.getElementById('dc-callcenter').value = '';
             
             const ccLabel = document.getElementById('label-dc-callcenter');

@@ -33,10 +33,11 @@ class DeliveryManagementController extends Controller
                     'phone'      => $d->phone,
                     'is_active'  => $d->is_active,
                     'completed'  => $d->deliveryOrders->where('status', 'delivered')->count(),
-                    'revenue'    => $d->deliveryOrders->where('status', 'delivered')->sum('total'),
+                    'revenue'    => $d->deliveryOrders->where('status', 'delivered')->sum('delivery_fee'),
                     'code'       => $d->code,
                     'shift_active' => $d->activeShift !== null,
                     'incentive_slices' => $d->incentive_slices,
+                    'personal_phone' => $d->personal_phone,
                 ]);
 
             $deliveries = $allDeliveries->where('role', 'delivery')->values();
@@ -65,10 +66,11 @@ class DeliveryManagementController extends Controller
                 'phone'      => $d->phone,
                 'is_active'  => $d->is_active,
                 'completed'  => $d->deliveryOrders->where('status', 'delivered')->count(),
-                'revenue'    => $d->deliveryOrders->where('status', 'delivered')->sum('total'),
+                'revenue'    => $d->deliveryOrders->where('status', 'delivered')->sum('delivery_fee'),
                 'code'       => $d->code,
                 'shift_active' => $d->activeShift !== null,
                 'incentive_slices' => $d->incentive_slices,
+                'personal_phone' => $d->personal_phone,
             ]);
 
         $deliveries = $allDeliveries->where('role', 'delivery')->values();
@@ -117,6 +119,7 @@ class DeliveryManagementController extends Controller
         $data = $request->validate([
             'name'       => 'required|string|max:255',
             'phone'      => 'nullable|string|max:30',
+            'personal_phone' => 'nullable|string|max:30',
             'is_active'  => 'boolean',
             'password'   => 'nullable|string|min:6',
             'code'       => 'nullable|string|max:50',
@@ -126,6 +129,7 @@ class DeliveryManagementController extends Controller
         $updateData = [
             'name'      => $data['name'],
             'phone'     => $data['phone'] ?? $user->phone,
+            'personal_phone' => array_key_exists('personal_phone', $data) ? $data['personal_phone'] : $user->personal_phone,
             'code'      => $data['code'] ?? $user->code,
             'is_active' => $data['is_active'] ?? $user->is_active,
             'incentive_slices' => $data['incentive_slices'] ?? $user->incentive_slices,

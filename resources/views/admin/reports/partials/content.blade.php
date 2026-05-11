@@ -114,7 +114,7 @@
                         <th style="text-align: right;">المندوب</th>
                         <th style="text-align: center;">الطلبات</th>
                         <th style="text-align: center;">تم التوصيلة</th>
-                        <th style="text-align: center;">الإيراد</th>
+                        <th style="text-align: center;">اجمالي التوصيل</th>
                     </tr>
                 </thead>
                 <tbody id="delivery-breakdown"></tbody>

@@ -51,7 +51,7 @@
                     <th style="text-align: center;">الهاتف</th>
                     <th style="text-align: right;">العنوان</th>
                     <th style="text-align: center;">عدد الطلبات</th>
-                    <th style="text-align: center;">إجمالي المبيعات</th>
+                    <th style="text-align: center;">اجمالي المشتريات</th>
                     <th style="text-align: center;">الحالة</th>
                     <th style="text-align: center;">إجراءات</th>
                 </tr>

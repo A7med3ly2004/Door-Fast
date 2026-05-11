@@ -56,20 +56,28 @@ class ReportDiscountController extends Controller
     public function data(Request $request)
     {
         $from = $request->filled('from')
-            ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0]
-            : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
+            ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from)->setTime(12, 0))[0]
+            : \App\Models\Setting::businessDayRange(now()->subDays(30))[0];
 
         $to = $request->filled('to')
-            ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]
-            : \App\Models\Setting::businessDayRange(today())[1];
+            ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to)->setTime(12, 0))[1]
+            : \App\Models\Setting::businessDayRange(now())[1];
 
         $query = Order::with(['client', 'callcenter', 'admin', 'delivery', 'items'])
             ->whereBetween('created_at', [$from, $to])
             ->where('discount', '>', 0)
             ->where('status', 'delivered');
 
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('order_number', 'like', "%{$searchTerm}%")
+                  ->orWhereHas('client', function ($cq) use ($searchTerm) {
+                      $cq->where('code', 'like', "%{$searchTerm}%")
+                         ->orWhere('phone', 'like', "%{$searchTerm}%")
+                         ->orWhere('phone2', 'like', "%{$searchTerm}%");
+                  });
+            });
         }
         if ($request->filled('callcenter_id')) {
             $query->where('callcenter_id', $request->callcenter_id);

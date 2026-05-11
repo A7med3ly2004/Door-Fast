@@ -76,6 +76,9 @@ class WalletTransaction extends Model
             'debt_paid'             => 'دفع مديونية',
             'discount'              => 'خصم',
             'company_revenue'       => 'إيراد للشركة',
+            'admin_pay'             => 'إيصال دفع',
+            'admin_receive'         => 'إيصال استلام',
+            'admin_expense'         => 'مصروف إداري',
         ];
     }
 

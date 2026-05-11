@@ -11,6 +11,7 @@ use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -162,67 +163,88 @@ class AdminLedgerController extends Controller
     public function receiveFromEmployee(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'employee_id' => ['required', 'exists:users,id'],
+            'employee_id' => ['required'], // Can be ID or 'revenue'
             'amount'      => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
             'date'        => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
-            'note'        => ['nullable', 'string', 'max:500'],
-        ], $this->messages());
+            'note'        => [
+                Rule::requiredIf(fn() => $request->input('employee_id') === 'revenue'),
+                'nullable', 'string', 'max:500'
+            ],
+        ], array_merge($this->messages(), [
+            'employee_id.required' => 'يجب اختيار موظف أو نوع العملية.',
+            'note.required'        => 'الملاحظة إلزامية عند اختيار إيراد.',
+        ]));
 
-        $admin    = auth()->user();
-        $employee = User::findOrFail($validated['employee_id']);
-
-        if (!in_array($employee->role, ['callcenter', 'delivery', 'reserve_delivery'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'يجب اختيار موظف كول سنتر أو مندوب.',
-                'errors'  => ['employee_id' => ['الموظف المختار ليس كول سنتر أو مندوباً.']],
-            ], 422);
-        }
-
+        $admin         = auth()->user();
         $walletService = app(WalletService::class);
         $date          = $validated['date'] ?? now()->toDateString();
-        $note          = $validated['note'] ?? ('أصال استلام من ' . $employee->name);
         $amount        = (float) $validated['amount'];
+        $note          = $validated['note'] ?? null;
 
-        DB::transaction(function () use ($admin, $employee, $walletService, $amount, $date, $note) {
-            $adminWallet    = $admin->getOrCreateWallet();
-            $employeeWallet = $employee->getOrCreateWallet();
+        DB::transaction(function () use ($admin, $validated, $walletService, $amount, $date, $note) {
+            $adminWallet = $admin->getOrCreateWallet();
 
-            // إضافة لرصيد المدير (credit = دخول)
-            $walletService->credit(
-                wallet:          $adminWallet,
-                amount:          $amount,
-                type:            'admin_receive',
-                description:     'أصال استلام من ' . $employee->name . ($note ? ' — ' . $note : ''),
-                createdBy:       $admin->id,
-                relatedWalletId: $employeeWallet->id,
-                date:            $date
-            );
+            if ($validated['employee_id'] === 'revenue') {
+                // ── إيراد: فقط زيادة حساب الأدمن — لا يوجد موظف ──────────────
+                $walletService->credit(
+                    wallet:      $adminWallet,
+                    amount:      $amount,
+                    type:        'admin_receive',
+                    description: 'إيراد — ' . $note,
+                    createdBy:   $admin->id,
+                    date:        $date
+                );
 
-            // خصم من رصيد الموظف (debit = خروج)
-            $walletService->debit(
-                wallet:          $employeeWallet,
-                amount:          $amount,
-                type:            'cash_paid',
-                description:     'دفع نقدي للإدارة — ' . ($note ?: ''),
-                createdBy:       $admin->id,
-                relatedWalletId: $adminWallet->id,
-                date:            $date
-            );
+                ActivityLog::log(
+                    event:        'admin_ledger.revenue',
+                    description:  'إيراد في حساب ' . $admin->name . ' — ' . number_format($amount, 2) . ' ج',
+                    subjectType:  'admin_ledger',
+                    subjectId:    $admin->id,
+                    subjectLabel: $admin->name,
+                    properties:   ['amount' => $amount, 'note' => $note]
+                );
+            } else {
+                // ── استلام عادي من موظف ─────────────────────────────────────────
+                $employee       = User::findOrFail((int) $validated['employee_id']);
+                $employeeWallet = $employee->getOrCreateWallet();
+
+                // إضافة لرصيد المدير (credit = دخول)
+                $walletService->credit(
+                    wallet:          $adminWallet,
+                    amount:          $amount,
+                    type:            'admin_receive',
+                    description:     'أصال استلام من ' . $employee->name . ($note ? ' — ' . $note : ''),
+                    createdBy:       $admin->id,
+                    relatedWalletId: $employeeWallet->id,
+                    date:            $date
+                );
+
+                // خصم من رصيد الموظف (debit = خروج)
+                $debitType = $employee->role === 'admin' ? 'admin_pay' : 'cash_paid';
+                $walletService->debit(
+                    wallet:          $employeeWallet,
+                    amount:          $amount,
+                    type:            $debitType,
+                    description:     'دفع نقدي للإدارة — ' . ($note ?: ''),
+                    createdBy:       $admin->id,
+                    relatedWalletId: $adminWallet->id,
+                    date:            $date
+                );
+
+                ActivityLog::log(
+                    event:        'admin_ledger.receive',
+                    description:  'أصال استلام من ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج',
+                    subjectType:  'admin_ledger',
+                    subjectId:    $admin->id,
+                    subjectLabel: $admin->name,
+                    properties:   ['employee_id' => $employee->id, 'amount' => $amount, 'note' => $note]
+                );
+            }
         });
-
-        ActivityLog::log(
-            event:        'admin_ledger.receive',
-            description:  'أصال استلام من ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج',
-            subjectType:  'admin_ledger',
-            subjectId:    $admin->id,
-            subjectLabel: $admin->name,
-            properties:   ['employee_id' => $employee->id, 'amount' => $amount, 'note' => $note]
-        );
 
         return response()->json([
             'success' => true,
-            'message' => 'تم استلام ' . number_format($amount, 2) . ' ج من ' . $employee->name . ' بنجاح.',
+            'message' => $validated['employee_id'] === 'revenue' ? 'تم تسجيل الإيراد بنجاح.' : 'تم تسجيل الاستلام بنجاح.',
         ], 201);
     }
 
@@ -375,17 +397,17 @@ class AdminLedgerController extends Controller
         // Headers
         $headers = ['#', 'التاريخ', 'التعريف / الملاحظة', 'مدين', 'دائن', 'الرصيد'];
         foreach ($headers as $i => $h) {
-            $sheet->setCellValueByColumnAndRow($i + 1, 1, $h);
+            $sheet->setCellValue([$i + 1, 1], $h);
         }
 
         // Data rows
         foreach ($rows as $i => $row) {
-            $sheet->setCellValueByColumnAndRow(1, $i + 2, $row['id']);
-            $sheet->setCellValueByColumnAndRow(2, $i + 2, $row['date']);
-            $sheet->setCellValueByColumnAndRow(3, $i + 2, $row['description']);
-            $sheet->setCellValueByColumnAndRow(4, $i + 2, $row['debit']);
-            $sheet->setCellValueByColumnAndRow(5, $i + 2, $row['credit']);
-            $sheet->setCellValueByColumnAndRow(6, $i + 2, $row['running_balance']);
+            $sheet->setCellValue([1, $i + 2], $row['id']);
+            $sheet->setCellValue([2, $i + 2], $row['date']);
+            $sheet->setCellValue([3, $i + 2], $row['description']);
+            $sheet->setCellValue([4, $i + 2], $row['debit']);
+            $sheet->setCellValue([5, $i + 2], $row['credit']);
+            $sheet->setCellValue([6, $i + 2], $row['running_balance']);
         }
 
         $writer   = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);

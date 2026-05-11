@@ -53,7 +53,7 @@
                     <th style="text-align: center;">الهاتف</th>
                     <th style="text-align: right;">العنوان</th>
                     <th style="text-align: center;">عدد الطلبات</th>
-                    <th style="text-align: center;">إجمالي المبيعات</th>
+                    <th style="text-align: center;">اجمالي المشتريات</th>
                     <th style="text-align: center;">الحالة</th>
                     <th style="text-align: center;">إجراءات</th>
                 </tr>
@@ -381,7 +381,7 @@ async function exportShopsExcel() {
             { header: 'هاتف 4',            key: 'phone4',                  width: 16 },
             { header: 'العنوان',           key: 'address',                 width: 28 },
             { header: 'عدد الطلبات',     key: 'orders_count',            width: 14 },
-            { header: 'إجمالي المبيعات', key: 'order_items_sum_total',   width: 18 },
+            { header: 'اجمالي المشتريات', key: 'order_items_sum_total',   width: 18 },
             { header: 'الحالة',            key: 'is_active',               width: 12 },
         ];
         const rows = data.data.map(s => ({

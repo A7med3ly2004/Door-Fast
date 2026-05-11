@@ -20,7 +20,7 @@ class TreasuryTransaction extends Model
     ];
 
     protected $casts = [
-        'amount'           => 'decimal:2',
+        'amount' => 'decimal:2',
         'transaction_date' => 'date',
     ];
 
@@ -85,7 +85,7 @@ class TreasuryTransaction extends Model
      */
     public function scopeCredit(Builder $query): Builder
     {
-        return $query->whereIn('type', ['income', 'settlement']);
+        return $query->whereIn('type', ['income', 'settlement', 'receive_from_user']);
     }
 
     /**
@@ -145,45 +145,50 @@ class TreasuryTransaction extends Model
             ->withinDateRange($from, $to)
             ->when($userId, function ($q) use ($userId) {
                 $q->where(function ($sub) use ($userId) {
-                    $sub->where('recorded_by', $userId)
+                    // Only pay/receive operations where this admin was the actor
+                    $sub->where(function ($s0) use ($userId) {
+                        $s0->where('recorded_by', $userId)
+                            ->whereIn('type', ['pay_to_user', 'receive_from_user']);
+                    })
                         ->orWhere(function ($s1) use ($userId) {
-                            $s1->where('source_type', 'manual')
-                               ->whereIn('type', ['pay_to_user', 'receive_from_user', 'dain'])
-                               ->where('source_id', $userId);
-                        })
+                        // Transactions targeting this user (employee as source/target)
+                        $s1->where('source_type', 'manual')
+                            ->whereIn('type', ['pay_to_user', 'receive_from_user', 'dain'])
+                            ->where('source_id', $userId);
+                    })
                         ->orWhere(function ($s2) use ($userId) {
-                            $s2->where('source_type', 'settlement')
-                               ->whereHas('settlement', fn($s) => $s->where('callcenter_id', $userId));
-                        });
+                        $s2->where('source_type', 'settlement')
+                            ->whereHas('settlement', fn($s) => $s->where('callcenter_id', $userId));
+                    });
                 });
             })
             ->selectRaw('type, SUM(amount) as total')
             ->groupBy('type')
             ->pluck('total', 'type');
 
-        $totalIncome         = (float) ($rows['income']           ?? 0);
-        $totalExpense        = (float) ($rows['expense']          ?? 0);
-        $totalSettlement     = (float) ($rows['settlement']       ?? 0);
-        $totalDain           = (float) ($rows['dain']             ?? 0);
-        $totalDiscount       = (float) ($rows['discount']         ?? 0);
-        $totalPayToUser      = (float) ($rows['pay_to_user']      ?? 0);
-        $totalReceiveFromUser= (float) ($rows['receive_from_user']?? 0);
+        $totalIncome = (float) ($rows['income'] ?? 0);
+        $totalExpense = (float) ($rows['expense'] ?? 0);
+        $totalSettlement = (float) ($rows['settlement'] ?? 0);
+        $totalDain = (float) ($rows['dain'] ?? 0);
+        $totalDiscount = (float) ($rows['discount'] ?? 0);
+        $totalPayToUser = (float) ($rows['pay_to_user'] ?? 0);
+        $totalReceiveFromUser = (float) ($rows['receive_from_user'] ?? 0);
 
         // KPI 1: إجمالي الدفع لموظف
-        $paymentReceipts   = $totalPayToUser;
+        $paymentReceipts = $totalPayToUser;
         // KPI 2: إجمالي الاستلام من موظف
         $receivingReceipts = $totalReceiveFromUser;
         // KPI 3: إجمالي المصروفات (expense only)
-        $totalExpenses     = $totalExpense;
+        $totalExpenses = $totalExpense;
         // KPI 4: الرصيد = (income + settlement + receive_from_user) − (expense + dain + discount + pay_to_user)
         $balance = ($totalIncome + $totalSettlement + $totalReceiveFromUser)
-                 - ($totalExpense + $totalDain + $totalDiscount + $totalPayToUser);
+            - ($totalExpense + $totalDain + $totalDiscount + $totalPayToUser);
 
         return [
-            'payment_receipts'   => number_format($paymentReceipts, 2),
+            'payment_receipts' => number_format($paymentReceipts, 2),
             'receiving_receipts' => number_format($receivingReceipts, 2),
-            'total_expenses'     => number_format($totalExpenses, 2),
-            'balance'            => number_format($balance, 2),
+            'total_expenses' => number_format($totalExpenses, 2),
+            'balance' => number_format($balance, 2),
         ];
     }
 
@@ -194,19 +199,19 @@ class TreasuryTransaction extends Model
     public static function createManual(
         string $type,      // 'income' | 'expense'
         string $byWhom,
-        float  $amount,
+        float $amount,
         ?string $note,
-        int    $recordedBy,
+        int $recordedBy,
         ?string $transactionDate = null
     ): static {
         return static::create([
-            'type'             => $type,
-            'source_type'      => 'manual',
-            'source_id'        => null,
-            'amount'           => $amount,
-            'by_whom'          => $byWhom,
-            'note'             => $note,
-            'recorded_by'      => $recordedBy,
+            'type' => $type,
+            'source_type' => 'manual',
+            'source_id' => null,
+            'amount' => $amount,
+            'by_whom' => $byWhom,
+            'note' => $note,
+            'recorded_by' => $recordedBy,
             'transaction_date' => $transactionDate ?? now()->toDateString(),
         ]);
     }
@@ -229,13 +234,13 @@ class TreasuryTransaction extends Model
             : $agentName;
 
         return static::create([
-            'type'             => 'settlement',
-            'source_type'      => 'settlement',
-            'source_id'        => $settlement->id,
-            'amount'           => $settlement->amount,
-            'by_whom'          => $agentName,
-            'note'             => $combinedNote,
-            'recorded_by'      => $settlement->settled_by,
+            'type' => 'settlement',
+            'source_type' => 'settlement',
+            'source_id' => $settlement->id,
+            'amount' => $settlement->amount,
+            'by_whom' => $agentName,
+            'note' => $combinedNote,
+            'recorded_by' => $settlement->settled_by,
             'transaction_date' => $settlement->settled_at->toDateString(),
         ]);
     }
@@ -251,14 +256,14 @@ class TreasuryTransaction extends Model
     public function getTypeLabelAttribute(): string
     {
         return match ($this->type) {
-            'income'           => 'إيراد',
-            'expense'          => 'مصروف',
-            'settlement'       => 'تسوية',
-            'dain'             => 'صرف مديونية',
-            'discount'         => 'خصم',
-            'pay_to_user'      => 'إيصال صرف',
-            'receive_from_user'=> 'إيصال استلام',
-            default            => $this->type,
+            'income' => 'إيراد',
+            'expense' => 'مصروف',
+            'settlement' => 'تسوية',
+            'dain' => 'صرف مديونية',
+            'discount' => 'خصم',
+            'pay_to_user' => 'إيصال دفع',
+            'receive_from_user' => 'إيصال استلام',
+            default => $this->type,
         };
     }
 
@@ -269,14 +274,14 @@ class TreasuryTransaction extends Model
     public function getTypeBadgeClassAttribute(): string
     {
         return match ($this->type) {
-            'income'           => 'success',
-            'expense'          => 'danger',
-            'settlement'       => 'warning',
-            'dain'             => 'indigo',
-            'discount'         => 'danger',
-            'pay_to_user'      => 'cyan',
-            'receive_from_user'=> 'teal',
-            default            => 'secondary',
+            'income' => 'success',
+            'expense' => 'danger',
+            'settlement' => 'warning',
+            'dain' => 'indigo',
+            'discount' => 'danger',
+            'pay_to_user' => 'cyan',
+            'receive_from_user' => 'teal',
+            default => 'secondary',
         };
     }
 }

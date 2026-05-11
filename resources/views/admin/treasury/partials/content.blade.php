@@ -78,6 +78,14 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 {{-- ── Filter Bar ────────────────────────────────────────────────── --}}
 <div class="card" style="margin-bottom:20px;">
     <div class="filter-bar" style="margin-bottom:0;">
+        {{-- Search field --}}
+        <div style="min-width:170px;">
+            <div class="form-label" style="margin-bottom:4px;">بحث</div>
+            <div style="position:relative;">
+                <input type="text" id="filter-search" class="form-control" placeholder="رقم العملية أو اسم المدير..."
+                    autocomplete="off">
+            </div>
+        </div>
         <div>
             <div class="form-label" style="margin-bottom:4px;">من تاريخ</div>
             <input type="date" id="filter-from" class="form-control" value="{{ $filters['from'] ?? '' }}">
@@ -408,7 +416,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 <div class="modal-overlay" id="modal-pay-to-user">
     <div class="modal">
         <div class="modal-header" style="background:rgba(8,145,178,.08);border-bottom:0;">
-            <h3 style="color:#0891b2;">دفع نقدي لموظف</h3>
+            <h3 style="color:#0891b2;">دفع نقدي للمدير</h3>
             <button class="btn-close" onclick="closeModal('modal-pay-to-user')">✕</button>
         </div>
         <div class="modal-body">
@@ -418,14 +426,29 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 
             <div class="form-group">
                 <label for="pay-user-id" class="form-label">المدير <span style="color:var(--red)">*</span></label>
-                <select id="pay-user-id" class="form-select">
-                    <option value="">اختر مدير...</option>
+                <select id="pay-user-id" class="form-select" onchange="autoFillPayAmount()">
+                    <option value="">-- اختر --</option>
+                    @if(isset($currentAdmin))
+                        <optgroup label="أنا">
+                            <option value="{{ $currentAdmin->id }}" data-role="admin"
+                                data-balance="{{ $currentAdmin->wallet?->balance ?? 0 }}">
+                                {{ $currentAdmin->name }} (حسابي)
+                            </option>
+                        </optgroup>
+                    @endif
+
                     @if(isset($admins) && $admins->count())
-                        @foreach($admins as $adm)
-                            <option value="{{ $adm->id }}">{{ $adm->name }}</option>
-                        @endforeach
+                        <optgroup label="باقي المديرين">
+                            @foreach($admins as $adm)
+                                <option value="{{ $adm->id }}" data-role="admin"
+                                    data-balance="{{ $adm->wallet?->balance ?? 0 }}">
+                                    {{ $adm->name }}
+                                </option>
+                            @endforeach
+                        </optgroup>
                     @endif
                 </select>
+                <small id="pay-balance-hint" style="display:none; color:var(--text-muted); margin-top:4px;"></small>
                 <div class="error-text" id="pay-user-id-error"></div>
             </div>
 
@@ -470,7 +493,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 <div class="modal-overlay" id="modal-receive-from-user">
     <div class="modal">
         <div class="modal-header" style="background:rgba(5,150,105,.08);border-bottom:0;">
-            <h3 style="color:#059669;">استلام نقدي من موظف</h3>
+            <h3 style="color:#059669;">استلام نقدي من المدير</h3>
             <button class="btn-close" onclick="closeModal('modal-receive-from-user')">✕</button>
         </div>
         <div class="modal-body">
@@ -482,11 +505,25 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                 <label for="receive-user-id" class="form-label">المدير
                     <span style="color:var(--text-muted);font-weight:400;font-size:11px;">(اختياري)</span></label>
                 <select id="receive-user-id" class="form-select" onchange="autoFillReceiveAmount()">
-                    <option value="" data-balance="0">بدون (لحساب الإدارة)...</option>
+                    <option value="">-- اختر --</option>
+                    @if(isset($currentAdmin))
+                        <optgroup label="أنا">
+                            <option value="{{ $currentAdmin->id }}" data-role="admin"
+                                data-balance="{{ $currentAdmin->wallet?->balance ?? 0 }}">
+                                {{ $currentAdmin->name }} (حسابي)
+                            </option>
+                        </optgroup>
+                    @endif
+
                     @if(isset($admins) && $admins->count())
-                        @foreach($admins as $adm)
-                            <option value="{{ $adm->id }}" data-balance="{{ $adm->wallet->balance ?? 0 }}">{{ $adm->name }}</option>
-                        @endforeach
+                        <optgroup label="باقي المديرين">
+                            @foreach($admins as $adm)
+                                <option value="{{ $adm->id }}" data-role="admin"
+                                    data-balance="{{ $adm->wallet?->balance ?? 0 }}">
+                                    {{ $adm->name }}
+                                </option>
+                            @endforeach
+                        </optgroup>
                     @endif
                 </select>
                 <div class="error-text" id="receive-user-id-error"></div>
@@ -646,6 +683,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                 to: document.getElementById('filter-to').value || null,
                 type: document.getElementById('filter-type').value || null,
                 user_id: getActiveUserId(),
+                search: document.getElementById('filter-search').value.trim() || null,
             };
         }
 
@@ -656,6 +694,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             if (f.to) p.to = f.to;
             if (f.type) p.type = f.type;
             if (f.user_id) p.user_id = f.user_id;
+            if (f.search) p.search = f.search;
             return Object.assign(p, extra);
         }
 
@@ -927,8 +966,32 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             });
             const typeLabel = document.getElementById('label-filter-type');
             if (typeLabel) typeLabel.innerText = 'الكل';
+            document.getElementById('filter-search').value = '';
             applyFilters();
         };
+
+        // ── Search input — debounced ──────────────────────────────────────────
+        (function () {
+            let searchTimer = null;
+            const searchInput = document.getElementById('filter-search');
+            if (!searchInput) return;
+
+            searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(function () {
+                    fetchLedger(1);
+                    // fetchStats(); // User requested KPIs NOT to be affected by search
+                }, 400); // 400ms debounce
+            });
+
+            searchInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    clearTimeout(searchTimer);
+                    fetchLedger(1);
+                    // fetchStats();
+                }
+            });
+        })();
 
         // ── Public: detail modal ──────────────────────────────────────
         window.showDetail = async function (id) {
@@ -1151,8 +1214,23 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         // ── Pay To User handlers ──────────────────────────────────────
         window.openPayToUserModal = function () {
             resetWalletModalFields('pay');
+            const hint = document.getElementById('pay-balance-hint');
+            if (hint) hint.style.display = 'none';
             openModal('modal-pay-to-user');
             setTimeout(() => { const el = document.getElementById('pay-user-id'); if (el) el.focus(); }, 250);
+        };
+
+        window.autoFillPayAmount = function () {
+            const select = document.getElementById('pay-user-id');
+            const selectedOption = select.options[select.selectedIndex];
+            const balance = selectedOption.getAttribute('data-balance');
+            const hint = document.getElementById('pay-balance-hint');
+            if (hint && balance !== null && balance !== '') {
+                hint.textContent = 'الرصيد الحالي للمستخدم: ' + parseFloat(balance).toFixed(2) + ' ج';
+                hint.style.display = 'block';
+            } else if (hint) {
+                hint.style.display = 'none';
+            }
         };
 
         window.submitPayToUser = async function () {
@@ -1171,7 +1249,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             var selectedOption = select.options[select.selectedIndex];
             var balance = selectedOption.getAttribute('data-balance');
 
-            if (balance && parseFloat(balance) > 0) {
+            if (balance !== null && balance !== '' && parseFloat(balance) > 0) {
                 document.getElementById('receive-amount').value = parseFloat(balance);
             } else {
                 document.getElementById('receive-amount').value = '';

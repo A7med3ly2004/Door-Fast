@@ -117,33 +117,23 @@ class TreasuryService
         $treasuryTx = DB::transaction(function () use (
             $admin, $targetUser, $walletService, $data, $date, $description
         ): TreasuryTransaction {
-            $adminWallet  = $admin->getOrCreateWallet();
             $targetWallet = $targetUser->getOrCreateWallet();
 
-            // خصم من خزينة الأدمن
-            $walletService->debit(
-                wallet:          $adminWallet,
-                amount:          (float) $data['amount'],
-                type:            'cash_paid',
-                description:     'دفع نقدي إلى ' . $targetUser->name
-                                    . ($description !== ('دفع نقدي إلى ' . $targetUser->name) ? ' — ' . $description : ''),
-                createdBy:       $admin->id,
-                relatedWalletId: $targetWallet->id,
-                date:            $date
-            );
+            // نوع المعاملة يعتمد على دور المستخدم المستهدف
+            // إذا كان المستهدف أدمن → admin_receive حتى يظهر في كشف حسابه الخاص
+            // إذا كان موظفاً → cash_received
+            $creditType = $targetUser->role === 'admin' ? 'admin_receive' : 'cash_received';
 
-            // إضافة لخزينة الموظف
             $walletService->credit(
-                wallet:          $targetWallet,
-                amount:          (float) $data['amount'],
-                type:            'cash_received',
-                description:     'استلام نقدي من الإدارة' . ($description ? ' — ' . $description : ''),
-                createdBy:       $admin->id,
-                relatedWalletId: $adminWallet->id,
-                date:            $date
+                wallet:      $targetWallet,
+                amount:      (float) $data['amount'],
+                type:        $creditType,
+                description: 'استلام نقدي من الإدارة' . ($description ? ' — ' . $description : ''),
+                createdBy:   $admin->id,
+                date:        $date
             );
 
-            // سجل في الخزينة كمعاملة دفع لموظف
+            // سجل العملية في الخزينة المستقلة
             return TreasuryTransaction::create([
                 'type'             => 'pay_to_user',
                 'source_type'      => 'manual',
@@ -157,9 +147,9 @@ class TreasuryService
         });
 
         ActivityLog::log(
-            event:        'wallet.pay_to_user',
+            event:        'treasury.pay_to_user',
             description:  'دفع نقدي إلى ' . $targetUser->name . ' — ' . number_format((float) $data['amount'], 2) . ' ج',
-            subjectType:  'wallet',
+            subjectType:  'treasury',
             subjectId:    $targetUser->id,
             subjectLabel: $targetUser->name,
             properties:   [
@@ -194,42 +184,33 @@ class TreasuryService
         $description = $data['description'] ?? $defaultDesc;
 
         $treasuryTx = DB::transaction(function () use (
-            $admin, $targetUser, $walletService, $data, $date, $description, $defaultDesc
+            $admin, $targetUser, $walletService, $data, $date, $description
         ): TreasuryTransaction {
-            $adminWallet = $admin->getOrCreateWallet();
-
-            // إضافة لخزينة الأدمن
-            $walletService->credit(
-                wallet:          $adminWallet,
-                amount:          (float) $data['amount'],
-                type:            'cash_received',
-                description:     $defaultDesc . ($description !== $defaultDesc ? ' — ' . $description : ''),
-                createdBy:       $admin->id,
-                relatedWalletId: $targetUser ? $targetUser->getOrCreateWallet()->id : null,
-                date:            $date
-            );
 
             if ($targetUser) {
-                // خصم من خزينة الموظف
+                // نوع المعاملة يعتمد على دور المستخدم المستهدف
+                // إذا كان المستهدف أدمن → admin_pay حتى يظهر في كشف حسابه الخاص
+                // إذا كان موظفاً → cash_paid
+                $debitType = $targetUser->role === 'admin' ? 'admin_pay' : 'cash_paid';
+
                 $targetWallet = $targetUser->getOrCreateWallet();
                 $walletService->debit(
-                    wallet:          $targetWallet,
-                    amount:          (float) $data['amount'],
-                    type:            'cash_paid',
-                    description:     'دفع نقدي للإدارة' . ($description ? ' — ' . $description : ''),
-                    createdBy:       $admin->id,
-                    relatedWalletId: $adminWallet->id,
-                    date:            $date
+                    wallet:      $targetWallet,
+                    amount:      (float) $data['amount'],
+                    type:        $debitType,
+                    description: 'دفع نقدي للإدارة' . ($description ? ' — ' . $description : ''),
+                    createdBy:   $admin->id,
+                    date:        $date
                 );
             }
 
-            // سجل في الخزينة كمعاملة استلام من موظف
+            // سجل العملية في الخزينة المستقلة
             return TreasuryTransaction::create([
                 'type'             => 'receive_from_user',
                 'source_type'      => 'manual',
                 'source_id'        => $targetUser?->id,
                 'amount'           => (float) $data['amount'],
-                'by_whom'          => $targetUser ? $targetUser->name : 'حساب الإدارة (بدون موظف)',
+                'by_whom'          => $targetUser ? $targetUser->name : 'بدون موظف',
                 'note'             => $description,
                 'recorded_by'      => $admin->id,
                 'transaction_date' => $date,
@@ -237,11 +218,11 @@ class TreasuryService
         });
 
         ActivityLog::log(
-            event:        'wallet.receive_from_user',
+            event:        'treasury.receive_from_user',
             description:  $targetUser
                 ? ('استلام نقدي من ' . $targetUser->name . ' — ' . number_format((float) $data['amount'], 2) . ' ج')
                 : ('استلام نقدي (بدون موظف) — ' . number_format((float) $data['amount'], 2) . ' ج'),
-            subjectType:  'wallet',
+            subjectType:  'treasury',
             subjectId:    $targetUser ? $targetUser->id : $admin->id,
             subjectLabel: $targetUser ? $targetUser->name : 'الإدارة',
             properties:   [

@@ -18,8 +18,8 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     {{-- TomSelect for searchable selects --}}
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
     <style>
         :root {
@@ -582,50 +582,67 @@
             outline: none;
         }
 
-        /* ── Tom Select Overrides ── */
-        .ts-wrapper.form-select {
-            padding: 0 !important;
-            border: none !important;
-            background: transparent !important;
-            box-shadow: none !important;
-            outline: none !important;
-        }
-
-        .ts-control {
-            background: var(--input-bg) !important;
-            border: 1px solid var(--border) !important;
+        /* ── Tom Select custom overrides ── */
+        .ts-wrapper.single .ts-control,
+        .ts-wrapper.multi .ts-control {
+            border: 1px solid var(--border, #e2e8f0) !important;
             border-radius: 8px !important;
+            background: var(--input-bg, #fff) !important;
+            color: var(--text, #1e293b) !important;
+            font-size: 13px !important;
+            min-height: 38px !important;
             padding: 7px 12px !important;
-            color: var(--text) !important;
-            font-family: 'Cairo', sans-serif;
-            font-size: 13px;
             box-shadow: none !important;
-            min-height: 38px;
+            cursor: pointer;
         }
 
-        .ts-control>input {
+        .ts-control > input {
             color: var(--text) !important;
+            font-family: 'Cairo', sans-serif !important;
+        }
+
+        .ts-wrapper.single.focus .ts-control,
+        .ts-wrapper.multi.focus .ts-control {
+            border-color: var(--yellow, #0891b2) !important;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15) !important;
+            outline: none !important;
         }
 
         .ts-dropdown {
             background: var(--card-bg) !important;
-            border: 1px solid var(--border) !important;
-            color: var(--text) !important;
-            font-family: 'Cairo', sans-serif;
-            font-size: 13px;
+            border: 1px solid var(--border, #e2e8f0) !important;
             border-radius: 8px !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+            font-size: 13px !important;
+            z-index: 9999;
             margin-top: 4px;
         }
 
         .ts-dropdown .option {
-            padding: 8px 12px;
+            padding: 8px 12px !important;
+            cursor: pointer;
+            color: var(--text) !important;
         }
 
         .ts-dropdown .option:hover,
         .ts-dropdown .option.active {
-            background: var(--border) !important;
+            background: var(--border, #0891b2) !important;
             color: var(--text) !important;
+        }
+
+        .ts-dropdown .optgroup-header {
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            color: var(--text-muted, #64748b) !important;
+            padding: 6px 12px 2px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            background: var(--bg, #f8fafc) !important;
+        }
+
+        .ts-dropdown .ts-dropdown-content {
+            max-height: 240px !important;
+            overflow-y: auto !important;
         }
 
         .ts-wrapper.single .ts-control:after {
@@ -1385,6 +1402,8 @@
                 updateActiveLink(url);
                 // Scroll to top
                 content.parentElement.scrollTop = 0;
+                // After content injection and script execution:
+                document.dispatchEvent(new CustomEvent('spa:loaded', { detail: { route: url } }));
             } catch (err) {
                 // Fallback: full page nav on error
                 window.location.href = url;
@@ -1411,6 +1430,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             updateActiveLink(location.href);
             history.replaceState({ url: location.href }, document.title, location.href);
+        });
+        // ── SPA Navigation SPA Loaded Listener ──
+        document.addEventListener('spa:loaded', function (e) {
+            const page = e.detail?.route || window.location.pathname;
+
+            if (page.includes('admin-ledger') && window.reinitAdminLedgerSelects) {
+                window.reinitAdminLedgerSelects();
+            }
+            if (page.includes('callcenter') && page.includes('wallet') && window.reinitCCWalletSelects) {
+                window.reinitCCWalletSelects();
+            }
         });
     </script>
 

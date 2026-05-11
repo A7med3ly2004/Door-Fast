@@ -1,3 +1,12 @@
+@php
+    $arabic = new \ArPHP\I18N\Arabic();
+    $ar = function ($str) use ($arabic) {
+        if (preg_match('/[أ-ي]/ui', $str)) {
+            return $arabic->utf8Glyphs($str);
+        }
+        return $str;
+    };
+@endphp
 <!DOCTYPE html>
 <html lang="ar" dir="ltr">
 
@@ -140,10 +149,10 @@
             <td style="width: 40%; text-align: center;">
                 <h1 style="color: #a10303ff; margin: 0; font-size: 22px;">DoorFast</h1>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 14px;">
-                    إيصال معاملة مالية
+                    {{ $ar('إيصال معاملة مالية') }}
                 </p>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 12px;">
-                    {{ now()->format('Y-m-d H:i') }} التاريخ:
+                    {{ now()->format('Y-m-d H:i') }} {{ $ar('التاريخ:') }}
                 </p>
             </td>
             <td style="width: 30%; text-align: right; vertical-align: top;">
@@ -154,29 +163,29 @@
     <div class="info-section">
         <table class="info-table">
             <tr>
-                <td style="font-weight: bold; color: #a10303ff; font-size: 16px;">#{{ $transaction->id }}</td>
-                <td class="info-label">رقم العملية:</td>
+                <td style="font-weight: bold; color: #a10303ff; font-size: 16px;">{{ $transaction->id }}</td>
+                <td class="info-label">{{ $ar('رقم العملية:') }}</td>
             </tr>
             <tr>
                 <td style="color: #000000ff; font-size: 14px;">{{ $transaction->transaction_date->format('Y-m-d') }}
                 </td>
-                <td class="info-label">تاريخ المعاملة:</td>
+                <td class="info-label">{{ $ar('تاريخ المعاملة:') }}</td>
             </tr>
             <tr>
-                <td style="color: #000000ff; font-size: 14px;">{{ $transaction->type_label }}</td>
-                <td class="info-label">نوع المعاملة:</td>
+                <td style="color: #000000ff; font-size: 14px;">{{ $ar($transaction->type_label) }}</td>
+                <td class="info-label">{{ $ar('نوع المعاملة:') }}</td>
             </tr>
             <tr>
-                <td style=" font-size: 14px; color: #000000ff;">{{ $transaction->by_whom }}</td>
-                <td class="info-label">الطرف الثاني:</td>
+                <td style=" font-size: 14px; color: #000000ff;">{{ $ar($transaction->by_whom) }}</td>
+                <td class="info-label">{{ $ar('الطرف الثاني:') }}</td>
             </tr>
             <tr>
-                <td style="color: #000000ff; font-size: 14px;">{{ $transaction->note ?? 'لا توجد ملاحظات' }}</td>
-                <td class="info-label">ملاحظات:</td>
+                <td style="color: #000000ff; font-size: 14px;">{{ $ar($transaction->note ?? 'لا توجد ملاحظات') }}</td>
+                <td class="info-label">{{ $ar('ملاحظات:') }}</td>
             </tr>
             <tr>
-                <td style="color: #000000ff; font-size: 14px;">{{ $transaction->recordedBy?->name ?? '—' }}</td>
-                <td class="info-label">سجلت بواسطة:</td>
+                <td style="color: #000000ff; font-size: 14px;">{{ $ar($transaction->recordedBy?->name ?? '—') }}</td>
+                <td class="info-label">{{ $ar('سجلت بواسطة:') }}</td>
             </tr>
         </table>
     </div>
@@ -184,16 +193,16 @@
     <table class="totals-table">
         <tr class="grand-total">
             <td class="value">
-                ج.م <span dir="ltr">{{ number_format((float) $transaction->amount, 2) }}</span>
+                {{ $ar('ج.م') }} <span dir="ltr">{{ number_format((float) $transaction->amount, 2) }}</span>
             </td>
-            <td class="label">قيمة المعاملة : </td>
+            <td class="label">{{ $ar('قيمة المعاملة :') }} </td>
         </tr>
     </table>
 
     <table class="signatures">
         <tr>
-            <td>توقيع المدير</td>
-            <td>توقيع الطرف الثاني</td>
+            <td>{{ $ar('توقيع المدير') }}</td>
+            <td>{{ $ar('توقيع الطرف الثاني') }}</td>
         </tr>
         <tr class="lines">
             <td>..............</td>
@@ -202,7 +211,7 @@
     </table>
 
     <div class="footer">
-        تم إنشاؤه بواسطة نظام دور فاست — {{ now()->format('Y-m-d H:i:s') }}
+        {{ $ar('تم إنشاؤه بواسطة نظام دور فاست —') }} {{ now()->format('Y-m-d H:i:s') }}
     </div>
 
 </body>

@@ -188,6 +188,7 @@
                 <th style="text-align: center">{{ $ar('الكمية') }}</th>
                 <th style="text-align: center">{{ $ar('المتجر') }}</th>
                 <th style="text-align: right">{{ $ar('الصنف') }}</th>
+                <th style="text-align: center">{{ $ar('التاريخ') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -202,10 +203,11 @@
                     <td style="text-align: center">{{ $item->total_qty }}</td>
                     <td style="text-align: center">{{ $ar($item->shop->name ?? 'بدون متجر') }}</td>
                     <td style="text-align: right">{{ $ar($item->item_name) }}</td>
+                    <td style="text-align: center; direction: ltr;">{{ $item->date }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" style="text-align: center">{{ $ar('لا توجد أصناف مباعة في هذه الفترة') }}</td>
+                    <td colspan="6" style="text-align: center">{{ $ar('لا توجد أصناف مباعة في هذه الفترة') }}</td>
                 </tr>
             @endforelse
         </tbody>

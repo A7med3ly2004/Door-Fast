@@ -231,16 +231,8 @@ class WalletController extends Controller
             ->where('wallet_id', $wallet->id)
             ->firstOrFail();
 
-        $html = view('callcenter.pdf.wallet-transaction', compact('transaction', 'user'))->render();
-
-        $Arabic = new \ArPHP\I18N\Arabic();
-        $p = $Arabic->arIdentify($html);
-        for ($i = count($p) - 1; $i >= 0; $i -= 2) {
-            $utf8ar = $Arabic->utf8Glyphs(substr($html, $p[$i - 1], $p[$i] - $p[$i - 1]));
-            $html   = substr_replace($html, $utf8ar, $p[$i - 1], $p[$i] - $p[$i - 1]);
-        }
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper('a5', 'portrait');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('callcenter.pdf.wallet-transaction', compact('transaction', 'user'))
+            ->setPaper('a5', 'portrait');
 
         return $pdf->download('receipt-' . $transaction->id . '.pdf');
     }

@@ -87,7 +87,7 @@ class ReportController extends Controller
                 'total'       => $total,
                 'completed'   => $completed,
                 'cancelled'   => $group->where('status', 'cancelled')->count(),
-                'revenue'     => $group->where('status', 'delivered')->sum('total'),
+                'revenue'     => $group->where('status', 'delivered')->sum('delivery_fee'),
             ];
         })->values();
 

@@ -131,4 +131,33 @@ class ShiftController extends Controller
             'started_at'   => $shift?->started_at?->toIso8601String(),
         ]);
     }
+
+    /**
+     * GET /api/delivery/shift/times or /api/reserve/shift/times
+     * Return detailed timing of the latest shift.
+     */
+    public function shiftTimes(Request $request)
+    {
+        $delivery = $request->user();
+
+        // Get the latest shift regardless of status
+        $shift = Shift::where('delivery_id', $delivery->id)
+            ->latest('id')
+            ->first();
+
+        $durationMinutes = null;
+        if ($shift && $shift->started_at && $shift->ended_at) {
+            $durationMinutes = (int) $shift->started_at->diffInMinutes($shift->ended_at);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'has_active_shift' => (bool) ($shift && !$shift->ended_at),
+                'shift_start'      => $shift?->started_at?->format('Y-m-d H:i:s'),
+                'shift_end'        => $shift?->ended_at?->format('Y-m-d H:i:s'),
+                'duration_minutes' => $durationMinutes,
+            ]
+        ]);
+    }
 }

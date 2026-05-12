@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
     /**
-     * POST /api/delivery/login
+     * POST /api/delivery/login or /api/reserve/login
      * Authenticate a delivery user and return a Sanctum token.
      */
     public function login(Request $request)
@@ -29,10 +29,18 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if ($user->role !== 'delivery') {
+        // Determine target role based on URL
+        $isReserve = $request->is('*/reserve/*');
+        $targetRole = $isReserve ? 'reserve_delivery' : 'delivery';
+
+        if ($user->role !== $targetRole) {
+            $errorMsg = $isReserve 
+                ? 'هذا الحساب مخصص للدليفري الأساسي، يرجى استخدامه في التطبيق الصحيح' 
+                : 'هذا الحساب مخصص للدليفري الاحتياطي، يرجى استخدامه في تطبيق الاحتياطي';
+            
             return response()->json([
                 'success' => false,
-                'message' => 'غير مصرح لك بالدخول',
+                'message' => $errorMsg,
             ], 403);
         }
 
@@ -56,6 +64,7 @@ class AuthController extends Controller
                 'name'  => $user->name,
                 'code'  => $user->code,
                 'phone' => $user->phone,
+                'role'  => $user->role,
             ],
         ]);
     }

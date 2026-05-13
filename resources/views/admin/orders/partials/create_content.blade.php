@@ -271,6 +271,10 @@
                     <option value="">— اختر العنوان —</option>
                 </select>
                 <input type="text" class="form-control" id="${id}-address-txt" placeholder="اكتب العنوان" style="margin-top:6px;display:none">
+                <div class="form-group" style="margin-top:6px">
+                    <label class="form-label">لينك التوصيل (اختياري)</label>
+                    <input type="url" class="form-control" id="${id}-client-delivery-link" placeholder="https://maps.google.com/..." style="direction:ltr">
+                </div>
             </div>
             <input type="hidden" id="${id}-is-new-addr" value="0">
 
@@ -285,6 +289,7 @@
             <button class="btn btn-secondary btn-sm" style="margin-bottom:8px" onclick="admToggleSendTo('${id}')">↗ إرسال إلى عميل آخر</button>
             <div class="sendto-section" id="${id}-sendto">
                 <div class="form-row"><div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="admStSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div><div class="form-group"><label class="form-label">هاتف 2 (العميل المستلم)</label><input type="text" class="form-control" id="${id}-st-phone2" placeholder="اختياري" dir="ltr" style="text-align:right"></div><div class="form-group"><label class="form-label">عنوان المستلم *</label><div id="${id}-st-addr-wrap"><input type="text" class="form-control" id="${id}-st-addr-txt" placeholder="العنوان"></div></div></div>
+                <div class="form-group" style="margin-top:6px"><label class="form-label">لينك التوصيل للمستلم (اختياري)</label><input type="url" class="form-control" id="${id}-st-delivery-link" placeholder="https://maps.google.com/..." style="direction:ltr"></div>
                 <div class="form-row"><div class="form-group"><label class="form-label">الكود</label><div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" onblur="admStSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="admStGenCode('${id}')">كود جديد</button></div></div><div class="form-group"><label class="form-label">اسم المستلم</label><input type="text" class="form-control" id="${id}-st-name" placeholder="Unnamed if left blank"></div></div>
             </div>
             <input type="hidden" id="${id}-st-client-id" value="">
@@ -513,8 +518,9 @@
             var fee = parseFloat(document.getElementById(cardId + '-fee').value) || 0;
             var disc = parseFloat(document.getElementById(cardId + '-disc').value) || 0;
             var discType = document.getElementById(cardId + '-disc-type').value;
+            var clientDeliveryLink = document.getElementById(cardId + '-client-delivery-link')?.value.trim() || '';
             var stOpen = document.getElementById(cardId + '-sendto')?.classList.contains('open');
-            var sendToPhone = ''; var sendToPhone2 = ''; var sendToAddr = ''; var sendToCode = ''; var sendToName = ''; var sendToClientId = '';
+            var sendToDeliveryLink = ''; var sendToPhone = ''; var sendToPhone2 = ''; var sendToAddr = ''; var sendToCode = ''; var sendToName = ''; var sendToClientId = '';
             if (stOpen) {
                 sendToPhone = document.getElementById(cardId + '-st-phone')?.value.trim() || '';
                 sendToPhone2 = document.getElementById(cardId + '-st-phone2')?.value.trim() || '';
@@ -524,6 +530,7 @@
                 var rawName = document.getElementById(cardId + '-st-name')?.value.trim();
                 sendToName = rawName ? rawName : 'Unnamed';
                 sendToClientId = (document.getElementById(cardId + '-st-client-found')?.value === '1') ? document.getElementById(cardId + '-st-client-id')?.value : '';
+                sendToDeliveryLink = document.getElementById(cardId + '-st-delivery-link')?.value.trim() || '';
             }
             var isNewAddr = document.getElementById(cardId + '-is-new-addr').value;
 
@@ -571,6 +578,8 @@
                     send_to_code: sendToCode || null,
                     send_to_name: sendToName || null,
                     send_to_client_id: sendToClientId || null,
+                    client_delivery_link: clientDeliveryLink || null,
+                    send_to_delivery_link: sendToDeliveryLink || null,
                     notes, delivery_fee: fee, discount: disc, discount_type: discType, items
                 });
                 var successLabel = data.has_delivery

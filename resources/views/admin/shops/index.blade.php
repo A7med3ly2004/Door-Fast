@@ -302,7 +302,7 @@ async function viewShop(id, name) {
         const s = data.shop;
         const phones = [s.phone, s.phone2, s.phone3, s.phone4].filter(Boolean);
         const phonesHtml = phones.length
-            ? phones.map(p => `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:6px;padding:4px 10px;font-size:13px;">📞 ${p}</span>`).join('')
+            ? phones.map(p => `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:6px;padding:4px 10px;font-size:13px;">${p}</span>`).join('')
             : '<span style="color:var(--text-muted)">—</span>';
 
         document.getElementById('view-modal-body').innerHTML = `

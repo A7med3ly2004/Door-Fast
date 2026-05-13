@@ -57,6 +57,8 @@ class OrderController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.shop_id'    => 'nullable|exists:shops,id',
             'send_to_phone2'     => 'nullable|string|max:30',
+            'client_delivery_link'  => 'nullable|url|max:500',
+            'send_to_delivery_link' => 'nullable|url|max:500',
         ], [
             'phone.required'         => 'رقم الهاتف مطلوب',
             'code.required'          => 'الكود مطلوب',
@@ -72,6 +74,7 @@ class OrderController extends Controller
             'delivery_id', 'notes',
             'send_to_phone', 'send_to_phone2', 'send_to_address', 'send_to_name',
             'send_to_code', 'send_to_client_id',
+            'client_delivery_link', 'send_to_delivery_link',
         ]));
 
         // ── Discount guard (HTTP-layer: return JSON error, not exception) ─
@@ -284,6 +287,8 @@ class OrderController extends Controller
             'send_to_phone'       => $request->send_to_phone ?: null,
             'send_to_phone2'      => $request->send_to_phone2 ?: null,
             'send_to_address'     => $request->send_to_address ?: null,
+            'client_delivery_link'  => $request->client_delivery_link ?: null,
+            'send_to_delivery_link' => $request->send_to_delivery_link ?: null,
             'notes'               => $request->notes,
             'delivery_fee'        => $deliveryFee,
             'discount'            => $discount,

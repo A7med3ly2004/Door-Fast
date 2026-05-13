@@ -161,6 +161,7 @@
         font-size: 14.5px;
         color: var(--text-dark);
         line-height: 1.4;
+        width: 100%;
     }
 
     .party-row button {
@@ -645,7 +646,7 @@
             tr.innerHTML = `
             <td style="padding:15px;border-bottom:1px solid var(--border-color)"><span style="color:var(--primary);font-weight:800">#${order.order_number}</span></td>
             <td style="padding:15px;border-bottom:1px solid var(--border-color)">${clientName}<br><small style="color:var(--text-muted)">${clientPhone}</small></td>
-            <td style="padding:15px;border-bottom:1px solid var(--border-color);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${order.client_address || 'غير محدد'}</td>
+            <td style="padding:15px;border-bottom:1px solid var(--border-color);max-width:200px"><div style="display:flex;align-items:center;gap:6px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${order.client_address || 'غير محدد'}</span></div></td>
             <td style="padding:15px;border-bottom:1px solid var(--border-color)"><span style="background:#ecfdf5;color:var(--success);padding:4px 10px;border-radius:15px;font-size:12px">${order.total} ج</span></td>
             <td style="padding:15px;border-bottom:1px solid var(--border-color)">${order.delivery_fee} ج</td>
             <td style="padding:15px;border-bottom:1px solid var(--border-color)"><button class="btn-dmc-view" style="width:auto; margin:0; padding:6px 12px" onclick="openDeliveredModal(${order.id})">عرض التفاصيل</button></td>
@@ -660,8 +661,9 @@
                 <div class="dmc-order-num">#${order.order_number}</div>
                 <div class="dmc-total">${order.total} ج</div>
             </div>
-            <div class="dmc-client-row"><span class="icon">👤</span> <strong>${clientName}</strong></div>
-            <div class="dmc-client-row"><span class="icon">📞</span> <span style="direction:ltr">${clientPhone}</span>${order.client?.phone2 ? ` / <span style="direction:ltr">${order.client.phone2}</span>` : ''}</div>
+            <div class="dmc-client-row"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span> <strong>${clientName}</strong></div>
+            <div class="dmc-client-row"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></span> <span style="direction:ltr">${clientPhone}</span>${order.client?.phone2 ? ` / <span style="direction:ltr">${order.client.phone2}</span>` : ''}</div>
+            <div class="dmc-client-row"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span> <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%;flex-grow:1">${order.client_address || '—'}</span></div>
             <button class="btn-dmc-view" onclick="openDeliveredModal(${order.id})">📋 عرض تفاصيل الطلب</button>
         `;
             mobileList.appendChild(mCard);
@@ -700,9 +702,9 @@
             }
         }
 
-        var phoneHtml = `<a href="tel:${clientPhone}" style="color:#2563eb;text-decoration:none;direction:ltr;display:inline-block">📞 ${clientPhone}</a>`;
+        var phoneHtml = `<a href="tel:${clientPhone}" style="color:#2563eb;text-decoration:none;direction:ltr;display:inline-block">${clientPhone}</a>`;
         if (order.client?.phone2) {
-            phoneHtml += ` / <a href="tel:${order.client.phone2}" style="color:#2563eb;text-decoration:none;direction:ltr;display:inline-block">📞 ${order.client.phone2}</a>`;
+            phoneHtml += ` / <a href="tel:${order.client.phone2}" style="color:#2563eb;text-decoration:none;direction:ltr;display:inline-block">${order.client.phone2}</a>`;
         }
 
         var clientSectionHtml = '';
@@ -726,27 +728,28 @@
             <div class="two-party-info" style="margin-bottom:20px; font-size:15px">
                 <div class="party sender">
                     <div class="party-label" style="font-size:13px">العميل (المرسل)</div>
-                    <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon">👤</span> <strong>${clientName}</strong></div>
-                    <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon">📞</span> ${phoneHtml}</div>
+                    <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span> <strong>${clientName}</strong></div>
+                    <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></span> ${phoneHtml}</div>
                     ${primaryWaButtonsHtml}
+                    <div class="party-row" style="gap:8px; color:var(--text-muted)"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span> <span style="flex-grow:1">${order.client_address || 'بدون عنوان'}</span>${order.client_delivery_link ? `<a href="${order.client_delivery_link}" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;text-decoration:none;flex-shrink:0;margin-left:auto" title="فتح الخريطة"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;display:block"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></a>` : ''}</div>
                 </div>
                 <div class="party-divider">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
                 </div>
                 <div class="party receiver" style="padding:15px">
                     <div class="party-label" style="color:#059669; font-size:13px">العميل المستلم (وجهة التوصيل النهائية)</div>
-                    <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon">📞</span> <a href="tel:${order.send_to_phone}" style="font-size:16px">${order.send_to_phone}</a>${order.send_to_phone2 ? ` / <a href="tel:${order.send_to_phone2}" style="font-size:16px">${order.send_to_phone2}</a>` : ''}</div>
+                    <div class="party-row" style="gap:8px; margin-bottom:5px"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></span> <a href="tel:${order.send_to_phone}" style="font-size:16px">${order.send_to_phone}</a>${order.send_to_phone2 ? ` / <a href="tel:${order.send_to_phone2}" style="font-size:16px">${order.send_to_phone2}</a>` : ''}</div>
                     ${sendToWaButtonsHtml}
-                    <div class="party-row" style="gap:8px"><span class="icon">📍</span> <strong style="font-size:16px">${order.send_to_address || 'بدون عنوان'}</strong></div>
+                    <div class="party-row" style="gap:8px"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span> <strong style="font-size:16px;flex-grow:1">${order.send_to_address || 'بدون عنوان'}</strong>${order.send_to_delivery_link ? `<a href="${order.send_to_delivery_link}" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:#d1fae5;color:#059669;border:1px solid #6ee7b7;text-decoration:none;flex-shrink:0;margin-left:auto" title="فتح خريطة المستلم"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;display:block"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></a>` : ''}</div>
                 </div>
             </div>`;
         } else {
             clientSectionHtml = `
             <div class="single-party-info" style="background:#f8fafc; padding:15px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:20px">
-                <div class="party-row" style="margin-bottom:8px"><span class="icon">👤</span> <strong style="font-size:16px">${clientName}</strong></div>
-                <div class="party-row" style="margin-bottom:8px"><span class="icon">📞</span> ${phoneHtml}</div>
+                <div class="party-row" style="margin-bottom:8px"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span> <strong style="font-size:16px">${clientName}</strong></div>
+                <div class="party-row" style="margin-bottom:8px"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></span> ${phoneHtml}</div>
                 ${primaryWaButtonsHtml}
-                <div class="party-row"><span class="icon">📍</span> <span style="font-size:15px">${order.client_address || 'لم يتم تحديده'}</span></div>
+                <div class="party-row"><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;display:block"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span> <span style="font-size:15px;flex-grow:1">${order.client_address || 'لم يتم تحديده'}</span>${order.client_delivery_link ? `<a href="${order.client_delivery_link}" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;text-decoration:none;flex-shrink:0;margin-left:auto" title="فتح الخريطة"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;display:block"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></a>` : ''}</div>
             </div>`;
         }
 

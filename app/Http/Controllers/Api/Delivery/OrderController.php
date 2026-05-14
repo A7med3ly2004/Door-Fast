@@ -310,6 +310,21 @@ class OrderController extends Controller
     // Private helper: format order for API response
     // ─────────────────────────────────────────────────────────────────────────
 
+    /**
+     * GET /api/delivery/orders/{id}/invoice
+     */
+    public function downloadInvoice($id)
+    {
+        $delivery = auth()->user();
+        $order    = Order::with(['items.shop', 'client', 'recipientClient'])
+            ->where('id', $id)
+            ->where('delivery_id', $delivery->id)
+            ->firstOrFail();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.order', compact('order'))->setPaper('a4', 'portrait');
+        return $pdf->download($order->order_number . '.pdf');
+    }
+
     private function formatOrder(Order $order): array
     {
         $client = $order->client;

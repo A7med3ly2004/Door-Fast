@@ -44,9 +44,10 @@ class DashboardController extends Controller
             ->whereBetween('delivered_at', [$start, $end])
             ->count();
 
-        // Cancelled today
+        // Cancelled today (Includes orders cancelled by delivery OR received orders cancelled by admin)
         $cancelledToday = Order::where('delivery_id', $delivery->id)
             ->where('status', 'cancelled')
+            ->whereNotNull('accepted_at')
             ->whereBetween('updated_at', [$start, $end])
             ->count();
 

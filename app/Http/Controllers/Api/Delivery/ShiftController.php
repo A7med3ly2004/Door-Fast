@@ -33,28 +33,43 @@ class ShiftController extends Controller
         }
 
         [$startOfToday] = Setting::businessDayRange();
-        $businessDate   = $startOfToday->toDateString();
+        $businessDate = $startOfToday->toDateString();
 
         $shift = Shift::create([
             'delivery_id' => $delivery->id,
-            'date'        => $businessDate,
-            'started_at'  => Carbon::now(),
-            'is_active'   => true,
+            'date' => $businessDate,
+            'started_at' => Carbon::now(),
+            'is_active' => true,
         ]);
 
         ActivityLog::log(
-            event:        'shift.started',
-            description:  'بدء وردية — ' . $delivery->name,
-            subjectType:  'user',
-            subjectId:    $delivery->id,
+            event: 'shift.started',
+            description: 'بدء وردية — ' . $delivery->name,
+            subjectType: 'user',
+            subjectId: $delivery->id,
             subjectLabel: $delivery->name,
-            properties:   ['shift_id' => $shift->id],
-            causerId:     $delivery->id
+            properties: ['shift_id' => $shift->id],
+            causerId: $delivery->id
         );
 
+        try {
+            broadcast(new \App\Events\ShiftUpdated([
+                'user_id' => $delivery->id,
+                'status' => 'started',
+                'shift_id' => $shift->id,
+                'started_at' => $shift->started_at->toIso8601String(),
+            ]))->toOthers();
+            \Log::info('✅ ShiftUpdated (start) broadcast sent for user: ' . $delivery->id);
+        } catch (\Exception $e) {
+            \Log::error('❌ Broadcast failed (start): ' . $e->getMessage());
+            \Log::error('❌ Trace: ' . $e->getTraceAsString());
+            \Log::error('❌ File: ' . $e->getFile());
+            \Log::error('❌ Line: ' . $e->getLine());
+        }
+
         return response()->json([
-            'success'    => true,
-            'shift_id'   => $shift->id,
+            'success' => true,
+            'shift_id' => $shift->id,
             'started_at' => $shift->started_at->toIso8601String(),
         ]);
     }
@@ -92,22 +107,34 @@ class ShiftController extends Controller
         }
 
         $shift->update([
-            'ended_at'  => Carbon::now(),
+            'ended_at' => Carbon::now(),
             'is_active' => false,
         ]);
 
         ActivityLog::log(
-            event:        'shift.ended',
-            description:  'إنهاء وردية — ' . $delivery->name,
-            subjectType:  'user',
-            subjectId:    $delivery->id,
+            event: 'shift.ended',
+            description: 'إنهاء وردية — ' . $delivery->name,
+            subjectType: 'user',
+            subjectId: $delivery->id,
             subjectLabel: $delivery->name,
-            properties:   ['shift_id' => $shift->id],
-            causerId:     $delivery->id
+            properties: ['shift_id' => $shift->id],
+            causerId: $delivery->id
         );
 
+        try {
+            broadcast(new \App\Events\ShiftUpdated([
+                'user_id' => $delivery->id,
+                'status' => 'ended',
+                'shift_id' => $shift->id,
+                'ended_at' => $shift->ended_at->toIso8601String(),
+            ]))->toOthers();
+            \Illuminate\Support\Facades\Log::info('✅ ShiftUpdated (end) broadcast sent for user: ' . $delivery->id);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('❌ Broadcast failed (end): ' . $e->getMessage());
+        }
+
         return response()->json([
-            'success'  => true,
+            'success' => true,
             'ended_at' => $shift->ended_at->toIso8601String(),
         ]);
     }
@@ -125,10 +152,10 @@ class ShiftController extends Controller
             ->first();
 
         return response()->json([
-            'success'      => true,
+            'success' => true,
             'shift_active' => (bool) $shift,
-            'shift_id'     => $shift?->id,
-            'started_at'   => $shift?->started_at?->toIso8601String(),
+            'shift_id' => $shift?->id,
+            'started_at' => $shift?->started_at?->toIso8601String(),
         ]);
     }
 
@@ -152,10 +179,10 @@ class ShiftController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
+            'data' => [
                 'has_active_shift' => (bool) ($shift && !$shift->ended_at),
-                'shift_start'      => $shift?->started_at?->format('Y-m-d H:i:s'),
-                'shift_end'        => $shift?->ended_at?->format('Y-m-d H:i:s'),
+                'shift_start' => $shift?->started_at?->format('Y-m-d H:i:s'),
+                'shift_end' => $shift?->ended_at?->format('Y-m-d H:i:s'),
                 'duration_minutes' => $durationMinutes,
             ]
         ]);

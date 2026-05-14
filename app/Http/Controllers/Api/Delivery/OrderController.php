@@ -31,7 +31,7 @@ class OrderController extends Controller
             ->where('sent_to_delivery_at', '<=', Carbon::now())
             ->where(function ($q) use ($delivery) {
                 $q->whereNull('delivery_id')
-                  ->orWhere('delivery_id', $delivery->id);
+                    ->orWhere('delivery_id', $delivery->id);
             })
             ->orderBy('sent_to_delivery_at', 'asc')
             ->get()
@@ -90,10 +90,10 @@ class OrderController extends Controller
             ->where('id', $id)
             ->where(function ($q) use ($delivery) {
                 $q->where('delivery_id', $delivery->id)
-                  ->orWhere(function ($q2) {
-                      $q2->whereNull('delivery_id')
-                         ->where('status', 'pending');
-                  });
+                    ->orWhere(function ($q2) {
+                        $q2->whereNull('delivery_id')
+                            ->where('status', 'pending');
+                    });
             })
             ->first();
 
@@ -113,7 +113,7 @@ class OrderController extends Controller
 
     public function accept(Request $request, $id)
     {
-        $delivery  = $request->user();
+        $delivery = $request->user();
         $maxActive = (int) Setting::get('max_active_orders', 3);
         [$start, $end] = Setting::businessDayRange();
 
@@ -135,7 +135,7 @@ class OrderController extends Controller
                     ->where('status', 'pending')
                     ->where(function ($q) use ($delivery) {
                         $q->whereNull('delivery_id')
-                          ->orWhere('delivery_id', $delivery->id);
+                            ->orWhere('delivery_id', $delivery->id);
                     })
                     ->lockForUpdate()
                     ->first();
@@ -145,25 +145,25 @@ class OrderController extends Controller
                 }
 
                 $order->update([
-                    'status'      => 'received',
+                    'status' => 'received',
                     'delivery_id' => $delivery->id,
                     'accepted_at' => Carbon::now(),
                 ]);
 
                 OrderLog::create([
                     'order_id' => $order->id,
-                    'user_id'  => $delivery->id,
-                    'action'   => 'تم قبول الطلب من المندوب (موبايل)',
+                    'user_id' => $delivery->id,
+                    'action' => 'تم قبول الطلب من المندوب (موبايل)',
                 ]);
 
                 ActivityLog::log(
-                    event:        'order.accepted',
-                    description:  'تم قبول طلب — ' . $order->order_number,
-                    subjectType:  'order',
-                    subjectId:    $order->id,
+                    event: 'order.accepted',
+                    description: 'تم قبول طلب — ' . $order->order_number,
+                    subjectType: 'order',
+                    subjectId: $order->id,
                     subjectLabel: $order->order_number,
-                    properties:   ['order_number' => $order->order_number],
-                    causerId:     $delivery->id
+                    properties: ['order_number' => $order->order_number],
+                    causerId: $delivery->id
                 );
 
                 event(new OrderStatusUpdated($order));
@@ -198,7 +198,7 @@ class OrderController extends Controller
                 }
 
                 $order->update([
-                    'status'       => 'delivered',
+                    'status' => 'delivered',
                     'delivered_at' => Carbon::now(),
                 ]);
 
@@ -207,30 +207,30 @@ class OrderController extends Controller
                 if ($order->delivery_fee > 0) {
                     $wallet = $delivery->getOrCreateWallet();
                     app(WalletService::class)->credit(
-                        wallet:      $wallet,
-                        amount:      (float) $order->delivery_fee,
-                        type:        'delivery_fee_received',
+                        wallet: $wallet,
+                        amount: (float) $order->delivery_fee,
+                        type: 'delivery_fee_received',
                         description: 'رسوم توصيل — طلب ' . $order->order_number,
-                        createdBy:   $delivery->id,
-                        orderId:     $order->id,
-                        date:        now()->toDateString()
+                        createdBy: $delivery->id,
+                        orderId: $order->id,
+                        date: now()->toDateString()
                     );
                 }
 
                 OrderLog::create([
                     'order_id' => $order->id,
-                    'user_id'  => $delivery->id,
-                    'action'   => 'تم توصيل الطلب (موبايل)',
+                    'user_id' => $delivery->id,
+                    'action' => 'تم توصيل الطلب (موبايل)',
                 ]);
 
                 ActivityLog::log(
-                    event:        'order.delivered',
-                    description:  'تم توصيل طلب — ' . $order->order_number,
-                    subjectType:  'order',
-                    subjectId:    $order->id,
+                    event: 'order.delivered',
+                    description: 'تم توصيل طلب — ' . $order->order_number,
+                    subjectType: 'order',
+                    subjectId: $order->id,
                     subjectLabel: $order->order_number,
-                    properties:   ['order_number' => $order->order_number, 'total' => $order->total],
-                    causerId:     $delivery->id
+                    properties: ['order_number' => $order->order_number, 'total' => $order->total],
+                    causerId: $delivery->id
                 );
 
                 event(new OrderStatusUpdated($order));
@@ -274,27 +274,27 @@ class OrderController extends Controller
                 $order->update(['status' => 'cancelled']);
 
                 $notif = AdminNotification::create([
-                    'type'         => 'cancelled',
-                    'order_id'     => $order->id,
+                    'type' => 'cancelled',
+                    'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'message'      => "تم إلغاء الطلب #{$order->order_number} — {$request->reason}",
+                    'message' => "تم إلغاء الطلب #{$order->order_number} — {$request->reason}",
                 ]);
                 event(new AdminNotificationCreated($notif));
 
                 OrderLog::create([
                     'order_id' => $order->id,
-                    'user_id'  => $delivery->id,
-                    'action'   => 'تم إلغاء الطلب من المندوب (موبايل): ' . $request->reason,
+                    'user_id' => $delivery->id,
+                    'action' => 'تم إلغاء الطلب من المندوب (موبايل): ' . $request->reason,
                 ]);
 
                 ActivityLog::log(
-                    event:        'order.cancelled_delivery',
-                    description:  'تم إلغاء طلب من المندوب — ' . $order->order_number,
-                    subjectType:  'order',
-                    subjectId:    $order->id,
+                    event: 'order.cancelled_delivery',
+                    description: 'تم إلغاء طلب من المندوب — ' . $order->order_number,
+                    subjectType: 'order',
+                    subjectId: $order->id,
                     subjectLabel: $order->order_number,
-                    properties:   ['order_number' => $order->order_number, 'reason' => $request->reason],
-                    causerId:     $delivery->id
+                    properties: ['order_number' => $order->order_number, 'reason' => $request->reason],
+                    causerId: $delivery->id
                 );
 
                 event(new OrderStatusUpdated($order));
@@ -316,7 +316,7 @@ class OrderController extends Controller
     public function downloadInvoice($id)
     {
         $delivery = auth()->user();
-        $order    = Order::with(['items.shop', 'client', 'recipientClient'])
+        $order = Order::with(['items.shop', 'client', 'recipientClient'])
             ->where('id', $id)
             ->where('delivery_id', $delivery->id)
             ->firstOrFail();
@@ -330,42 +330,42 @@ class OrderController extends Controller
         $client = $order->client;
 
         return [
-            'id'                  => $order->id,
-            'order_number'        => $order->order_number,
-            'status'              => $order->status,
-            'total'               => (float) $order->total,
-            'delivery_fee'        => (float) $order->delivery_fee,
-            'discount'            => (float) $order->discount,
-            'discount_type'       => $order->discount_type,
-            'notes'               => $order->notes,
-            'is_delivery_chosen'  => $order->is_delivery_chosen,
+            'id' => $order->id,
+            'order_number' => $order->order_number,
+            'status' => $order->status,
+            'total' => (float) $order->total,
+            'delivery_fee' => (float) $order->delivery_fee,
+            'discount' => (float) $order->discount,
+            'discount_type' => $order->discount_type,
+            'notes' => $order->notes,
+            'is_delivery_chosen' => $order->is_delivery_chosen,
             'sent_to_delivery_at' => $order->sent_to_delivery_at?->toIso8601String(),
-            'accepted_at'         => $order->accepted_at?->toIso8601String(),
-            'delivered_at'        => $order->delivered_at?->toIso8601String(),
-            'created_at'          => $order->created_at?->toIso8601String(),
-            'client'              => $client ? [
-                'id'            => $client->id,
-                'name'          => $client->name,
-                'phone'         => $client->phone,
-                'phone2'        => $client->phone2 ?? null,
-                'address'       => $order->client_address,
+            'accepted_at' => $order->accepted_at?->toIso8601String(),
+            'delivered_at' => $order->delivered_at?->toIso8601String(),
+            'created_at' => $order->created_at?->toIso8601String(),
+            'client' => $client ? [
+                'id' => $client->id,
+                'name' => $client->name,
+                'phone' => $client->phone,
+                'phone2' => $client->phone2 ?? null,
+                'address' => $order->client_address,
                 'delivery_link' => $order->client_delivery_link,
             ] : null,
-            'send_to'             => $order->send_to_phone ? [
-                'name'          => $order->send_to_name ?? null,
-                'phone'         => $order->send_to_phone,
-                'phone2'        => $order->send_to_phone2 ?? null,
-                'address'       => $order->send_to_address,
+            'send_to' => $order->send_to_phone ? [
+                'name' => $order->send_to_name ?? null,
+                'phone' => $order->send_to_phone,
+                'phone2' => $order->send_to_phone2 ?? null,
+                'address' => $order->send_to_address,
                 'delivery_link' => $order->send_to_delivery_link,
             ] : null,
-            'items'               => $order->items->map(fn($item) => [
-                'id'         => $item->id,
-                'item_name'  => $item->item_name,
-                'quantity'   => $item->quantity,
+            'items' => $order->items->map(fn($item) => [
+                'id' => $item->id,
+                'item_name' => $item->item_name,
+                'quantity' => $item->quantity,
                 'unit_price' => (float) $item->unit_price,
-                'total'      => (float) $item->total,
-                'shop'       => $item->shop ? [
-                    'id'   => $item->shop->id,
+                'total' => (float) $item->total,
+                'shop' => $item->shop ? [
+                    'id' => $item->shop->id,
                     'name' => $item->shop->name,
                 ] : null,
             ])->all(),

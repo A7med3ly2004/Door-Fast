@@ -26,15 +26,15 @@ class DeliveryManagementController extends Controller
                 ->orderBy('name')
                 ->get()
                 ->map(fn($d) => [
-                    'id'         => $d->id,
-                    'name'       => $d->name,
-                    'username'   => $d->username,
-                    'role'       => $d->role,
-                    'phone'      => $d->phone,
-                    'is_active'  => $d->is_active,
-                    'completed'  => $d->deliveryOrders->where('status', 'delivered')->count(),
-                    'revenue'    => $d->deliveryOrders->where('status', 'delivered')->sum('delivery_fee'),
-                    'code'       => $d->code,
+                    'id' => $d->id,
+                    'name' => $d->name,
+                    'username' => $d->username,
+                    'role' => $d->role,
+                    'phone' => $d->phone,
+                    'is_active' => $d->is_active,
+                    'completed' => $d->deliveryOrders->where('status', 'delivered')->count(),
+                    'revenue' => $d->deliveryOrders->where('status', 'delivered')->sum('delivery_fee'),
+                    'code' => $d->code,
                     'shift_active' => $d->activeShift !== null,
                     'incentive_slices' => $d->incentive_slices,
                     'personal_phone' => $d->personal_phone,
@@ -44,8 +44,8 @@ class DeliveryManagementController extends Controller
             $reserveDeliveries = $allDeliveries->where('role', 'reserve_delivery')->values();
 
             return response()->json([
-                'html'       => view('admin.delivery.partials.content', compact('deliveries', 'reserveDeliveries'))->render(),
-                'title'      => 'المناديب',
+                'html' => view('admin.delivery.partials.content', compact('deliveries', 'reserveDeliveries'))->render(),
+                'title' => 'المناديب',
                 'csrf_token' => csrf_token(),
             ]);
         }
@@ -59,15 +59,15 @@ class DeliveryManagementController extends Controller
             ->orderBy('name')
             ->get()
             ->map(fn($d) => [
-                'id'         => $d->id,
-                'name'       => $d->name,
-                'username'   => $d->username,
-                'role'       => $d->role,
-                'phone'      => $d->phone,
-                'is_active'  => $d->is_active,
-                'completed'  => $d->deliveryOrders->where('status', 'delivered')->count(),
-                'revenue'    => $d->deliveryOrders->where('status', 'delivered')->sum('delivery_fee'),
-                'code'       => $d->code,
+                'id' => $d->id,
+                'name' => $d->name,
+                'username' => $d->username,
+                'role' => $d->role,
+                'phone' => $d->phone,
+                'is_active' => $d->is_active,
+                'completed' => $d->deliveryOrders->where('status', 'delivered')->count(),
+                'revenue' => $d->deliveryOrders->where('status', 'delivered')->sum('delivery_fee'),
+                'code' => $d->code,
                 'shift_active' => $d->activeShift !== null,
                 'incentive_slices' => $d->incentive_slices,
                 'personal_phone' => $d->personal_phone,
@@ -82,21 +82,21 @@ class DeliveryManagementController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'       => 'required|string|max:255',
-            'username'   => 'required|string|unique:users,username|max:50',
-            'password'   => 'required|string|min:6',
-            'phone'      => 'nullable|string|max:30',
-            'code'       => 'nullable|string|max:50',
-            'role'       => 'nullable|in:delivery,reserve_delivery',
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|unique:users,username|max:50',
+            'password' => 'required|string|min:6',
+            'phone' => 'nullable|string|max:30',
+            'code' => 'nullable|string|max:50',
+            'role' => 'nullable|in:delivery,reserve_delivery',
         ]);
 
         $user = User::create([
-            'name'      => $data['name'],
-            'username'  => $data['username'],
-            'password'  => Hash::make($data['password']),
-            'phone'     => $data['phone'] ?? null,
-            'code'      => $data['code'] ?? null,
-            'role'      => $data['role'] ?? 'delivery',
+            'name' => $data['name'],
+            'username' => $data['username'],
+            'password' => Hash::make($data['password']),
+            'phone' => $data['phone'] ?? null,
+            'code' => $data['code'] ?? null,
+            'role' => $data['role'] ?? 'delivery',
             'is_active' => true,
         ]);
 
@@ -117,20 +117,20 @@ class DeliveryManagementController extends Controller
         $user = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
 
         $data = $request->validate([
-            'name'       => 'required|string|max:255',
-            'phone'      => 'nullable|string|max:30',
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:30',
             'personal_phone' => 'nullable|string|max:30',
-            'is_active'  => 'boolean',
-            'password'   => 'nullable|string|min:6',
-            'code'       => 'nullable|string|max:50',
+            'is_active' => 'boolean',
+            'password' => 'nullable|string|min:6',
+            'code' => 'nullable|string|max:50',
             'incentive_slices' => 'nullable|array',
         ]);
 
         $updateData = [
-            'name'      => $data['name'],
-            'phone'     => $data['phone'] ?? $user->phone,
+            'name' => $data['name'],
+            'phone' => $data['phone'] ?? $user->phone,
             'personal_phone' => array_key_exists('personal_phone', $data) ? $data['personal_phone'] : $user->personal_phone,
-            'code'      => $data['code'] ?? $user->code,
+            'code' => $data['code'] ?? $user->code,
             'is_active' => $data['is_active'] ?? $user->is_active,
             'incentive_slices' => $data['incentive_slices'] ?? $user->incentive_slices,
         ];
@@ -178,14 +178,17 @@ class DeliveryManagementController extends Controller
                 'is_active' => false,
             ]);
             $msg = 'تم إنهاء الوردية للمندوب بنجاح';
+            $status = 'ended';
+            $shift = $activeShift;
         } else {
-            \App\Models\Shift::create([
+            $shift = \App\Models\Shift::create([
                 'delivery_id' => $delivery->id,
                 'date' => $businessDate,
                 'started_at' => Carbon::now(),
                 'is_active' => true,
             ]);
             $msg = 'تم بدء وردية جديدة للمندوب بنجاح';
+            $status = 'started';
         }
 
         ActivityLog::log(
@@ -195,6 +198,44 @@ class DeliveryManagementController extends Controller
             subjectId: $delivery->id,
             subjectLabel: $delivery->name
         );
+
+        $shiftId = $activeShift ? $activeShift->id : $shift->id;
+
+        try {
+            broadcast(new \App\Events\ShiftUpdated([
+                'user_id' => $delivery->id,
+                'status' => $status,
+                'shift_id' => $shiftId,
+            ]));
+        } catch (\Exception $e) {
+            \Log::error('❌ ShiftUpdated broadcast failed: ' . $e->getMessage());
+        }
+
+        try {
+            $pusher = new \Pusher\Pusher(
+                config('broadcasting.connections.pusher.key'),
+                config('broadcasting.connections.pusher.secret'),
+                config('broadcasting.connections.pusher.app_id'),
+                [
+                    'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+                    'useTLS' => true,
+                    'curl_options' => [
+                        CURLOPT_SSL_VERIFYHOST => 0,
+                        CURLOPT_SSL_VERIFYPEER => 0,
+                    ],
+                ]
+            );
+
+            $result = $pusher->trigger(
+                'delivery.' . $delivery->id,
+                'shift.updated',
+                ['user_id' => $delivery->id, 'status' => $status]
+            );
+
+            \Log::info('✅ Direct Pusher result: ' . json_encode($result));
+        } catch (\Exception $e) {
+            \Log::error('❌ Direct Pusher error: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => $msg]);
     }

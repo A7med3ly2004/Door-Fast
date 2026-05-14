@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Delivery\AuthController;
 use App\Http\Controllers\Api\Delivery\DashboardController;
 use App\Http\Controllers\Api\Delivery\ShiftController;
 use App\Http\Controllers\Api\Delivery\OrderController;
+use App\Http\Controllers\Api\Delivery\WalletController;
 
 // ── Public: Login ──────────────────────────────────────────────────────────
 Route::post('/delivery/login', [AuthController::class, 'login'])->name('api.delivery.login');
@@ -22,6 +23,7 @@ Route::middleware(['auth:sanctum', 'role:delivery'])
         Route::post('/shift/end',           [ShiftController::class,  'end']);
         Route::get('/shift/status',         [ShiftController::class,  'status']);
         Route::get('/shift/times',          [ShiftController::class,  'shiftTimes']);
+        Route::get('/wallet/statement',     [WalletController::class, 'statement']);
         
         Route::get('/orders/new',           [OrderController::class,  'newOrders']);
         Route::post('/orders/{id}/accept',  [OrderController::class,  'accept']);
@@ -44,6 +46,7 @@ Route::middleware(['auth:sanctum', 'role:reserve_delivery'])
         Route::post('/shift/end',           [ShiftController::class,  'end']);
         Route::get('/shift/status',         [ShiftController::class,  'status']);
         Route::get('/shift/times',          [ShiftController::class,  'shiftTimes']);
+        Route::get('/wallet/statement',     [WalletController::class, 'statement']);
         
         Route::get('/orders/new',           [OrderController::class,  'newOrders']);
         Route::post('/orders/{id}/accept',  [OrderController::class,  'accept']);

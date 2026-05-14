@@ -153,6 +153,7 @@ class OrderController extends Controller
             'message'      => "تم إلغاء الطلب #{$order->order_number}",
         ]);
         event(new \App\Events\AdminNotificationCreated($notif));
+        event(new \App\Events\OrderStatusUpdated(['order_id' => $order->id, 'status' => 'cancelled']));
 
         OrderLog::create([
             'order_id' => $order->id,

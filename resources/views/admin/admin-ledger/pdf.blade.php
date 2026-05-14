@@ -168,7 +168,7 @@
             @if($relatedUser)
             <tr>
                 <td style=" font-size: 14px; color: #000000ff;">{{ $relatedUser }}</td>
-                <td class="info-label">الموظف المرتبط:</td>
+                <td class="info-label">الطرف الثاني:</td>
             </tr>
             @endif
             <tr>
@@ -194,7 +194,7 @@
     <table class="signatures">
         <tr>
             <td>توقيع المدير</td>
-            <td>توقيع الطرف الثاني</td>
+            <td>توقيع الطرف الثاني {{ $tx->direction === 'debit' ? '( مستلم من )' : '( مدفوع الي )' }}</td>
         </tr>
         <tr class="lines">
             <td>..............</td>

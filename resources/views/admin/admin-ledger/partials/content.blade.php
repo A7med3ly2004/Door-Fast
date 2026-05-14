@@ -184,7 +184,8 @@
             </div>
             <div class="form-group">
                 <label class="form-label">الموظف <span style="color:var(--red)">*</span></label>
-                <select id="receive-employee-id" class="form-select" data-tom-select="true" onchange="onReceiveEmployeeChange()">
+                <select id="receive-employee-id" class="form-select" data-tom-select="true"
+                    onchange="onReceiveEmployeeChange()">
                     <option value="">اختر موظف...</option>
                     <option value="revenue" data-type="revenue">💰 اضافة ايراد عام</option>
                     <optgroup label="كول سنتر">
@@ -528,7 +529,7 @@
                     </div>
                     <div style="display:flex;flex-direction:column;gap:16px;">
                         <div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">الموظف المرتبط</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">الطرف الثاني</div>
                             <div style="font-weight:600;font-size:14px">${d.related_user && d.related_user !== '—' ? escHtml(d.related_user) : '—'}</div>
                         </div>
                         <div>

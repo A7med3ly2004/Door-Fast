@@ -43,10 +43,9 @@ class ReportHopsController extends Controller
             });
 
         $totalPurchases = $allItems->clone()->sum('total');
-        $totalOrders = Order::whereBetween('created_at', [$from, $to])
-            ->where('status', 'delivered')
-            ->whereHas('items', fn($q) => $q->whereNotNull('shop_id'))
-            ->count();
+        $totalOrders = (int) ($allItems->clone()
+            ->selectRaw('COUNT(DISTINCT order_id, shop_id) as total')
+            ->value('total') ?? 0);
 
         $topShop = OrderItem::whereNotNull('shop_id')
             ->whereHas('order', function ($q) use ($from, $to) {

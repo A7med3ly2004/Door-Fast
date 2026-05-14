@@ -202,7 +202,7 @@
     <table class="signatures">
         <tr>
             <td>{{ $ar('توقيع المدير') }}</td>
-            <td>{{ $ar('توقيع الطرف الثاني') }}</td>
+            <td>{{ $ar('توقيع الطرف الثاني') }} {{ in_array($transaction->type, ['income', 'settlement', 'receive_from_user']) ? $ar('( مستلم من )') : $ar('( مدفوع الي )') }}</td>
         </tr>
         <tr class="lines">
             <td>..............</td>

@@ -167,7 +167,7 @@ class OrderController extends Controller
             $s = $request->search;
             $query->where(function ($q) use ($s) {
                 $q->where('order_number', 'like', "%$s%")
-                    ->orWhereHas('client', fn($c) => $c->where('name', 'like', "%$s%")->orWhere('phone', 'like', "%$s%"));
+                    ->orWhereHas('client', fn($c) => $c->where('name', 'like', "%$s%")->orWhere('phone', $s));
             });
         }
 
@@ -211,7 +211,7 @@ class OrderController extends Controller
                     ->orWhereHas(
                         'client',
                         fn($c) =>
-                        $c->where('code', 'like', "%$s%")->orWhere('phone', 'like', "%$s%")
+                        $c->where('phone', $s)->orWhere('code', $s)
                     );
             });
 

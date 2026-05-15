@@ -36,7 +36,7 @@ class TreasuryService
             transactionDate: $data['date'] ?? null,
         );
 
-        ActivityLog::log(
+        $log = ActivityLog::log(
             event:        'treasury.income',
             description:  'تم إضافة وارد في الخزينة — ' . $data['by_whom'],
             subjectType:  'treasury',
@@ -48,6 +48,8 @@ class TreasuryService
                 'note'    => $data['note'] ?? null,
             ]
         );
+
+        $transaction->update(['log_id' => $log->id]);
 
         return $transaction;
     }
@@ -80,7 +82,7 @@ class TreasuryService
             'transaction_date' => $data['date'] ?? now()->toDateString(),
         ]);
 
-        ActivityLog::log(
+        $log = ActivityLog::log(
             event:        'treasury.dain',
             description:  'تم إضافة صرف مديونية في الخزينة — ' . $user->name,
             subjectType:  'treasury',
@@ -93,6 +95,8 @@ class TreasuryService
                 'note'    => $data['note'] ?? null,
             ]
         );
+
+        $transaction->update(['log_id' => $log->id]);
 
         return $transaction;
     }
@@ -146,7 +150,7 @@ class TreasuryService
             ]);
         });
 
-        ActivityLog::log(
+        $log = ActivityLog::log(
             event:        'treasury.pay_to_user',
             description:  'دفع نقدي إلى ' . $targetUser->name . ' — ' . number_format((float) $data['amount'], 2) . ' ج',
             subjectType:  'treasury',
@@ -158,6 +162,8 @@ class TreasuryService
                 'note'    => $data['description'] ?? null,
             ]
         );
+
+        $treasuryTx->update(['log_id' => $log->id]);
 
         return $treasuryTx;
     }
@@ -217,7 +223,7 @@ class TreasuryService
             ]);
         });
 
-        ActivityLog::log(
+        $log = ActivityLog::log(
             event:        'treasury.receive_from_user',
             description:  $targetUser
                 ? ('استلام نقدي من ' . $targetUser->name . ' — ' . number_format((float) $data['amount'], 2) . ' ج')
@@ -231,6 +237,8 @@ class TreasuryService
                 'note'    => $data['description'] ?? null,
             ]
         );
+
+        $treasuryTx->update(['log_id' => $log->id]);
 
         return $treasuryTx;
     }
@@ -250,13 +258,15 @@ class TreasuryService
             'transaction_date' => $data['date'] ?? $transaction->transaction_date,
         ]);
 
-        ActivityLog::log(
+        $log = ActivityLog::log(
             event:        'treasury.updated',
             description:  'تم تعديل معاملة مالية',
             subjectType:  'treasury',
             subjectId:    $transaction->id,
             subjectLabel: number_format((float) $transaction->amount, 2) . ' ج'
         );
+
+        $transaction->update(['log_id' => $log->id]);
 
         return $transaction->fresh();
     }

@@ -36,7 +36,7 @@ class ClientController extends Controller
                 ->latest();
 
             $s = $request->search;
-            $query->where(fn($q) => $q->where('name', 'like', "%$s%")->orWhere('phone', 'like', "%$s%")->orWhere('code', 'like', "%$s%"));
+            $query->where(fn($q) => $q->where('name', 'like', "%$s%")->orWhere('phone', $s)->orWhere('code', $s));
 
             return response()->json($query->paginate(15)->through(fn($c) => [
                 'id'              => $c->id,

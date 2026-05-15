@@ -203,6 +203,17 @@
         font-weight: 700;
         margin-bottom: 14px;
     }
+
+    /* Hide Spin Buttons */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
 </style>
 
 <div class="section-header">
@@ -344,9 +355,18 @@
 
             <button class="btn btn-secondary btn-sm" style="margin-bottom:8px" onclick="admToggleSendTo('${id}')">↗ إرسال إلى عميل آخر</button>
             <div class="sendto-section" id="${id}-sendto">
-                <div class="form-row"><div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="admStSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div><div class="form-group"><label class="form-label">هاتف 2 (العميل المستلم)</label><input type="text" class="form-control" id="${id}-st-phone2" placeholder="اختياري" dir="ltr" style="text-align:right"></div><div class="form-group"><label class="form-label">عنوان المستلم *</label><div id="${id}-st-addr-wrap"><input type="text" class="form-control" id="${id}-st-addr-txt" placeholder="العنوان"></div></div></div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="admStSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div>
+                    <div class="form-group"><label class="form-label">هاتف 2 (العميل المستلم)</label><input type="text" class="form-control" id="${id}-st-phone2" placeholder="اختياري" dir="ltr" style="text-align:right"></div>
+                    <div class="form-group"><label class="form-label">الكود</label><div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" onblur="admStSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="admStGenCode('${id}')">كود جديد</button></div></div>
+                    <div class="form-group"><label class="form-label">اسم المستلم</label><input type="text" class="form-control" id="${id}-st-name" placeholder="الاسم"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">عنوان المستلم *</label>
+                        <div id="${id}-st-addr-wrap"><input type="text" class="form-control" id="${id}-st-addr-txt" placeholder="العنوان"></div>
+                    </div>
+                </div>
                 <div class="form-group" style="margin-top:6px"><label class="form-label">لينك التوصيل للمستلم (اختياري)</label><input type="url" class="form-control" id="${id}-st-delivery-link" placeholder="https://maps.google.com/..." style="direction:ltr"></div>
-                <div class="form-row"><div class="form-group"><label class="form-label">الكود</label><div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" onblur="admStSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="admStGenCode('${id}')">كود جديد</button></div></div><div class="form-group"><label class="form-label">اسم المستلم</label><input type="text" class="form-control" id="${id}-st-name" placeholder="Unnamed if left blank"></div></div>
             </div>
             <input type="hidden" id="${id}-st-client-id" value="">
             <input type="hidden" id="${id}-st-client-found" value="0">
@@ -712,6 +732,13 @@
                 }
             }
         };
+
+        // Disable wheel on number inputs to prevent accidental value changes during scrolling
+        document.getElementById('adm-cards-wrapper').addEventListener('wheel', function (e) {
+            if (e.target.type === 'number' && document.activeElement === e.target) {
+                e.target.blur();
+            }
+        });
 
         // ─── Boot — add first card on page load ──────────────────
         admInitPage();

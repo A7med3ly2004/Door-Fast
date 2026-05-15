@@ -14,6 +14,10 @@ resources/views/admin/general-ledger/partials/content.blade.php
 <div class="card" style="margin-bottom:20px;">
     <div class="filter-bar" style="margin-bottom:0;">
         <div>
+            <div class="form-label" style="margin-bottom:4px;">بحث بالاسم</div>
+            <input type="text" id="gl-search-name" class="form-control" placeholder="اسم المستخدم أو الدور..." oninput="applySearchAndRender()">
+        </div>
+        <div>
             <div class="form-label" style="margin-bottom:4px;">من تاريخ</div>
             <input type="date" id="gl-filter-from" class="form-control">
         </div>
@@ -78,6 +82,7 @@ resources/views/admin/general-ledger/partials/content.blade.php
 <script>
 (function () {
     'use strict';
+    let allRows = [];
 
     // ── Filters ──────────────────────────────────────────────────
     function getFilters() {
@@ -101,12 +106,26 @@ resources/views/admin/general-ledger/partials/content.blade.php
             if (filters.to) params.to = filters.to;
 
             const res = await axios.get('/admin/general-ledger/data', { params });
-            renderTable(res.data.data);
+            allRows = res.data.data;
+            applySearchAndRender();
         } catch (e) {
             tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:40px;">حدث خطأ أثناء تحميل البيانات</td></tr>`;
             console.error('GL fetch error', e);
         }
     }
+
+    window.applySearchAndRender = function () {
+        const term = (document.getElementById('gl-search-name').value || '').toLowerCase().trim();
+        if (!term) {
+            renderTable(allRows);
+            return;
+        }
+        const filtered = allRows.filter(r =>
+            (r.name || '').toLowerCase().includes(term) ||
+            (r.role_label || '').toLowerCase().includes(term)
+        );
+        renderTable(filtered);
+    };
 
     // ── Render table ─────────────────────────────────────────────
     function roleBadge(role, label) {
@@ -245,6 +264,7 @@ resources/views/admin/general-ledger/partials/content.blade.php
     window.glResetFilters = function () {
         document.getElementById('gl-filter-from').value = '';
         document.getElementById('gl-filter-to').value = '';
+        document.getElementById('gl-search-name').value = '';
         fetchData();
     };
 

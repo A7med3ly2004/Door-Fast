@@ -67,9 +67,9 @@ class GeneralLedgerController extends Controller
         // Calculate debit/credit totals for treasury
         $treasuryQuery = TreasuryTransaction::query();
         if ($from)
-            $treasuryQuery->whereDate('transaction_date', '>=', $from);
+            $treasuryQuery->where('transaction_date', '>=', $from);
         if ($to)
-            $treasuryQuery->whereDate('transaction_date', '<=', $to);
+            $treasuryQuery->where('transaction_date', '<=', $to);
 
         $treasuryTotals = (clone $treasuryQuery)
             ->selectRaw("
@@ -153,9 +153,9 @@ class GeneralLedgerController extends Controller
 
         $query = TreasuryTransaction::query();
         if ($from)
-            $query->whereDate('transaction_date', '>=', $from);
+            $query->where('transaction_date', '>=', $from);
         if ($to)
-            $query->whereDate('transaction_date', '<=', $to);
+            $query->where('transaction_date', '<=', $to);
 
         // Totals
         $totals = (clone $query)
@@ -180,13 +180,14 @@ class GeneralLedgerController extends Controller
         ];
 
         $transactions = (clone $query)
+            ->with('activityLog')
             ->orderBy('transaction_date', 'asc')
             ->orderBy('id', 'asc')
             ->get()
             ->map(function (TreasuryTransaction $tx) use ($typeLabels) {
                 $isDebit = in_array($tx->type, ['income', 'settlement', 'receive_from_user']);
                 return [
-                    'id' => $tx->id,
+                    'id' => $tx->activityLog?->id ?? '-',
                     'transaction_date' => $tx->transaction_date->format('Y-m-d'),
                     'description' => ($typeLabels[$tx->type] ?? $tx->type) . ' — ' . ($tx->by_whom ?? '') . ($tx->note ? ' | ' . $tx->note : ''),
                     'type_label' => $typeLabels[$tx->type] ?? $tx->type,
@@ -271,12 +272,13 @@ class GeneralLedgerController extends Controller
 
         // All transactions ordered by date
         $transactions = (clone $query)
+            ->with('activityLog')
             ->orderBy('transaction_date', 'asc')
             ->orderBy('id', 'asc')
             ->get()
             ->map(function (WalletTransaction $tx) {
                 return [
-                    'id' => $tx->id,
+                    'id' => $tx->activityLog?->id ?? '-',
                     'transaction_date' => $tx->transaction_date->format('Y-m-d'),
                     'description' => $tx->description ?? '—',
                     'type_label' => $tx->type_label,

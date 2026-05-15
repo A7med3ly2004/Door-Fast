@@ -41,8 +41,15 @@ class Setting extends Model
      */
     public static function businessDayRange(\Carbon\Carbon $date = null): array
     {
+        $isExplicitDate = ($date !== null);
         $date      = $date ? $date->copy() : now();
         $startHour = (int) static::get('business_day_start_hour', 0);
+
+        // إذا تم تمرير تاريخ صريح في وقت منتصف الليل (00:00:00)، نفترض أن المقصود هو يوم العمل الذي يبدأ في هذا التاريخ.
+        // لذا نقوم بإزاحة الوقت للظهر (12:00) ليقع ضمن اليوم الصحيح عند حساب النطاق.
+        if ($isExplicitDate && $startHour > 0 && $date->hour === 0 && $date->minute === 0 && $date->second === 0) {
+            $date->setTime(12, 0, 0);
+        }
 
         if ($startHour === 0) {
             // الوضع الافتراضي — منتصف الليل (سلوك مطابق للسابق)

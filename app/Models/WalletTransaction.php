@@ -18,6 +18,7 @@ class WalletTransaction extends Model
         'order_id',
         'created_by',
         'transaction_date',
+        'log_id',
     ];
 
     protected function casts(): array
@@ -49,6 +50,11 @@ class WalletTransaction extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function activityLog(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\ActivityLog::class, 'log_id');
     }
 
     // ─── Helpers ──────────────────────────────────────────────

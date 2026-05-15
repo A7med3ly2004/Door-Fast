@@ -121,7 +121,7 @@
 
             tbody.innerHTML = transactions.map(tx => `
                 <tr>
-                    <td style="font-size:12px;text-align: center;">${tx.id}</td>
+                    <td style="font-size:12px;text-align: center;">${tx.log_id}</td>
                     <td style="text-align: center;">${fmtDate(tx.transaction_date)}</td>
                     <td style="font-size:12px;text-align: right;">${esc(tx.description)}</td>
                     <td style="color:var(--success);font-weight:700;text-align: center;">${tx.debit || '—'}</td>

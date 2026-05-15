@@ -7,15 +7,22 @@
         <div style="flex:1;min-width:200px;">
             <label class="form-label">الموظف <span style="color:var(--red)">*</span></label>
             <div class="relative group" style="z-index: 50;">
-                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <div class="form-control"
+                    style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
                     <span id="label-filter-callcenter-id">اختر الموظف</span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </div>
                 <input type="hidden" id="filter-callcenter-id" value="">
-                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-callcenter-id', '', 'اختر الموظف')">اختر الموظف</div>
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                    style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                        onclick="selectDropdown('filter-callcenter-id', '', 'اختر الموظف')">اختر الموظف</div>
                     @foreach($callcenters as $cc)
-                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-callcenter-id', '{{ $cc->id }}', '{{ $cc->name }}')">{{ $cc->name }}</div>
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-callcenter-id', '{{ $cc->id }}', '{{ $cc->name }}')">
+                            {{ $cc->name }}</div>
                     @endforeach
                 </div>
             </div>
@@ -106,7 +113,7 @@
                 <div class="kpi-value" id="kpi-total-work-days" style="color:lightblue">0</div>
                 <div class="kpi-sub">يوم عمل</div>
             </div>
-            
+
             <div class="kpi-card" style="border-right:4px solid #a855f7;">
                 <div class="kpi-label">الشريحة المحققة</div>
                 <div class="kpi-value" id="kpi-cc-tier-number" style="color:#a855f7">—</div>
@@ -120,8 +127,9 @@
     </div>
 
     <div class="card" id="cc-daily-breakdown-card" style="margin-bottom:20px; display:none;">
-        <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:15px; font-weight:700;">📊 تفصيل الشرائح اليومية</span>
+        <div
+            style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:15px; font-weight:700;">تفصيل الشرائح اليومية</span>
             <span style="font-size:13px; color:var(--text-muted);">كل يوم محسوب بشريحته المستقلة</span>
         </div>
         <div class="table-wrap">
@@ -139,7 +147,8 @@
                 <tfoot>
                     <tr style="background:#f8fafc; font-weight:800;">
                         <td colspan="4" style="text-align:center; padding:12px; color:#475569;">إجمالي الأرباح</td>
-                        <td style="text-align:center; padding:12px; color:#a855f7; font-size:16px;" id="cc-daily-breakdown-total">0 ج</td>
+                        <td style="text-align:center; padding:12px; color:#a855f7; font-size:16px;"
+                            id="cc-daily-breakdown-total">0 ج</td>
                     </tr>
                 </tfoot>
             </table>
@@ -263,16 +272,16 @@
             // الشريحة والأرباح
             var tierEl = document.getElementById('kpi-cc-tier-number');
             if (!kpis.is_single_day) {
-                tierEl.textContent  = '— حسب كل يوم';
-                tierEl.style.color  = '#94a3b8';
+                tierEl.textContent = '— حسب كل يوم';
+                tierEl.style.color = '#94a3b8';
                 tierEl.style.fontSize = '14px';
             } else if (kpis.tier_number > 0) {
-                tierEl.textContent  = 'الشريحة ' + kpis.tier_number;
-                tierEl.style.color  = '#a855f7';
+                tierEl.textContent = 'الشريحة ' + kpis.tier_number;
+                tierEl.style.color = '#a855f7';
                 tierEl.style.fontSize = '';
             } else {
-                tierEl.textContent  = '— لا يوجد';
-                tierEl.style.color  = '#94a3b8';
+                tierEl.textContent = '— لا يوجد';
+                tierEl.style.color = '#94a3b8';
                 tierEl.style.fontSize = '';
             }
             document.getElementById('kpi-total-cc-profits').textContent = kpis.total_cc_profits;
@@ -284,7 +293,7 @@
             if (!kpis.is_single_day && dailyBreakdown && dailyBreakdown.length > 0) {
                 breakdownCard.style.display = 'block';
                 var grandTotal = 0;
-                breakdownBody.innerHTML = dailyBreakdown.map(function(day) {
+                breakdownBody.innerHTML = dailyBreakdown.map(function (day) {
                     grandTotal += day.profit;
                     var tierBadge = day.tier_number > 0
                         ? `<span style="background:#ede9fe;color:#7c3aed;padding:2px 10px;border-radius:12px;font-weight:700;font-size:12px;">شريحة ${day.tier_number}</span>`

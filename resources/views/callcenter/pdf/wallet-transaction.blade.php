@@ -147,7 +147,7 @@
             <td style="width: 40%; text-align: center;">
                 <h1 style="color: #a10303ff; margin: 0; font-size: 22px;">DoorFast</h1>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 14px;">
-                    {{ $ar('إيصال معاملة مالية — كشف حسابي') }}
+                    {{ $ar('معاملة مالية — كشف حسابي') }}
                 </p>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 12px;">
                     {{ now()->format('Y-m-d H:i') }} {{ $ar('التاريخ:') }}
@@ -161,7 +161,8 @@
     <div class="info-section">
         <table class="info-table">
             <tr>
-                <td style="font-weight: bold; color: #a10303ff; font-size: 16px;">#{{ $transaction->id }}</td>
+                <td style="font-weight: bold; color: #a10303ff; font-size: 16px;">
+                    {{ $transaction->activityLog?->id ?? '-' }}</td>
                 <td class="info-label">{{ $ar('رقم العملية:') }}</td>
             </tr>
             <tr>
@@ -185,24 +186,19 @@
     </div>
 
     <table class="totals-table">
-        <tr>
+        <tr class="grand-total">
             <td class="value">
                 {{ $ar('ج.م') }} <span dir="ltr">{{ number_format((float) $transaction->amount, 2) }}</span>
             </td>
-            <td class="label">{{ $ar('قيمة المعاملة (') }}{{ $transaction->direction === 'debit' ? $ar('مدين') : $ar('دائن') }}) : </td>
-        </tr>
-        <tr class="grand-total">
-            <td class="value">
-                {{ $ar('ج.م') }} <span dir="ltr">{{ number_format((float) $transaction->balance_after, 2) }}</span>
-            </td>
-            <td class="label">{{ $ar('الرصيد بعد العملية :') }} </td>
+            <td class="label">{{ $ar('قيمة المعاملة :') }}</td>
         </tr>
     </table>
 
     <table class="signatures">
         <tr>
             <td>{{ $ar('توقيع الكول سينتر') }}</td>
-            <td>{{ $ar('توقيع الطرف الثاني') }} {{ $transaction->direction === 'debit' ? $ar('( مستلم من )') : $ar('( مدفوع الي )') }}</td>
+            <td>{{ $ar('توقيع الطرف الثاني ' . ($transaction->direction === 'debit' ? '( مستلم من )' : '( مدفوع الي )')) }}
+            </td>
         </tr>
         <tr class="lines">
             <td>..................................</td>

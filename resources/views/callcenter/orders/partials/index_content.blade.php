@@ -10,8 +10,8 @@
             <option value="received">مسلم للمندوب</option>
             <option value="delivered">تم التوصيل</option>
             <option value="cancelled">ملغي</option>
-        </select><button class="btn btn-primary" onclick="loadList(1)">🔍 بحث</button><button class="btn btn-secondary"
-            onclick="resetFilters()">↺ إعادة</button></div>
+        </select><button class="btn btn-primary" onclick="loadList(1)">بحث</button><button class="btn btn-secondary"
+            onclick="resetFilters()">إعادة</button></div>
 </div>
 <div class="card" style="padding:0;position:relative">
     <div class="loading-overlay" id="tbl-loading">

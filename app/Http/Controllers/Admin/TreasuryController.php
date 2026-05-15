@@ -151,6 +151,7 @@ class TreasuryController extends Controller
         $rows = $paginator->getCollection()->map(function (TreasuryTransaction $tx) {
             return [
                 'id'               => $tx->id,
+                'log_id'           => $tx->activityLog?->id ?? '-',
                 'transaction_date' => $tx->transaction_date->format('Y-m-d'),
                 'type'             => $tx->type,
                 'type_label'       => $tx->type_label,
@@ -185,10 +186,11 @@ class TreasuryController extends Controller
             ]);
         }
 
-        $transaction->load('recordedBy:id,name');
+        $transaction->load(['recordedBy:id,name', 'activityLog']);
 
         return response()->json([
             'id'               => $transaction->id,
+            'log_id'           => $transaction->activityLog?->id ?? '-',
             'transaction_date' => $transaction->transaction_date->format('d/m/Y'),
             'type'             => $transaction->type,
             'type_label'       => $transaction->type_label,
@@ -382,7 +384,7 @@ class TreasuryController extends Controller
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     if (is_numeric($search)) {
-                        $sub->orWhere('treasury_transactions.id', (int) $search);
+                        $sub->orWhere('treasury_transactions.log_id', (int) $search);
                     }
                     $sub->orWhere('treasury_transactions.by_whom', 'LIKE', '%' . $search . '%')
                         ->orWhereHas('recordedBy', function ($uq) use ($search) {
@@ -390,11 +392,12 @@ class TreasuryController extends Controller
                         });
                 });
             })
-            ->with('recordedBy:id,name')
+            ->with(['recordedBy:id,name', 'activityLog'])
             ->select([
                 'id', 'type', 'source_type', 'source_id',
                 'amount', 'by_whom', 'note',
                 'transaction_date', 'recorded_by', 'created_at',
+                'log_id',
             ]);
     }
 
@@ -405,6 +408,7 @@ class TreasuryController extends Controller
     {
         return [
             'id'               => $tx->id,
+            'log_id'           => $tx->activityLog?->id ?? '-',
             'transaction_date' => $tx->transaction_date->format('d/m/Y'),
             'type'             => $tx->type,
             'type_label'       => $tx->type_label,

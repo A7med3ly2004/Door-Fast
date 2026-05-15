@@ -63,7 +63,7 @@
                 <div class="form-group"><label class="form-label">اسم المتجر *</label><input type="text" id="s-name"
                         class="form-control"></div>
                 <div class="form-group"><label class="form-label">كود المتجر</label><input type="text" id="s-code"
-                        class="form-control" placeholder="اختياري"></div>
+                        class="form-control" placeholder="يتم إنشاؤه تلقائياً" readonly></div>
             </div>
             <div class="form-row">
                 <div class="form-group"><label class="form-label">الهاتف</label><input type="text" id="s-phone"

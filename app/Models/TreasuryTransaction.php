@@ -17,6 +17,7 @@ class TreasuryTransaction extends Model
         'note',
         'recorded_by',
         'transaction_date',
+        'log_id',
     ];
 
     protected $casts = [
@@ -43,6 +44,11 @@ class TreasuryTransaction extends Model
     public function settlement(): BelongsTo
     {
         return $this->belongsTo(CallcenterSettlement::class, 'source_id');
+    }
+
+    public function activityLog(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\ActivityLog::class, 'log_id');
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -100,11 +106,11 @@ class TreasuryTransaction extends Model
     public function scopeWithinDateRange(Builder $query, ?string $from, ?string $to): Builder
     {
         if ($from) {
-            $query->whereDate('transaction_date', '>=', $from);
+            $query->where('transaction_date', '>=', $from);
         }
 
         if ($to) {
-            $query->whereDate('transaction_date', '<=', $to);
+            $query->where('transaction_date', '<=', $to);
         }
 
         return $query;

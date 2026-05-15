@@ -185,6 +185,17 @@
         align-self: flex-start;
     }
 
+    /* Hide Spin Buttons */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
     .add-card-btn:hover {
         border-color: var(--yellow);
         color: var(--yellow);
@@ -252,13 +263,61 @@
         var card = document.createElement('div'); card.className = 'order-card'; card.id = id;
         card.innerHTML = `<div class="order-card-header"><div><div class="order-meta">${isEdit ? '<span class="badge badge-info" style="font-size:10px;padding:2px 6px;margin-bottom:4px;display:inline-block">وضع التعديل</span><br>' : ''}${nowStr()} &mdash; {{ auth()->user()->name }}</div></div><button class="btn-close" onclick="removeCard('${id}')" title="إغلاق">✕</button></div>
     <div class="order-card-body"><input type="hidden" id="${id}-edit-id" value="${isEdit ? draft.editOrderId : ''}">
-        <div class="section-label">📞 بيانات العميل</div><div class="form-row"><div class="form-group"><label class="form-label">الهاتف *</label><input type="text" class="form-control" id="${id}-phone" placeholder="01xxxxxxxxx" onblur="searchClient('${id}', 'phone')" onkeydown="if(event.key==='Enter') this.blur()"></div><div class="form-group"><label class="form-label">هاتف 2</label><input type="text" class="form-control" id="${id}-phone2" placeholder="اختياري"></div></div><div class="form-row"><div class="form-group"><label class="form-label">الكود *</label><div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-code" placeholder="XXXXX" onblur="searchClient('${id}', 'code')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="genCode('${id}')">كود جديد</button></div></div><div class="form-group"><label class="form-label">الاسم *</label><input type="text" class="form-control" id="${id}-name" placeholder="اسم العميل"></div></div><input type="hidden" id="${id}-client-id" value=""><input type="hidden" id="${id}-client-found" value="0">
-        <div class="section-label">📍 العنوان</div><div class="form-group"><label class="form-label">العنوان *</label><select class="form-select" id="${id}-address-sel" onchange="onAddressChange('${id}')"><option value="">— اختر العنوان —</option></select><input type="text" class="form-control" id="${id}-address-txt" placeholder="اكتب العنوان" style="margin-top:6px;display:none"><div class="form-group" style="margin-top:6px"><label class="form-label">لينك التوصيل (اختياري)</label><input type="url" class="form-control" id="${id}-client-delivery-link" placeholder="https://maps.google.com/..." style="direction:ltr"></div></div><input type="hidden" id="${id}-is-new-addr" value="0">
-        <div class="form-group"><label class="form-label">المندوب</label><select class="form-select" id="${id}-delivery"><option value="">— تلقائي —</option>${buildDeliveryOptions()}</select></div>
-        <button class="btn btn-secondary btn-sm" style="margin-bottom:8px" onclick="toggleSendTo('${id}')">↗ إرسال إلى عميل آخر</button><div class="sendto-section" id="${id}-sendto"><div class="form-row"><div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="stSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div><div class="form-group"><label class="form-label">هاتف 2 (العميل المستلم)</label><input type="text" class="form-control" id="${id}-st-phone2" placeholder="اختياري" dir="ltr" style="text-align:right"></div><div class="form-group"><label class="form-label">عنوان المستلم *</label><div id="${id}-st-addr-wrap"><input type="text" class="form-control" id="${id}-st-addr-txt" placeholder="العنوان"></div></div></div><div class="form-group" style="margin-top:6px"><label class="form-label">لينك التوصيل للمستلم (اختياري)</label><input type="url" class="form-control" id="${id}-st-delivery-link" placeholder="https://maps.google.com/..." style="direction:ltr"></div><div class="form-row"><div class="form-group"><label class="form-label">الكود</label><div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" onblur="stSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="stGenCode('${id}')">كود جديد</button></div></div><div class="form-group"><label class="form-label">اسم المستلم</label><input type="text" class="form-control" id="${id}-st-name" placeholder="Unnamed if left blank"></div></div></div>
+        <div class="section-label">📞 بيانات العميل</div>
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">الهاتف *</label><input type="text" class="form-control" id="${id}-phone" placeholder="01xxxxxxxxx" onblur="searchClient('${id}', 'phone')" onkeydown="if(event.key==='Enter') this.blur()"></div>
+            <div class="form-group"><label class="form-label">هاتف 2</label><input type="text" class="form-control" id="${id}-phone2" placeholder="اختياري"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">الكود *</label>
+                <div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-code" placeholder="XXXXX" onblur="searchClient('${id}', 'code')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="genCode('${id}')">كود جديد</button></div>
+            </div>
+            <div class="form-group"><label class="form-label">الاسم *</label><input type="text" class="form-control" id="${id}-name" placeholder="اسم العميل"></div>
+        </div>
+        <input type="hidden" id="${id}-client-id" value=""><input type="hidden" id="${id}-client-found" value="0">
+        <div class="section-label">📍 العنوان</div>
+            <div class="form-group"><label class="form-label">العنوان *</label><select class="form-select" id="${id}-address-sel" onchange="onAddressChange('${id}')"><option value="">— اختر العنوان —</option></select><input type="text" class="form-control" id="${id}-address-txt" placeholder="اكتب العنوان" style="margin-top:6px;display:none">
+                <div class="form-group" style="margin-top:6px"><label class="form-label">لينك التوصيل (اختياري)</label><input type="url" class="form-control" id="${id}-client-delivery-link" placeholder="https://maps.google.com/..." style="direction:ltr"></div>
+            </div>
+            <input type="hidden" id="${id}-is-new-addr" value="0">
+            <div class="form-group"><label class="form-label">المندوب</label><select class="form-select" id="${id}-delivery"><option value="">— تلقائي —</option>${buildDeliveryOptions()}</select></div>
+            <button class="btn btn-secondary btn-sm" style="margin-bottom:8px" onclick="toggleSendTo('${id}')">↗ إرسال إلى عميل آخر</button>
+            <div class="sendto-section" id="${id}-sendto">
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="stSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div>
+                    <div class="form-group"><label class="form-label">هاتف 2 (العميل المستلم)</label><input type="text" class="form-control" id="${id}-st-phone2" placeholder="اختياري" dir="ltr" style="text-align:right"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">الكود</label>
+                        <div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" onblur="stSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="stGenCode('${id}')">كود جديد</button></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">اسم المستلم</label><input type="text" class="form-control" id="${id}-st-name" placeholder="اسم المستلم"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">عنوان المستلم *</label>
+                        <div id="${id}-st-addr-wrap"><input type="text" class="form-control" id="${id}-st-addr-txt" placeholder="العنوان"></div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:6px"><label class="form-label">لينك التوصيل للمستلم (اختياري)</label><input type="url" class="form-control" id="${id}-st-delivery-link" placeholder="https://maps.google.com/..." style="direction:ltr"></div>
+            </div>
         <input type="hidden" id="${id}-st-client-id" value="">
         <input type="hidden" id="${id}-st-client-found" value="0">
-        <div class="section-label">الأصناف</div><table class="items-table"><thead><tr><th style="min-width:120px">الصنف</th><th style="width:55px">الكمية</th><th style="width:70px">السعر</th><th style="width:65px; text-align: center;">الإجمالي</th><th style="min-width:100px">المتجر</th><th style="width:30px"></th></tr></thead><tbody id="${id}-items"></tbody></table><button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addItemRow('${id}')">＋ إضافة صنف</button>
+        <div class="section-label">الأصناف</div>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="min-width:120px">الصنف</th>
+                    <th style="width:55px">الكمية</th>
+                    <th style="width:70px">السعر</th>
+                    <th style="width:65px; text-align: center;">الإجمالي</th>
+                    <th style="min-width:100px">المتجر</th>
+                    <th style="width:30px"></th>
+                </tr>
+            </thead>
+            <tbody id="${id}-items">
+            </tbody>
+        </table>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addItemRow('${id}')">＋ إضافة صنف</button>
         <div class="section-label">ملاحظات</div><textarea class="form-control" id="${id}-notes" rows="2" placeholder="ملاحظات اختيارية..."></textarea>
     </div>
     <div class="order-card-footer">
@@ -389,4 +448,11 @@
             showSuccess(editId ? data.message : 'تم حفظ الطلب ' + data.order_number); if (data.warning) showWarning(data.warning); document.getElementById(cardId)?.remove(); cardCount--; saveDrafts(); await loadActiveDeliveries(); refreshDeliveryDropdowns();
         } catch (e) { const errors = e.response?.data?.errors; if (errors) showError(Object.values(errors).flat().join(' | ')); else showError(e.response?.data?.message ?? 'حدث خطأ'); } finally { btn.disabled = false; btn.textContent = 'حفظ الطلب ✔'; }
     }
+
+    // Disable wheel on number inputs to prevent accidental value changes during scrolling
+    document.getElementById('cards-wrapper').addEventListener('wheel', function (e) {
+        if (e.target.type === 'number' && document.activeElement === e.target) {
+            e.target.blur();
+        }
+    });
 </script>

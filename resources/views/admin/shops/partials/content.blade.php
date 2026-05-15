@@ -31,8 +31,8 @@
             </div>
         </div>
         <div style="display: flex; gap: 5px; margin-bottom: 2px;">
-            <button class="btn btn-primary" onclick="loadShops(1)">🔍 بحث</button>
-            <button class="btn btn-secondary" onclick="resetFilters()">↺ إعادة</button>
+            <button class="btn btn-primary" onclick="loadShops(1)">بحث</button>
+            <button class="btn btn-secondary" onclick="resetFilters()">إعادة</button>
         </div>
     </div>
 </div>

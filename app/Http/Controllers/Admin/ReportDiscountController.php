@@ -18,15 +18,20 @@ class ReportDiscountController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        $admins = User::where('role', 'admin')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         if (request()->header('X-SPA-Navigation')) {
             return response()->json([
-                'html'       => view('admin.report-discounts.partials.content', compact('callcenters'))->render(),
+                'html'       => view('admin.report-discounts.partials.content', compact('callcenters', 'admins'))->render(),
                 'title'      => 'تقارير الخصومات',
                 'csrf_token' => csrf_token(),
             ]);
         }
 
-        return view('admin.report-discounts.index', compact('callcenters'));
+        return view('admin.report-discounts.index', compact('callcenters', 'admins'));
     }
 
     /**
@@ -56,11 +61,11 @@ class ReportDiscountController extends Controller
     public function data(Request $request)
     {
         $from = $request->filled('from')
-            ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from)->setTime(12, 0))[0]
+            ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0]
             : \App\Models\Setting::businessDayRange(now()->subDays(30))[0];
 
         $to = $request->filled('to')
-            ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to)->setTime(12, 0))[1]
+            ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]
             : \App\Models\Setting::businessDayRange(now())[1];
 
         $query = Order::with(['client', 'callcenter', 'admin', 'delivery', 'items'])
@@ -81,6 +86,9 @@ class ReportDiscountController extends Controller
         }
         if ($request->filled('callcenter_id')) {
             $query->where('callcenter_id', $request->callcenter_id);
+        }
+        if ($request->filled('admin_id')) {
+            $query->where('admin_id', $request->admin_id);
         }
 
         $orders = $query->latest()->get();

@@ -81,9 +81,11 @@ class WalletController extends Controller
         $transactions = (clone $query)
             ->orderBy('transaction_date', 'asc')
             ->orderBy('id', 'asc')
+            ->with('activityLog')
             ->get()
             ->map(fn(WalletTransaction $tx) => [
                 'id'               => $tx->id,
+                'log_id'           => $tx->activityLog?->id ?? '-',
                 'transaction_date' => $tx->transaction_date->format('Y-m-d'),
                 'description'      => $tx->description ?? '—',
                 'type_label'       => $tx->type_label,
@@ -121,11 +123,11 @@ class WalletController extends Controller
         $date     = $validated['date'] ?? now()->toDateString();
         $desc     = $validated['description'] ?? null;
 
-        DB::transaction(function () use ($cc, $delivery, $service, $validated, $date, $desc) {
+        $txIds = DB::transaction(function () use ($cc, $delivery, $service, $validated, $date, $desc): array {
             $ccWallet  = $cc->getOrCreateWallet();
             $delWallet = $delivery->getOrCreateWallet();
 
-            $service->debit(
+            $ccTx = $service->debit(
                 wallet:          $ccWallet,
                 amount:          (float) $validated['amount'],
                 type:            'cash_paid',
@@ -135,7 +137,7 @@ class WalletController extends Controller
                 date:            $date,
             );
 
-            $service->credit(
+            $delTx = $service->credit(
                 wallet:          $delWallet,
                 amount:          (float) $validated['amount'],
                 type:            'cash_received',
@@ -144,9 +146,11 @@ class WalletController extends Controller
                 relatedWalletId: $ccWallet->id,
                 date:            $date,
             );
+
+            return [$ccTx->id, $delTx->id];
         });
 
-        ActivityLog::log(
+        $log = ActivityLog::log(
             event:        'wallet.cc_pay_delivery',
             description:  $cc->name . ' دفع ' . number_format((float) $validated['amount'], 2) . ' ج إلى ' . $delivery->name,
             subjectType:  'wallet',
@@ -155,6 +159,9 @@ class WalletController extends Controller
             properties:   ['amount' => $validated['amount'], 'note' => $desc],
             causerId:     $cc->id,
         );
+
+        \App\Models\WalletTransaction::whereIn('id', $txIds)
+            ->update(['log_id' => $log->id]);
 
         return response()->json([
             'success' => true,
@@ -181,11 +188,11 @@ class WalletController extends Controller
         $date     = $validated['date'] ?? now()->toDateString();
         $desc     = $validated['description'] ?? null;
 
-        DB::transaction(function () use ($cc, $delivery, $service, $validated, $date, $desc) {
+        $txIds = DB::transaction(function () use ($cc, $delivery, $service, $validated, $date, $desc): array {
             $ccWallet  = $cc->getOrCreateWallet();
             $delWallet = $delivery->getOrCreateWallet();
 
-            $service->credit(
+            $ccTx = $service->credit(
                 wallet:          $ccWallet,
                 amount:          (float) $validated['amount'],
                 type:            'cash_received',
@@ -195,7 +202,7 @@ class WalletController extends Controller
                 date:            $date,
             );
 
-            $service->debit(
+            $delTx = $service->debit(
                 wallet:          $delWallet,
                 amount:          (float) $validated['amount'],
                 type:            'cash_paid',
@@ -204,9 +211,11 @@ class WalletController extends Controller
                 relatedWalletId: $ccWallet->id,
                 date:            $date,
             );
+
+            return [$ccTx->id, $delTx->id];
         });
 
-        ActivityLog::log(
+        $log = ActivityLog::log(
             event:        'wallet.cc_receive_delivery',
             description:  $cc->name . ' استلم ' . number_format((float) $validated['amount'], 2) . ' ج من ' . $delivery->name,
             subjectType:  'wallet',
@@ -215,6 +224,9 @@ class WalletController extends Controller
             properties:   ['amount' => $validated['amount'], 'note' => $desc],
             causerId:     $cc->id,
         );
+
+        \App\Models\WalletTransaction::whereIn('id', $txIds)
+            ->update(['log_id' => $log->id]);
 
         return response()->json([
             'success' => true,
@@ -229,6 +241,7 @@ class WalletController extends Controller
 
         $transaction = WalletTransaction::where('id', $id)
             ->where('wallet_id', $wallet->id)
+            ->with('activityLog')
             ->firstOrFail();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('callcenter.pdf.wallet-transaction', compact('transaction', 'user'))

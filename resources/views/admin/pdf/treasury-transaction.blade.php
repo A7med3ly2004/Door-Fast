@@ -163,7 +163,7 @@
     <div class="info-section">
         <table class="info-table">
             <tr>
-                <td style="font-weight: bold; color: #a10303ff; font-size: 16px;">{{ $transaction->id }}</td>
+                <td style="font-weight: bold; color: #a10303ff; font-size: 16px;">{{ $transaction->activityLog?->id ?? '-' }}</td>
                 <td class="info-label">{{ $ar('رقم العملية:') }}</td>
             </tr>
             <tr>

@@ -403,14 +403,7 @@
         gap: 6px;
     }
 
-    .shop-group-total-badge {
-        background: #1e40af;
-        color: white;
-        font-size: 12px;
-        font-weight: 700;
-        padding: 3px 10px;
-        border-radius: 20px;
-    }
+
 
     .shop-group-items {
         background: #ffffff;
@@ -754,7 +747,7 @@
                     <div class="shop-group">
                         <div class="shop-group-header">
                             <div class="shop-group-name">${group.name}</div>
-                            <div class="shop-group-total-badge">${group.total.toFixed(2)} ج</div>
+
                         </div>
                         <div class="shop-group-items">
                             ${itemsRows}

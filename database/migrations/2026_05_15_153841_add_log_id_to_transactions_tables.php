@@ -12,7 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('treasury_transactions', function (Blueprint $table) {
-            //
+            $table->unsignedBigInteger('log_id')->nullable()->after('id');
+            $table->foreign('log_id')->references('id')->on('activity_logs')->nullOnDelete();
+        });
+
+        Schema::table('wallet_transactions', function (Blueprint $table) {
+            $table->unsignedBigInteger('log_id')->nullable()->after('id');
+            $table->foreign('log_id')->references('id')->on('activity_logs')->nullOnDelete();
         });
     }
 
@@ -22,7 +28,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('treasury_transactions', function (Blueprint $table) {
-            //
+            $table->dropForeign(['log_id']);
+            $table->dropColumn('log_id');
+        });
+
+        Schema::table('wallet_transactions', function (Blueprint $table) {
+            $table->dropForeign(['log_id']);
+            $table->dropColumn('log_id');
         });
     }
 };

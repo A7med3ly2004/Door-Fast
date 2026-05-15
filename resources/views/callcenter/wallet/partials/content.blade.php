@@ -3,6 +3,18 @@ resources/views/callcenter/wallet/partials/content.blade.php
 كشف حسابي — خزينة الكول سينتر
 --}}
 
+<style>
+    /* Hide Spin Buttons */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
 <div class="section-header">
     <h2>كشف حسابي</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -213,6 +225,13 @@ resources/views/callcenter/wallet/partials/content.blade.php
     (function () {
         'use strict';
 
+        // Disable wheel on number inputs to prevent accidental value changes during scrolling
+        document.addEventListener('wheel', function (e) {
+            if (e.target.type === 'number' && document.activeElement === e.target) {
+                e.target.blur();
+            }
+        });
+
         // ── Filters ──────────────────────────────────────────────
         function getFilters() {
             return {
@@ -253,7 +272,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
 
                 tbody.innerHTML = transactions.map(tx => `
                 <tr>
-                    <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.id}</td>
+                    <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.log_id}</td>
                     <td style="text-align:center;">${formatDate(tx.transaction_date)}</td>
                     <td style="font-size:12px; text-align:right;">${escHtml(tx.description)}</td>
                     <td style="color:var(--success);font-weight:700; text-align:center;">${tx.debit || '—'}</td>

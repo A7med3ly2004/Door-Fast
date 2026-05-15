@@ -1,3 +1,15 @@
+<style>
+    /* Hide Spin Buttons */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
 <div class="section-header">
     <h2>كشف الحساب الخاص</h2>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -6,7 +18,7 @@
             استلام</button>
         <button class="btn btn-danger" onclick="openModal('modal-expense')">صرف مصروف</button>
         <a href="{{ route('admin.admin-ledger.export') }}" id="export-link" class="btn"
-            style="background:#217346;color:#fff;">تصدير Excel</a>
+            style="background:#217346;color:#fff;text-decoration: none;">تصدير Excel</a>
     </div>
 </div>
 
@@ -32,6 +44,11 @@
 {{-- Filters --}}
 <div class="card" style="margin-bottom:20px;">
     <div class="filter-bar" style="margin-bottom:0;">
+        <div>
+            <div class="form-label" style="margin-bottom:4px;">رقم العملية</div>
+            <input type="number" id="filter-log-id" class="form-control" placeholder="بحث برقم العملية..."
+                style="min-width:120px;" oninput="applyFilters()">
+        </div>
         <div>
             <div class="form-label" style="margin-bottom:4px;">من تاريخ</div>
             <input type="date" id="filter-from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
@@ -92,7 +109,8 @@
             <tbody id="ledger-tbody">
                 @forelse($initialData['rows'] as $row)
                     <tr>
-                        <td style="text-align:center;color:var(--text-muted);font-size:12px;">{{ $row['id'] }}</td>
+                        <td style="text-align:center;color:var(--text-muted);font-size:12px;">{{ $row['log_id'] ?? '-' }}
+                        </td>
                         <td style="text-align:center;">{{ $row['date'] }}</td>
                         <td>
                             <div style="font-size:13px;">{{ Str::limit($row['description'], 50) }}</div>
@@ -335,16 +353,25 @@
     (function () {
         'use strict';
 
+        // Disable wheel on number inputs to prevent accidental value changes during scrolling
+        document.addEventListener('wheel', function (e) {
+            if (e.target.type === 'number' && document.activeElement === e.target) {
+                e.target.blur();
+            }
+        });
+
         function getFilters() {
             const p = {};
             const from = document.getElementById('filter-from').value;
             const to = document.getElementById('filter-to').value;
             const cc = document.getElementById('filter-cc').value;
             const del = document.getElementById('filter-delivery').value;
+            const logId = document.getElementById('filter-log-id').value;
             if (from) p.date_from = from;
             if (to) p.date_to = to;
             if (cc) p.callcenter_id = cc;
             if (del) p.delivery_id = del;
+            if (logId) p.log_id = logId;
             return p;
         }
 
@@ -367,6 +394,7 @@
             document.getElementById('filter-to').value = '';
             document.getElementById('filter-cc').value = '';
             document.getElementById('filter-delivery').value = '';
+            document.getElementById('filter-log-id').value = '';
             applyFilters();
         };
 
@@ -379,7 +407,7 @@
             }
             tbody.innerHTML = data.rows.map(r => `
             <tr>
-                <td style="text-align:center;color:var(--text-muted);font-size:12px;">${r.id}</td>
+                <td style="text-align:center;color:var(--text-muted);font-size:12px;">${r.log_id}</td>
                 <td style="text-align:center;">${r.date}</td>
                 <td>
                     <div style="font-size:13px;">${r.description}</div>
@@ -508,7 +536,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
                 <div>
                     <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">رقم المعاملة</div>
-                    <code style="background:rgba(245,158,11,.12);color:var(--yellow);padding:4px 10px;border-radius:6px;font-size:15px;font-weight:700;letter-spacing:1px">${d.id}</code>
+                    <code style="background:rgba(245,158,11,.12);color:var(--yellow);padding:4px 10px;border-radius:6px;font-size:15px;font-weight:700;letter-spacing:1px">${d.log_id}</code>
                 </div>
                 <div style="text-align:center;">
                     <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">القيمة</div>

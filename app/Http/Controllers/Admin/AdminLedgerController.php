@@ -114,12 +114,12 @@ class AdminLedgerController extends Controller
         $note          = $validated['note'] ?? ('أصال دفع إلى ' . $employee->name);
         $amount        = (float) $validated['amount'];
 
-        DB::transaction(function () use ($admin, $employee, $walletService, $amount, $date, $note) {
+        $txIds = DB::transaction(function () use ($admin, $employee, $walletService, $amount, $date, $note) {
             $adminWallet    = $admin->getOrCreateWallet();
             $employeeWallet = $employee->getOrCreateWallet();
 
             // خصم من رصيد المدير (debit = خروج)
-            $walletService->debit(
+            $adminTx = $walletService->debit(
                 wallet:          $adminWallet,
                 amount:          $amount,
                 type:            'admin_pay',
@@ -130,7 +130,7 @@ class AdminLedgerController extends Controller
             );
 
             // إضافة لرصيد الموظف (credit = دخول)
-            $walletService->credit(
+            $empTx = $walletService->credit(
                 wallet:          $employeeWallet,
                 amount:          $amount,
                 type:            'cash_received',
@@ -139,9 +139,11 @@ class AdminLedgerController extends Controller
                 relatedWalletId: $adminWallet->id,
                 date:            $date
             );
+
+            return [$adminTx->id, $empTx->id];
         });
 
-        ActivityLog::log(
+        $log = ActivityLog::log(
             event:        'admin_ledger.pay',
             description:  'أصال دفع إلى ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج',
             subjectType:  'admin_ledger',
@@ -149,6 +151,8 @@ class AdminLedgerController extends Controller
             subjectLabel: $admin->name,
             properties:   ['employee_id' => $employee->id, 'amount' => $amount, 'note' => $note]
         );
+
+        \App\Models\WalletTransaction::whereIn('id', $txIds)->update(['log_id' => $log->id]);
 
         return response()->json([
             'success' => true,
@@ -181,12 +185,13 @@ class AdminLedgerController extends Controller
         $amount        = (float) $validated['amount'];
         $note          = $validated['note'] ?? null;
 
-        DB::transaction(function () use ($admin, $validated, $walletService, $amount, $date, $note) {
+        $txIds = DB::transaction(function () use ($admin, $validated, $walletService, $amount, $date, $note) {
             $adminWallet = $admin->getOrCreateWallet();
+            $results = ['ids' => [], 'event' => '', 'description' => '', 'properties' => []];
 
             if ($validated['employee_id'] === 'revenue') {
                 // ── إيراد: فقط زيادة حساب الأدمن — لا يوجد موظف ──────────────
-                $walletService->credit(
+                $tx = $walletService->credit(
                     wallet:      $adminWallet,
                     amount:      $amount,
                     type:        'admin_receive',
@@ -195,21 +200,17 @@ class AdminLedgerController extends Controller
                     date:        $date
                 );
 
-                ActivityLog::log(
-                    event:        'admin_ledger.revenue',
-                    description:  'إيراد في حساب ' . $admin->name . ' — ' . number_format($amount, 2) . ' ج',
-                    subjectType:  'admin_ledger',
-                    subjectId:    $admin->id,
-                    subjectLabel: $admin->name,
-                    properties:   ['amount' => $amount, 'note' => $note]
-                );
+                $results['ids'] = [$tx->id];
+                $results['event'] = 'admin_ledger.revenue';
+                $results['description'] = 'إيراد في حساب ' . $admin->name . ' — ' . number_format($amount, 2) . ' ج';
+                $results['properties'] = ['amount' => $amount, 'note' => $note];
             } else {
                 // ── استلام عادي من موظف ─────────────────────────────────────────
                 $employee       = User::findOrFail((int) $validated['employee_id']);
                 $employeeWallet = $employee->getOrCreateWallet();
 
                 // إضافة لرصيد المدير (credit = دخول)
-                $walletService->credit(
+                $adminTx = $walletService->credit(
                     wallet:          $adminWallet,
                     amount:          $amount,
                     type:            'admin_receive',
@@ -221,7 +222,7 @@ class AdminLedgerController extends Controller
 
                 // خصم من رصيد الموظف (debit = خروج)
                 $debitType = $employee->role === 'admin' ? 'admin_pay' : 'cash_paid';
-                $walletService->debit(
+                $empTx = $walletService->debit(
                     wallet:          $employeeWallet,
                     amount:          $amount,
                     type:            $debitType,
@@ -231,16 +232,24 @@ class AdminLedgerController extends Controller
                     date:            $date
                 );
 
-                ActivityLog::log(
-                    event:        'admin_ledger.receive',
-                    description:  'أصال استلام من ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج',
-                    subjectType:  'admin_ledger',
-                    subjectId:    $admin->id,
-                    subjectLabel: $admin->name,
-                    properties:   ['employee_id' => $employee->id, 'amount' => $amount, 'note' => $note]
-                );
+                $results['ids'] = [$adminTx->id, $empTx->id];
+                $results['event'] = 'admin_ledger.receive';
+                $results['description'] = 'أصال استلام من ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج';
+                $results['properties'] = ['employee_id' => $employee->id, 'amount' => $amount, 'note' => $note];
             }
+            return $results;
         });
+
+        $log = ActivityLog::log(
+            event:        $txIds['event'],
+            description:  $txIds['description'],
+            subjectType:  'admin_ledger',
+            subjectId:    $admin->id,
+            subjectLabel: $admin->name,
+            properties:   $txIds['properties']
+        );
+
+        \App\Models\WalletTransaction::whereIn('id', $txIds['ids'])->update(['log_id' => $log->id]);
 
         return response()->json([
             'success' => true,
@@ -267,11 +276,11 @@ class AdminLedgerController extends Controller
         $amount        = (float) $validated['amount'];
         $fullDesc      = $validated['description'] . ($validated['note'] ? ' — ' . $validated['note'] : '');
 
-        DB::transaction(function () use ($admin, $walletService, $amount, $date, $fullDesc) {
+        $txId = DB::transaction(function () use ($admin, $walletService, $amount, $date, $fullDesc) {
             $adminWallet = $admin->getOrCreateWallet();
 
             // خصم من رصيد المدير فقط — لا يؤثر على الخزينة أو أي رصيد آخر
-            $walletService->debit(
+            $tx = $walletService->debit(
                 wallet:      $adminWallet,
                 amount:      $amount,
                 type:        'admin_expense',
@@ -279,9 +288,10 @@ class AdminLedgerController extends Controller
                 createdBy:   $admin->id,
                 date:        $date
             );
+            return $tx->id;
         });
 
-        ActivityLog::log(
+        $log = ActivityLog::log(
             event:        'admin_ledger.expense',
             description:  'صرف مصروف — ' . $validated['description'] . ' — ' . number_format($amount, 2) . ' ج',
             subjectType:  'admin_ledger',
@@ -289,6 +299,8 @@ class AdminLedgerController extends Controller
             subjectLabel: $admin->name,
             properties:   ['description' => $validated['description'], 'amount' => $amount, 'note' => $validated['note'] ?? null]
         );
+
+        \App\Models\WalletTransaction::where('id', $txId)->update(['log_id' => $log->id]);
 
         return response()->json([
             'success' => true,
@@ -308,11 +320,12 @@ class AdminLedgerController extends Controller
         $tx = WalletTransaction::where('id', $id)
             ->where('wallet_id', $adminWallet->id)
             ->whereIn('type', ['admin_pay', 'admin_receive', 'admin_expense'])
-            ->with(['relatedWallet.user:id,name', 'createdBy:id,name'])
+            ->with(['relatedWallet.user:id,name', 'createdBy:id,name', 'activityLog'])
             ->firstOrFail();
 
         return response()->json([
             'id'              => $tx->id,
+            'log_id'          => $tx->activityLog?->id ?? '-',
             'date'            => $tx->transaction_date->format('d/m/Y'),
             'type'            => $tx->type,
             'type_label'      => $this->typeLabel($tx->type),
@@ -402,7 +415,7 @@ class AdminLedgerController extends Controller
 
         // Data rows
         foreach ($rows as $i => $row) {
-            $sheet->setCellValue([1, $i + 2], $row['id']);
+            $sheet->setCellValue([1, $i + 2], $row['log_id']);
             $sheet->setCellValue([2, $i + 2], $row['date']);
             $sheet->setCellValue([3, $i + 2], $row['description']);
             $sheet->setCellValue([4, $i + 2], $row['debit']);
@@ -468,14 +481,14 @@ class AdminLedgerController extends Controller
 
         $query = WalletTransaction::where('wallet_id', $adminWallet->id)
             ->whereIn('type', ['admin_pay', 'admin_receive', 'admin_expense'])
-            ->with(['relatedWallet.user:id,name']);
+            ->with(['relatedWallet.user:id,name', 'activityLog']);
 
         // فلتر التاريخ
         if ($request->filled('date_from')) {
-            $query->whereDate('transaction_date', '>=', $request->input('date_from'));
+            $query->where('transaction_date', '>=', $request->input('date_from'));
         }
         if ($request->filled('date_to')) {
-            $query->whereDate('transaction_date', '<=', $request->input('date_to'));
+            $query->where('transaction_date', '<=', $request->input('date_to'));
         }
 
         // فلتر الكول سنتر
@@ -494,6 +507,11 @@ class AdminLedgerController extends Controller
             if ($dWallet) {
                 $query->where('related_wallet_id', $dWallet->id);
             }
+        }
+
+        // فلتر رقم العملية
+        if ($request->filled('log_id')) {
+            $query->where('log_id', (int) $request->input('log_id'));
         }
 
         // ترتيب تصاعدي لحساب الرصيد التراكمي
@@ -522,6 +540,7 @@ class AdminLedgerController extends Controller
 
             return [
                 'id'              => $tx->id,
+                'log_id'          => $tx->activityLog?->id ?? '-',
                 'date'            => $tx->transaction_date->format('d/m/Y'),
                 'description'     => $tx->description ?? '—',
                 'type'            => $tx->type,

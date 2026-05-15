@@ -61,9 +61,11 @@ abstract class BaseDeliveryWalletController extends Controller
         $transactions = (clone $query)
             ->orderBy('transaction_date', 'asc')
             ->orderBy('id', 'asc')
+            ->with('activityLog')
             ->get()
             ->map(fn(WalletTransaction $tx) => [
                 'id'               => $tx->id,
+                'log_id'           => $tx->activityLog?->id ?? '-',
                 'transaction_date' => $tx->transaction_date->format('Y-m-d'),
                 'description'      => $tx->description ?? '—',
                 'debit'            => $tx->direction === 'debit'  ? number_format((float) $tx->amount, 2) : '',

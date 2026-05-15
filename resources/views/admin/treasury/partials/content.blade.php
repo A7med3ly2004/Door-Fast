@@ -37,6 +37,17 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         .pagination a {
             cursor: pointer;
         }
+
+        /* Hide Spin Buttons */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn" onclick="openPayToUserModal()" style="background:#0891b2;color:#fff;">
@@ -175,7 +186,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             <tbody id="ledger-tbody">
                 @forelse($initialTransactions as $tx)
                     <tr>
-                        <td style="color:var(--text-muted);font-size:12px; text-align:center;">{{ $tx->id }}</td>
+                        <td style="color:var(--text-muted);font-size:12px; text-align:center;">{{ $tx->activityLog?->id ?? '-' }}</td>
                         <td style="text-align:center;">{{ $tx->transaction_date->format('d/m/Y') }}</td>
                         <td style="text-align:center;">
                             @if($tx->type === 'expense')
@@ -646,6 +657,13 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
     (function () {
         'use strict';
 
+        // Disable wheel on number inputs to prevent accidental value changes during scrolling
+        document.addEventListener('wheel', function (e) {
+            if (e.target.type === 'number' && document.activeElement === e.target) {
+                e.target.blur();
+            }
+        });
+
         // ── State ────────────────────────────────────────────────────
         let currentPage = {{ $initialTransactions->currentPage() }};
 
@@ -747,7 +765,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
 
             tbody.innerHTML = payload.data.map(tx => `
             <tr>
-                <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.id}</td>
+                <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.log_id}</td>
                 <td style="text-align:center;">${formatDate(tx.transaction_date)}</td>
                 <td style="text-align:center;">${typeBadge(tx.type)}</td>
                 <td style="font-weight:700;text-align:center;">${tx.amount}</td>

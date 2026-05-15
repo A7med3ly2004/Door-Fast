@@ -90,6 +90,7 @@ class ActivityLogController extends Controller
     private function extractFilters(Request $request): array
     {
         return [
+            'log_id'       => $request->input('log_id') ? (int) $request->input('log_id') : null,
             'client_search'=> $request->input('client_search'),
             'order_number' => $request->input('order_number'),
             'delivery_id'  => $request->input('delivery_id') ? (int) $request->input('delivery_id') : null,
@@ -103,6 +104,11 @@ class ActivityLogController extends Controller
         $query = ActivityLog::query()
             ->searchClient($filters['client_search'])
             ->forOrderNumber($filters['order_number']);
+
+        // Log ID filter
+        if ($filters['log_id']) {
+            $query->where('id', $filters['log_id']);
+        }
 
         // Delivery filter
         if ($filters['delivery_id']) {

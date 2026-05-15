@@ -92,7 +92,7 @@ class WalletService
             $wallet->update(['balance' => $balanceAfter]);
 
             // تسجيل العملية
-            return WalletTransaction::create([
+            $transaction = WalletTransaction::create([
                 'wallet_id'         => $wallet->id,
                 'type'              => $type,
                 'amount'            => $amount,
@@ -104,6 +104,23 @@ class WalletService
                 'created_by'        => $createdBy,
                 'transaction_date'  => $date,
             ]);
+
+            // إرسال WebSocket Event للمندوب (إذا كانت المحفظة تابعة لمستخدم)
+            if ($wallet->user_id) {
+                try {
+                    broadcast(new \App\Events\WalletTransactionCreated([
+                        'user_id'   => $wallet->user_id,
+                        'balance'   => (float) $balanceAfter,
+                        'amount'    => (float) $amount,
+                        'type'      => $type,
+                        'direction' => $direction,
+                    ]))->toOthers();
+                } catch (\Exception $e) {
+                    \Log::error('❌ Wallet broadcast failed: ' . $e->getMessage());
+                }
+            }
+
+            return $transaction;
         });
     }
 }

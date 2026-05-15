@@ -225,12 +225,68 @@
         var STORE_URL = '{{ route("admin.orders.store") }}';
         var cardCount = 0;
         var MAX_CARDS = 4;
+        var DRAFTS_KEY = 'admin_drafts';
+
+        // ─── Save Drafts ──────────────────────────────────────────
+        function admSaveDrafts() {
+            var drafts = [];
+            document.querySelectorAll('#adm-cards-wrapper .order-card').forEach(function (card) {
+                var id = card.id; var items = [];
+                card.querySelectorAll('.items-table tbody tr').forEach(function (tr) {
+                    var inputs = tr.querySelectorAll('input'); var sel = tr.querySelector('select');
+                    if (inputs.length >= 3) items.push({ name: inputs[0].value, qty: inputs[1].value, price: inputs[2].value, shop: sel ? sel.value : '' });
+                });
+                var el = function (s) { return document.getElementById(id + '-' + s); };
+                drafts.push({
+                    id: id,
+                    phone: el('phone')?.value || '', phone2: el('phone2')?.value || '',
+                    code: el('code')?.value || '', name: el('name')?.value || '',
+                    cliId: el('client-id')?.value || '', cliFound: el('client-found')?.value || '0',
+                    addrSelHtml: el('address-sel')?.innerHTML || '',
+                    addrSelVal: el('address-sel')?.value || '',
+                    addrSelDisplay: el('address-sel')?.style.display || '',
+                    addrTxt: el('address-txt')?.value || '',
+                    addrTxtDisplay: el('address-txt')?.style.display || '',
+                    isNewAddr: el('is-new-addr')?.value || '0',
+                    delivery: el('delivery')?.value || '',
+                    stOpen: el('sendto')?.classList.contains('open') || false,
+                    stPhone: el('st-phone')?.value || '', stPhone2: el('st-phone2')?.value || '',
+                    stAddrWrap: el('st-addr-wrap')?.innerHTML || '',
+                    stAddrVal: el('st-addr-txt')?.value || '',
+                    stCode: el('st-code')?.value || '', stName: el('st-name')?.value || '',
+                    stClientId: el('st-client-id')?.value || '', stClientFound: el('st-client-found')?.value || '0',
+                    clientDeliveryLink: el('client-delivery-link')?.value || '',
+                    stDeliveryLink: el('st-delivery-link')?.value || '',
+                    notes: el('notes')?.value || '',
+                    fee: el('fee')?.value || '0', disc: el('disc')?.value || '0',
+                    discType: el('disc-type')?.value || 'amount',
+                    items: items
+                });
+            });
+            sessionStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+        }
+
+        // ─── Init Page ────────────────────────────────────────────
+        function admInitPage() {
+            var stored = sessionStorage.getItem(DRAFTS_KEY);
+            if (stored) {
+                try {
+                    var drafts = JSON.parse(stored);
+                    if (drafts.length) { drafts.forEach(function (d) { admAddCard(d); }); }
+                    else { admAddCard(); }
+                } catch (e) { admAddCard(); }
+            } else { admAddCard(); }
+        }
+
+        document.getElementById('adm-cards-wrapper').addEventListener('input', function () { setTimeout(admSaveDrafts, 100); });
+        document.getElementById('adm-cards-wrapper').addEventListener('change', function () { setTimeout(admSaveDrafts, 100); });
+        document.getElementById('adm-cards-wrapper').addEventListener('click', function () { setTimeout(admSaveDrafts, 100); });
 
         // ─── Add Card ─────────────────────────────────────────────
-        window.admAddCard = function () {
-            if (cardCount >= MAX_CARDS) { if (typeof showWarning === 'function') showWarning('الحد الأقصى 4 فواتير'); return; }
+        window.admAddCard = function (draft) {
+            if (!draft && cardCount >= MAX_CARDS) { if (typeof showWarning === 'function') showWarning('الحد الأقصى 4 فواتير'); return; }
             cardCount++;
-            var id = 'adm-card-' + Date.now();
+            var id = draft ? draft.id : ('adm-card-' + Date.now());
             var now = new Date().toLocaleString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             var shopOpts = SHOPS.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             var delivOpts = DELIVERIES.length
@@ -331,15 +387,62 @@
 
             document.getElementById('adm-cards-wrapper').insertBefore(card, document.getElementById('adm-add-btn'));
 
-            // Add 3 default item rows
-            for (let i = 0; i < 3; i++) admAddItemRow(id);
-            admResetAddressSection(id, false);
+            if (!draft) {
+                for (let i = 0; i < 3; i++) admAddItemRow(id);
+                admResetAddressSection(id, false);
+                admSaveDrafts();
+            } else {
+                var el = function (s) { return document.getElementById(id + '-' + s); };
+                if (el('phone')) el('phone').value = draft.phone || '';
+                if (el('phone2')) el('phone2').value = draft.phone2 || '';
+                if (el('code')) el('code').value = draft.code || '';
+                if (el('name')) el('name').value = draft.name || '';
+                if (el('client-id')) el('client-id').value = draft.cliId || '';
+                if (el('client-found')) el('client-found').value = draft.cliFound || '0';
+                if (el('address-sel')) { el('address-sel').innerHTML = draft.addrSelHtml || ''; el('address-sel').value = draft.addrSelVal || ''; el('address-sel').style.display = draft.addrSelDisplay || ''; }
+                if (el('address-txt')) { el('address-txt').value = draft.addrTxt || ''; el('address-txt').style.display = draft.addrTxtDisplay || ''; }
+                if (el('is-new-addr')) el('is-new-addr').value = draft.isNewAddr || '0';
+                if (el('delivery')) el('delivery').value = draft.delivery || '';
+                if (draft.stOpen && el('sendto')) el('sendto').classList.add('open');
+                if (el('st-phone')) el('st-phone').value = draft.stPhone || '';
+                if (el('st-phone2')) el('st-phone2').value = draft.stPhone2 || '';
+                if (el('st-addr-wrap')) { el('st-addr-wrap').innerHTML = draft.stAddrWrap || el('st-addr-wrap').innerHTML; if (el('st-addr-txt') && draft.stAddrVal) el('st-addr-txt').value = draft.stAddrVal; }
+                if (el('st-code')) el('st-code').value = draft.stCode || '';
+                if (el('st-name')) el('st-name').value = draft.stName || '';
+                if (el('st-client-id')) el('st-client-id').value = draft.stClientId || '';
+                if (el('st-client-found')) el('st-client-found').value = draft.stClientFound || '0';
+                if (el('client-delivery-link')) el('client-delivery-link').value = draft.clientDeliveryLink || '';
+                if (el('st-delivery-link')) el('st-delivery-link').value = draft.stDeliveryLink || '';
+                if (el('notes')) el('notes').value = draft.notes || '';
+                if (el('fee')) el('fee').value = draft.fee || '0';
+                if (el('disc')) el('disc').value = draft.disc || '0';
+                if (el('disc-type')) el('disc-type').value = draft.discType || 'amount';
+                if (el('disc-jm')) el('disc-jm').classList.toggle('active', draft.discType !== 'percent');
+                if (el('disc-pct')) el('disc-pct').classList.toggle('active', draft.discType === 'percent');
+                if (draft.items && draft.items.length) {
+                    draft.items.forEach(function (item) {
+                        admAddItemRow(id);
+                        var tbody = el('items');
+                        if (tbody && tbody.lastElementChild) {
+                            var inputs = tbody.lastElementChild.querySelectorAll('input');
+                            var selShop = tbody.lastElementChild.querySelector('select');
+                            if (inputs[0]) inputs[0].value = item.name;
+                            if (inputs[1]) inputs[1].value = item.qty;
+                            if (inputs[2]) inputs[2].value = item.price;
+                            if (selShop) { if (selShop.tomselect) selShop.tomselect.setValue(item.shop || ''); else selShop.value = item.shop || ''; }
+                        }
+                    });
+                }
+                admCalcTotals(id);
+                admUpdateSubmitBtn(id);
+            }
         };
 
         // ─── Remove Card ──────────────────────────────────────────
         window.admRemoveCard = function (id) {
             document.getElementById(id)?.remove();
             cardCount--;
+            admSaveDrafts();
         };
 
         // ─── Client Search ────────────────────────────────────────
@@ -362,11 +465,13 @@
                     document.getElementById(cardId + '-client-id').value = '';
                     admResetAddressSection(cardId, false);
                 }
+                admSaveDrafts();
             } catch (e) { }
         };
 
         window.admGenCode = function (cardId) {
             document.getElementById(cardId + '-code').value = String(Math.floor(10000 + Math.random() * 90000));
+            admSaveDrafts();
         };
 
         // ─── Address Section ─────────────────────────────────────
@@ -400,21 +505,23 @@
             var isNew = document.getElementById(cardId + '-is-new-addr');
             if (sel.value === '__new__') { txt.style.display = ''; txt.focus(); isNew.value = '1'; }
             else { txt.style.display = 'none'; isNew.value = '0'; }
+            admSaveDrafts();
         };
 
         // ─── Send-to Toggle ───────────────────────────────────────
         window.admToggleSendTo = function (cardId) {
             document.getElementById(cardId + '-sendto').classList.toggle('open');
+            admSaveDrafts();
         };
         window.admStSearchByPhone = async function (cardId) {
             var phone = document.getElementById(cardId + '-st-phone').value.trim(); var wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!phone) return;
-            try { var { data } = await axios.get(SEARCH_URL, { params: { phone } }); if (data.found) { document.getElementById(cardId + '-st-name').value = data.name; document.getElementById(cardId + '-st-code').value = data.code; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { var html = `<select class="form-select" id="${cardId}-st-addr-txt">`; data.addresses.forEach(a => { html += `<option value="${a.address}">${a.address}</option>`; }); html += '</select>'; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-name').value = ''; document.getElementById(cardId + '-st-code').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } } catch (e) { }
+            try { var { data } = await axios.get(SEARCH_URL, { params: { phone } }); if (data.found) { document.getElementById(cardId + '-st-name').value = data.name; document.getElementById(cardId + '-st-code').value = data.code; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { var html = `<select class="form-select" id="${cardId}-st-addr-txt">`; data.addresses.forEach(a => { html += `<option value="${a.address}">${a.address}</option>`; }); html += '</select>'; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-name').value = ''; document.getElementById(cardId + '-st-code').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } admSaveDrafts(); } catch (e) { }
         };
         window.admStSearchByCode = async function (cardId) {
             var code = document.getElementById(cardId + '-st-code').value.trim(); var wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!code) return;
-            try { var { data } = await axios.get(SEARCH_URL, { params: { code } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { var html = `<select class="form-select" id="${cardId}-st-addr-txt">`; data.addresses.forEach(a => { html += `<option value="${a.address}">${a.address}</option>`; }); html += '</select>'; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-phone').value = ''; document.getElementById(cardId + '-st-name').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } } catch (e) { }
+            try { var { data } = await axios.get(SEARCH_URL, { params: { code } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { var html = `<select class="form-select" id="${cardId}-st-addr-txt">`; data.addresses.forEach(a => { html += `<option value="${a.address}">${a.address}</option>`; }); html += '</select>'; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-phone').value = ''; document.getElementById(cardId + '-st-name').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } admSaveDrafts(); } catch (e) { }
         };
-        window.admStGenCode = function (cardId) { document.getElementById(cardId + '-st-code').value = String(Math.floor(10000 + Math.random() * 90000)); };
+        window.admStGenCode = function (cardId) { document.getElementById(cardId + '-st-code').value = String(Math.floor(10000 + Math.random() * 90000)); admSaveDrafts(); };
 
         // ─── Item Rows ────────────────────────────────────────────
         window.admAddItemRow = function (cardId) {
@@ -437,6 +544,7 @@
                     sortField: { field: "text", direction: "asc" }
                 });
             }
+            admSaveDrafts();
         };
 
         window.admCalcRow = function (input) {
@@ -449,6 +557,7 @@
         window.admDelRow = function (rowId, cardId) {
             document.getElementById(rowId)?.remove();
             admCalcTotals(cardId);
+            admSaveDrafts();
         };
 
         // ─── Totals ───────────────────────────────────────────────
@@ -475,6 +584,7 @@
             document.getElementById(cardId + '-disc-jm').classList.toggle('active', type === 'amount');
             document.getElementById(cardId + '-disc-pct').classList.toggle('active', type === 'percent');
             admCalcTotals(cardId);
+            admSaveDrafts();
         };
 
         // ─── Update Submit Button & Hint based on delivery selection ──
@@ -504,6 +614,7 @@
             admResetAddressSection(cardId, false, []);
             admCalcTotals(cardId);
             for (let i = 0; i < 3; i++) admAddItemRow(cardId);
+            admSaveDrafts();
         };
 
         // ─── Save Card ────────────────────────────────────────────
@@ -589,6 +700,7 @@
                 if (data.warning && typeof showWarning === 'function') showWarning(data.warning);
                 document.getElementById(cardId)?.remove();
                 cardCount--;
+                admSaveDrafts();
             } catch (e) {
                 var errors = e.response?.data?.errors;
                 var msg = errors ? Object.values(errors).flat().join(' | ') : (e.response?.data?.message ?? 'حدث خطأ');
@@ -602,7 +714,7 @@
         };
 
         // ─── Boot — add first card on page load ──────────────────
-        window.admAddCard();
+        admInitPage();
 
     })();
 </script>

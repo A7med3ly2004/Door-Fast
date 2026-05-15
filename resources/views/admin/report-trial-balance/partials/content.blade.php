@@ -13,6 +13,11 @@
 <div class="filter-bar" style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px; padding: 10px;
     margin-bottom: 25px; gap: 10px; align-items: flex-end;">
     <div>
+        <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث</label>
+        <input type="text" id="rtb-search" class="form-control" placeholder="بحث بالاسم أو كود الموظف"
+            style="min-width: 200px;">
+    </div>
+    <div>
         <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ من</label>
         <input type="date" id="rtb-from" class="form-control" placeholder="من تاريخ">
     </div>
@@ -49,11 +54,6 @@
                     onclick="selectDropdown('rtb-role', 'discount', 'خصومات')">خصومات</div>
             </div>
         </div>
-    </div>
-    <div>
-        <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث</label>
-        <input type="text" id="rtb-search" class="form-control" placeholder="بحث بالاسم أو كود الموظف"
-            style="min-width: 200px;">
     </div>
     <div style="display: flex; gap: 5px; margin-bottom: 2px;">
         <button class="btn btn-primary" onclick="loadTrialBalance()"

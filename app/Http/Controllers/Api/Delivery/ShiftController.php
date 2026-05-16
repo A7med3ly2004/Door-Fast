@@ -146,8 +146,12 @@ class ShiftController extends Controller
     public function status(Request $request)
     {
         $delivery = $request->user();
+        [$startOfToday] = \App\Models\Setting::businessDayRange();
+        $businessDate = $startOfToday->toDateString();
 
         $shift = Shift::where('delivery_id', $delivery->id)
+            ->where('date', $businessDate)   // ← أضف هذا الفلتر
+            ->where('is_active', true)
             ->whereNull('ended_at')
             ->first();
 
@@ -166,9 +170,12 @@ class ShiftController extends Controller
     public function shiftTimes(Request $request)
     {
         $delivery = $request->user();
+        [$startOfToday] = \App\Models\Setting::businessDayRange(); // ← أضف
+        $businessDate = $startOfToday->toDateString();
 
         // Get the latest shift regardless of status
         $shift = Shift::where('delivery_id', $delivery->id)
+            ->where('date', $businessDate) 
             ->latest('id')
             ->first();
 

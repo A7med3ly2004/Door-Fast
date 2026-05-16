@@ -16,6 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 
     {{-- TomSelect for searchable selects --}}
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
@@ -596,7 +597,7 @@
             cursor: pointer;
         }
 
-        .ts-control > input {
+        .ts-control>input {
             color: var(--text) !important;
             font-family: 'Cairo', sans-serif !important;
         }
@@ -1575,6 +1576,23 @@
                 labelEl.innerText = label;
             }
         };
+    </script>
+
+    <script>
+        (function () {
+            try {
+                window._adminNotifChannel = new Pusher(
+                    '{{ config("broadcasting.connections.pusher.key") }}',
+                    {
+                        cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}',
+                        forceTLS: true
+                    }
+                ).subscribe('admin-notifications');
+            } catch (e) {
+                console.warn('Pusher init failed:', e);
+                window._adminNotifChannel = null;
+            }
+        })();
     </script>
 
     @stack('scripts')

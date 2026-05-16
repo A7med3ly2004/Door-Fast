@@ -43,7 +43,7 @@
                                 <button id="status-btn-{{ $d['id'] }}"
                                     onclick="toggleActive({{ $d['id'] }}, this, {{ json_encode($d) }})"
                                     style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
-                                            {{ $d['is_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                                    {{ $d['is_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
                                     data-active="{{ $d['is_active'] ? '1' : '0' }}">
                                     {{ $d['is_active'] ? '✓ نشط' : '✗ غير نشط' }}
                                 </button>
@@ -51,7 +51,7 @@
                             <td style="text-align: center;">
                                 <button id="shift-btn-{{ $d['id'] }}" onclick="toggleShiftDelivery({{ $d['id'] }}, this)"
                                     style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
-                                            {{ $d['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                                    {{ $d['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
                                     data-active="{{ $d['shift_active'] ? '1' : '0' }}">
                                     {{ $d['shift_active'] ? '⏱ تعمل الآن' : '⏸ متوقفة' }}
                                 </button>
@@ -111,7 +111,7 @@
                                 <button id="status-btn-{{ $d['id'] }}"
                                     onclick="toggleActive({{ $d['id'] }}, this, {{ json_encode($d) }})"
                                     style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
-                                            {{ $d['is_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                                    {{ $d['is_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
                                     data-active="{{ $d['is_active'] ? '1' : '0' }}">
                                     {{ $d['is_active'] ? '✓ نشط' : '✗ غير نشط' }}
                                 </button>
@@ -119,7 +119,7 @@
                             <td style="text-align: center;">
                                 <button id="shift-btn-{{ $d['id'] }}" onclick="toggleShiftDelivery({{ $d['id'] }}, this)"
                                     style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
-                                            {{ $d['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                                    {{ $d['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
                                     data-active="{{ $d['shift_active'] ? '1' : '0' }}">
                                     {{ $d['shift_active'] ? '⏱ تعمل الآن' : '⏸ متوقفة' }}
                                 </button>
@@ -252,7 +252,7 @@
                     <div class="form-group"><label class="form-label">هاتف شخصي</label><input id="view-personal-phone"
                             type="text" class="form-control" readonly
                             style="background: var(--bg-light); cursor: not-allowed;"></div>
-                    
+
                 </div>
                 <div class="form-group">
                     <label class="form-label">الحالة</label>
@@ -367,16 +367,16 @@
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                        <td>الشريحة ${i}</td>
-                        <td><input type="number" class="form-control" value="${fromVal}" readonly disabled></td>
-                        <td>
-                            ${i < 5
+                            <td>الشريحة ${i}</td>
+                            <td><input type="number" class="form-control" value="${fromVal}" readonly disabled></td>
+                            <td>
+                                ${i < 5
                         ? `<input type="number" class="form-control slice-to" data-idx="${i - 1}" value="${s.to}" oninput="updateSlicesRanges()">`
                         : `<input type="text" class="form-control" value="∞ (إلى ما لا نهاية)" disabled>`
                     }
-                        </td>
-                        <td><input type="number" class="form-control slice-amount" data-idx="${i - 1}" value="${s.amount}" step="0.1"></td>
-                    `;
+                            </td>
+                            <td><input type="number" class="form-control slice-amount" data-idx="${i - 1}" value="${s.amount}" step="0.1"></td>
+                        `;
                 body.appendChild(tr);
             }
         }
@@ -516,6 +516,20 @@
             exportToExcel(mapped, columns, 'delivery-' + new Date().toISOString().slice(0, 10), 'المناديب');
             showSuccess('تم التصدير');
         }
+
+        (function waitForChannel() {
+            if (window._adminNotifChannel) {
+                window._adminNotifChannel.bind('shifts.auto_ended', function (e) {
+                    const ids = e.delivery_ids || [];
+                    ids.forEach(function (id) {
+                        const btn = document.getElementById('shift-btn-' + id);
+                        if (btn) applyShiftBtn(btn, false);
+                    });
+                });
+            } else {
+                setTimeout(waitForChannel, 200);
+            }
+        })();
 
     </script>
 @endpush

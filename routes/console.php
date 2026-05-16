@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 Schedule::job(new \App\Jobs\CheckDelayedDeliveryOrders)->everyFiveMinutes();
 Schedule::job(new \App\Jobs\CheckUnacceptedOrders)->everyFiveMinutes();
+Schedule::job(new \App\Jobs\AutoEndShifts)->everyMinute();

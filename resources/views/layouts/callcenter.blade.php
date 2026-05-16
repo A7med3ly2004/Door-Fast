@@ -15,7 +15,8 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+    <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+
     {{-- TomSelect for searchable selects --}}
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
@@ -456,7 +457,7 @@
             cursor: pointer;
         }
 
-        .ts-control > input {
+        .ts-control>input {
             color: var(--text) !important;
             font-family: 'Cairo', sans-serif !important;
         }
@@ -1120,14 +1121,15 @@
         <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
             <strong>التنبيهات</strong>
             <button onclick="ccMarkAllRead()" class="btn btn-sm btn-secondary"
-                style="border:1px solid var(--border);border-radius:6px;background:none;background-color:#bd3434;cursor:pointer;padding:4px 8px;font-size:11px;">تحديد كمقروء</button>
+                style="border:1px solid var(--border);border-radius:6px;background:none;background-color:#bd3434;cursor:pointer;padding:4px 8px;font-size:11px;">تحديد
+                كمقروء</button>
         </div>
         <div id="cc-notif-list" style="padding:8px 0;"></div>
     </div>
 
     <script>
         // ── CallCenter Notifications ──────────────────────────────────
-        var _ccNotifOpen  = false;
+        var _ccNotifOpen = false;
         var _ccNotifCount = 0;
 
         function toggleCCNotifPanel() {
@@ -1138,7 +1140,7 @@
 
         async function loadCCNotifications() {
             try {
-                var res  = await axios.get('/callcenter/notifications');
+                var res = await axios.get('/callcenter/notifications');
                 var list = document.getElementById('cc-notif-list');
                 _ccNotifCount = res.data.unread_count;
                 updateCCNotifBadge();
@@ -1200,9 +1202,9 @@
         setInterval(_refreshCCNotifCount, 30000);
 
         // إغلاق اللوحة عند الضغط خارجها
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             var panel = document.getElementById('cc-notif-panel');
-            var bell  = e.target.closest('[onclick="toggleCCNotifPanel()"]');
+            var bell = e.target.closest('[onclick="toggleCCNotifPanel()"]');
             if (!bell && !panel.contains(e.target)) {
                 _ccNotifOpen = false;
                 panel.style.display = 'none';
@@ -1303,6 +1305,23 @@
                 window.reinitCCWalletSelects();
             }
         });
+    </script>
+
+    <script>
+        (function () {
+            try {
+                window._adminNotifChannel = new Pusher(
+                    '{{ config("broadcasting.connections.pusher.key") }}',
+                    {
+                        cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}',
+                        forceTLS: true
+                    }
+                ).subscribe('admin-notifications');
+            } catch (e) {
+                console.warn('Pusher init failed:', e);
+                window._adminNotifChannel = null;
+            }
+        })();
     </script>
 
     @stack('scripts')

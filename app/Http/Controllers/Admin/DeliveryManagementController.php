@@ -155,8 +155,38 @@ class DeliveryManagementController extends Controller
                 subjectId: $user->id,
                 subjectLabel: $user->name
             );
-        }
 
+            // ✅ عند التعطيل: احذف الـ tokens + أرسل event فوري للموبايل
+            if (!$data['is_active']) {
+                // الطبقة الثانية: أي API call قادم يرجع 401 → logout تلقائي
+                $user->tokens()->where('name', 'delivery-mobile')->delete();
+
+                // الطبقة الأولى: إشعار فوري للموبايل عبر WebSocket
+                try {
+                    $pusher = new \Pusher\Pusher(
+                        config('broadcasting.connections.pusher.key'),
+                        config('broadcasting.connections.pusher.secret'),
+                        config('broadcasting.connections.pusher.app_id'),
+                        [
+                            'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+                            'useTLS' => true,
+                            'curl_options' => [
+                                CURLOPT_SSL_VERIFYHOST => 0,
+                                CURLOPT_SSL_VERIFYPEER => 0,
+                            ],
+                        ]
+                    );
+                    $pusher->trigger(
+                        'delivery.' . $user->id,
+                        'account.deactivated',
+                        ['user_id' => $user->id]
+                    );
+                    \Log::info('account.deactivated sent to delivery.' . $user->id);
+                } catch (\Exception $e) {
+                    \Log::error('account.deactivated push failed: ' . $e->getMessage());
+                }
+            }
+        }
 
         return response()->json(['success' => true, 'message' => 'تم تحديث المندوب']);
     }

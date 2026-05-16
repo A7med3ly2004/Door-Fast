@@ -1,7 +1,11 @@
 {{-- Callcenter Delivery SPA partial --}}
-<div class="section-header"><h2>إدارة المناديب</h2></div>
+<div class="section-header">
+    <h2>إدارة المناديب</h2>
+</div>
 <div class="card" style="padding:0;position:relative">
-    <div class="loading-overlay" id="tbl-loading"><div class="spin"></div></div>
+    <div class="loading-overlay" id="tbl-loading">
+        <div class="spin"></div>
+    </div>
     <div class="table-wrap">
         <table>
             <thead>
@@ -14,7 +18,9 @@
                 </tr>
             </thead>
             <tbody id="delivery-body">
-                <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">جاري التحميل...</td></tr>
+                <tr>
+                    <td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">جاري التحميل...</td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -37,28 +43,28 @@
 </div>
 
 <script>
-(function () {
-    // ─────────────────────────────────────────────────────────────
-    // Render table rows
-    // ─────────────────────────────────────────────────────────────
-    function renderDeliveries(data) {
-        var body = document.getElementById('delivery-body');
-        if (!data || !data.length) {
-            body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">لا يوجد مناديب نشطون</td></tr>';
-            return;
-        }
+    (function () {
+        // ─────────────────────────────────────────────────────────────
+        // Render table rows
+        // ─────────────────────────────────────────────────────────────
+        function renderDeliveries(data) {
+            var body = document.getElementById('delivery-body');
+            if (!data || !data.length) {
+                body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">لا يوجد مناديب نشطون</td></tr>';
+                return;
+            }
 
-        body.innerHTML = data.map(d => {
-            const isOn   = !!d.is_on_shift;
-            const btnBg  = isOn ? 'rgba(34,197,94,.15)' : 'rgba(220,38,38,.12)';
-            const btnClr = isOn ? 'var(--success)'       : 'var(--red)';
-            const btnTxt = isOn ? '✓ في الوردية'         : '✗ خارج الوردية';
+            body.innerHTML = data.map(d => {
+                const isOn = !!d.is_on_shift;
+                const btnBg = isOn ? 'rgba(34,197,94,.15)' : 'rgba(220,38,38,.12)';
+                const btnClr = isOn ? 'var(--success)' : 'var(--red)';
+                const btnTxt = isOn ? '✓ في الوردية' : '✗ خارج الوردية';
 
-            const badge = d.role === 'reserve_delivery'
-                ? '<span class="badge" style="background:var(--yellow);color:#000;font-size:10px;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-right:4px;">احتياطي</span>'
-                : '';
+                const badge = d.role === 'reserve_delivery'
+                    ? '<span class="badge" style="background:var(--yellow);color:#000;font-size:10px;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-right:4px;">احتياطي</span>'
+                    : '';
 
-            return `
+                return `
                 <tr>
                     <td style="text-align: center;"><strong>${escHtml(d.name)}</strong> ${badge}</td>
                     <td style="text-align: center;">${d.phone ?? '—'}</td>
@@ -75,40 +81,40 @@
                         <button class="btn btn-sm btn-info" style="font-size: 12px; padding: 4px 10px;" onclick="event.stopPropagation();openUserStatement(${d.id}, '${escAttr(d.name)}')" title="كشف حساب">كشف حساب</button>
                     </td>
                 </tr>`;
-        }).join('');
-    }
+            }).join('');
+        }
 
-    // ─────────────────────────────────────────────────────────────
-    // User statement modal
-    // ─────────────────────────────────────────────────────────────
-    window.openUserStatement = async function (userId, name) {
-        document.getElementById('stmt-user-name').textContent = name;
-        document.getElementById('stmt-modal-body').innerHTML = `
+        // ─────────────────────────────────────────────────────────────
+        // User statement modal
+        // ─────────────────────────────────────────────────────────────
+        window.openUserStatement = async function (userId, name) {
+            document.getElementById('stmt-user-name').textContent = name;
+            document.getElementById('stmt-modal-body').innerHTML = `
             <div style="text-align:center;padding:40px;color:var(--text-muted);">
                 <div class="spin" style="width:30px;height:30px;border-width:3px;margin:0 auto 12px;"></div>
                 جاري التحميل...
             </div>`;
-        openModal('modal-user-statement');
+            openModal('modal-user-statement');
 
-        try {
-            const res = await axios.get(`/callcenter/delivery/${userId}/statement`);
-            renderStatement(res.data);
-        } catch (e) {
-            document.getElementById('stmt-modal-body').innerHTML =
-                '<div style="color:var(--red);text-align:center;padding:30px;">حدث خطأ أثناء تحميل كشف الحساب</div>';
-            console.error('Statement fetch error', e);
-        }
-    };
+            try {
+                const res = await axios.get(`/callcenter/delivery/${userId}/statement`);
+                renderStatement(res.data);
+            } catch (e) {
+                document.getElementById('stmt-modal-body').innerHTML =
+                    '<div style="color:var(--red);text-align:center;padding:30px;">حدث خطأ أثناء تحميل كشف الحساب</div>';
+                console.error('Statement fetch error', e);
+            }
+        };
 
-    function renderStatement(data) {
-        const s = data.summary;
-        const txs = data.transactions;
+        function renderStatement(data) {
+            const s = data.summary;
+            const txs = data.transactions;
 
-        let transactionsHtml = '';
-        if (txs.length === 0) {
-            transactionsHtml = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">لا توجد عمليات</td></tr>`;
-        } else {
-            transactionsHtml = txs.map(tx => `
+            let transactionsHtml = '';
+            if (txs.length === 0) {
+                transactionsHtml = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px;">لا توجد عمليات</td></tr>`;
+            } else {
+                transactionsHtml = txs.map(tx => `
                 <tr>
                     <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.id}</td>
                     <td style="text-align:center;">${formatDate(tx.transaction_date)}</td>
@@ -118,9 +124,9 @@
                     <td style="font-weight:700;color:var(--yellow); text-align:center;">${tx.balance_after}</td>
                 </tr>
             `).join('');
-        }
+            }
 
-        document.getElementById('stmt-modal-body').innerHTML = `
+            document.getElementById('stmt-modal-body').innerHTML = `
             <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
                 <div class="kpi-card green">
                     <div class="kpi-label">إجمالي المدين</div>
@@ -155,97 +161,107 @@
                 </table>
             </div>
         `;
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Toggle shift — PATCH /callcenter/delivery/{id}/toggle
-    // ─────────────────────────────────────────────────────────────
-    window.toggleShift = async function(id, btn) {
-        const wasActive = btn.dataset.active === '1';
-        applyShiftBtn(btn, !wasActive);   // optimistic update
-        btn.disabled = true;
-        try {
-            const { data } = await axios.patch(`/callcenter/delivery/${id}/toggle`);
-            if (typeof showSuccess === 'function') showSuccess(data.message);
-            await reloadDeliveries();     // refresh the whole table from server
-        } catch(e) {
-            applyShiftBtn(btn, wasActive); // revert
-            const msg = e.response?.data?.message ?? 'حدث خطأ أثناء تغيير حالة الوردية';
-            if (typeof showError === 'function') showError(msg);
-        } finally {
-            btn.disabled = false;
         }
-    };
 
-    function applyShiftBtn(btn, active) {
-        btn.dataset.active = active ? '1' : '0';
-        if (active) {
-            btn.style.background = 'rgba(34,197,94,.15)';
-            btn.style.color      = 'var(--success)';
-            btn.textContent      = '✓ في الوردية';
+        // ─────────────────────────────────────────────────────────────
+        // Toggle shift — PATCH /callcenter/delivery/{id}/toggle
+        // ─────────────────────────────────────────────────────────────
+        window.toggleShift = async function (id, btn) {
+            const wasActive = btn.dataset.active === '1';
+            applyShiftBtn(btn, !wasActive);   // optimistic update
+            btn.disabled = true;
+            try {
+                const { data } = await axios.patch(`/callcenter/delivery/${id}/toggle`);
+                if (typeof showSuccess === 'function') showSuccess(data.message);
+                await reloadDeliveries();     // refresh the whole table from server
+            } catch (e) {
+                applyShiftBtn(btn, wasActive); // revert
+                const msg = e.response?.data?.message ?? 'حدث خطأ أثناء تغيير حالة الوردية';
+                if (typeof showError === 'function') showError(msg);
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        function applyShiftBtn(btn, active) {
+            btn.dataset.active = active ? '1' : '0';
+            if (active) {
+                btn.style.background = 'rgba(34,197,94,.15)';
+                btn.style.color = 'var(--success)';
+                btn.textContent = '✓ في الوردية';
+            } else {
+                btn.style.background = 'rgba(220,38,38,.12)';
+                btn.style.color = 'var(--red)';
+                btn.textContent = '✗ خارج الوردية';
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Reload — uses /delivery/all to show ALL delivery users
+        // (not just those currently on shift)
+        // ─────────────────────────────────────────────────────────────
+        window.reloadDeliveries = async function () {
+            const overlay = document.getElementById('tbl-loading');
+            if (overlay) overlay.classList.add('show');
+            try {
+                const res = await axios.get('{{ route("callcenter.delivery.all") }}');
+                renderDeliveries(res.data);
+            } catch (e) {
+                console.warn('reloadDeliveries failed', e);
+            } finally {
+                if (overlay) overlay.classList.remove('show');
+            }
+        };
+
+
+        // ─────────────────────────────────────────────────────────────
+        // Helpers
+        // ─────────────────────────────────────────────────────────────
+        function escHtml(str) {
+            if (str == null) return '—';
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function escAttr(str) {
+            if (str == null) return '';
+            return String(str).replace(/'/g, "\\'");
+        }
+        function formatDate(str) {
+            if (!str) return '—';
+            const d = new Date(str);
+            return d.toLocaleDateString('ar-EG', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Boot
+        // ─────────────────────────────────────────────────────────────
+        var initialData = @json($deliveries ?? []);
+        if (initialData && initialData.length) {
+            renderDeliveries(initialData);
         } else {
-            btn.style.background = 'rgba(220,38,38,.12)';
-            btn.style.color      = 'var(--red)';
-            btn.textContent      = '✗ خارج الوردية';
+            reloadDeliveries();
         }
-    }
 
-    // ─────────────────────────────────────────────────────────────
-    // Reload — uses /delivery/all to show ALL delivery users
-    // (not just those currently on shift)
-    // ─────────────────────────────────────────────────────────────
-    window.reloadDeliveries = async function() {
-        const overlay = document.getElementById('tbl-loading');
-        if (overlay) overlay.classList.add('show');
-        try {
-            const res = await axios.get('{{ route("callcenter.delivery.all") }}');
-            renderDeliveries(res.data);
-        } catch(e) {
-            console.warn('reloadDeliveries failed', e);
-        } finally {
-            if (overlay) overlay.classList.remove('show');
+        // Poll every 30 s
+        if (typeof addPolling === 'function') {
+            addPolling(reloadDeliveries, 30000);
+        } else {
+            setInterval(reloadDeliveries, 30000);
         }
-    };
 
+        (function waitForChannel() {
+            if (window._adminNotifChannel) {
+                window._adminNotifChannel.bind('shifts.auto_ended', function () {
+                    reloadDeliveries();
+                });
+            } else {
+                setTimeout(waitForChannel, 200);
+            }
+        })();
 
-    // ─────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────
-    function escHtml(str) {
-        if (str == null) return '—';
-        return String(str)
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-    function escAttr(str) {
-        if (str == null) return '';
-        return String(str).replace(/'/g, "\\'");
-    }
-    function formatDate(str) {
-        if (!str) return '—';
-        const d = new Date(str);
-        return d.toLocaleDateString('ar-EG', {
-            year:'numeric', month:'short', day:'numeric',
-            hour:'2-digit', minute:'2-digit'
-        });
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Boot
-    // ─────────────────────────────────────────────────────────────
-    var initialData = @json($deliveries ?? []);
-    if (initialData && initialData.length) {
-        renderDeliveries(initialData);
-    } else {
-        reloadDeliveries();
-    }
-
-    // Poll every 30 s
-    if (typeof addPolling === 'function') {
-        addPolling(reloadDeliveries, 30000);
-    } else {
-        setInterval(reloadDeliveries, 30000);
-    }
-
-})();
+    })();
 </script>

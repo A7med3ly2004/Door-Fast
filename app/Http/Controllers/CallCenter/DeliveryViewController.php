@@ -15,7 +15,7 @@ class DeliveryViewController extends Controller
 {
     public function index()
     {
-        $maxOrders  = (int) Setting::get('max_orders_per_delivery', 10);
+        $maxOrders = (int) Setting::get('max_orders_per_delivery', 10);
 
         list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
         $businessDate = $startOfToday->toDateString();
@@ -23,25 +23,25 @@ class DeliveryViewController extends Controller
         $deliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->where('is_active', true)
             ->with(['shifts' => fn($q) => $q->where('date', $businessDate), 'wallet'])
-            ->withCount(['deliveryOrders as orders_today'    => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
+            ->withCount(['deliveryOrders as orders_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
             ->get()
             ->map(fn($d) => [
-                'id'               => $d->id,
-                'name'             => $d->name,
-                'role'             => $d->role,
-                'phone'            => $d->phone,
-                'is_on_shift'      => $d->shifts->where('is_active', true)->isNotEmpty(),
+                'id' => $d->id,
+                'name' => $d->name,
+                'role' => $d->role,
+                'phone' => $d->phone,
+                'is_on_shift' => $d->shifts->where('is_active', true)->isNotEmpty(),
                 'cc_shift_enabled' => (bool) $d->cc_shift_enabled,
-                'orders_today'     => $d->orders_today,
-                'cancelled_today'  => $d->cancelled_today,
-                'max_orders'       => $d->shifts->first()?->max_orders ?? $maxOrders,
-                'current_balance'  => $d->wallet?->balance ?? 0,
+                'orders_today' => $d->orders_today,
+                'cancelled_today' => $d->cancelled_today,
+                'max_orders' => $d->shifts->first()?->max_orders ?? $maxOrders,
+                'current_balance' => $d->wallet?->balance ?? 0,
             ]);
 
         if (request()->header('X-SPA-Navigation')) {
             return response()->json([
-                'html'       => view('callcenter.delivery.partials.content', compact('deliveries'))->render(),
-                'title'      => 'إدارة المناديب',
+                'html' => view('callcenter.delivery.partials.content', compact('deliveries'))->render(),
+                'title' => 'إدارة المناديب',
                 'csrf_token' => csrf_token(),
             ]);
         }
@@ -63,9 +63,9 @@ class DeliveryViewController extends Controller
             ->withCount(['deliveryOrders as orders_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])->whereIn('status', ['received', 'delivered'])])
             ->get()
             ->map(fn($d) => [
-                'id'         => $d->id,
-                'name'       => $d->name,
-                'role'       => $d->role,
+                'id' => $d->id,
+                'name' => $d->name,
+                'role' => $d->role,
                 'orders_today' => $d->orders_today,
                 'max_orders' => $d->shifts->first()?->max_orders ?? $maxOrders,
             ]);
@@ -92,15 +92,15 @@ class DeliveryViewController extends Controller
             ->withCount(['deliveryOrders as cancelled_today' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'cancelled')])
             ->get()
             ->map(fn($d) => [
-                'id'              => $d->id,
-                'name'            => $d->name,
-                'role'            => $d->role,
-                'phone'           => $d->phone,
-                'is_on_shift'     => $d->shifts->where('is_active', true)->isNotEmpty(),
-                'cc_shift_enabled'=> (bool) $d->cc_shift_enabled,
-                'orders_today'    => $d->orders_today,
+                'id' => $d->id,
+                'name' => $d->name,
+                'role' => $d->role,
+                'phone' => $d->phone,
+                'is_on_shift' => $d->shifts->where('is_active', true)->isNotEmpty(),
+                'cc_shift_enabled' => (bool) $d->cc_shift_enabled,
+                'orders_today' => $d->orders_today,
                 'cancelled_today' => $d->cancelled_today,
-                'max_orders'      => $d->shifts->first()?->max_orders ?? $maxOrders,
+                'max_orders' => $d->shifts->first()?->max_orders ?? $maxOrders,
                 'current_balance' => $d->wallet?->balance ?? 0,
             ]);
 
@@ -108,44 +108,107 @@ class DeliveryViewController extends Controller
     }
 
 
+    // public function toggleShift(Request $request, $id)
+    // {
+    //     $delivery  = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
+    //     list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
+    //     $businessDate = $startOfToday->toDateString();
+    //     $maxOrders = (int) Setting::get('max_orders_per_delivery', 10);
+
+    //     $shift = Shift::where('delivery_id', $id)
+    //                   ->where('date', $businessDate)
+    //                   ->first();
+
+    //     if ($shift && $shift->is_active) {
+    //         // ── Turn OFF ──────────────────────────────────────────
+    //         $shift->update(['is_active' => false, 'ended_at' => now()]);
+    //         // Revoke CC permission so the delivery agent cannot re-start on their own
+    //         $delivery->update(['cc_shift_enabled' => false]);
+
+    //         $message = 'تم إنهاء وردية ' . $delivery->name;
+    //         $is_on   = false;
+    //     } else {
+    //         // ── Turn ON ───────────────────────────────────────────
+    //         // Grant CC permission flag FIRST
+    //         $delivery->update(['cc_shift_enabled' => true]);
+
+    //         if ($shift) {
+    //             $shift->update(['is_active' => true, 'started_at' => now(), 'ended_at' => null]);
+    //         } else {
+    //             Shift::create([
+    //                 'delivery_id' => $id,
+    //                 'date'        => $businessDate,
+    //                 'started_at'  => now(),
+    //                 'is_active'   => true,
+    //                 'max_orders'  => $maxOrders,
+    //             ]);
+    //         }
+
+    //         $message = 'تم بدء وردية ' . $delivery->name;
+    //         $is_on   = true;
+    //     }
+
+    //     ActivityLog::log(
+    //         event: $is_on ? 'shift.cc_started' : 'shift.cc_ended',
+    //         description: $message,
+    //         subjectType: 'shift',
+    //         subjectId: $delivery->id,
+    //         subjectLabel: $delivery->name
+    //     );
+
+    //     return response()->json(['success' => true, 'message' => $message, 'is_on' => $is_on]);
+    // }
+
     public function toggleShift(Request $request, $id)
     {
-        $delivery  = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
+        $delivery = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
         list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
         $businessDate = $startOfToday->toDateString();
         $maxOrders = (int) Setting::get('max_orders_per_delivery', 10);
 
-        $shift = Shift::where('delivery_id', $id)
-                      ->where('date', $businessDate)
-                      ->first();
+        // ✅ جيب الوردية النشطة فقط (مش أي وردية لليوم)
+        $activeShift = Shift::where('delivery_id', $id)
+            ->where('date', $businessDate)
+            ->where('is_active', true)
+            ->first();
 
-        if ($shift && $shift->is_active) {
-            // ── Turn OFF ──────────────────────────────────────────
-            $shift->update(['is_active' => false, 'ended_at' => now()]);
-            // Revoke CC permission so the delivery agent cannot re-start on their own
+        if ($activeShift) {
+            // ── إيقاف ──────────────────────────────────────────
+            $activeShift->update(['is_active' => false, 'ended_at' => now()]);
             $delivery->update(['cc_shift_enabled' => false]);
 
             $message = 'تم إنهاء وردية ' . $delivery->name;
-            $is_on   = false;
+            $is_on = false;
+            $status = 'ended';
         } else {
-            // ── Turn ON ───────────────────────────────────────────
-            // Grant CC permission flag FIRST
+            // ── تشغيل ──────────────────────────────────────────
             $delivery->update(['cc_shift_enabled' => true]);
 
-            if ($shift) {
-                $shift->update(['is_active' => true, 'started_at' => now(), 'ended_at' => null]);
+            // ابحث عن وردية موجودة لليوم (منتهية) لإعادة تفعيلها
+            $existingShift = Shift::where('delivery_id', $id)
+                ->where('date', $businessDate)
+                ->latest('id')
+                ->first();
+
+            if ($existingShift) {
+                $existingShift->update([
+                    'is_active' => true,
+                    'started_at' => now(),
+                    'ended_at' => null,
+                ]);
             } else {
                 Shift::create([
                     'delivery_id' => $id,
-                    'date'        => $businessDate,
-                    'started_at'  => now(),
-                    'is_active'   => true,
-                    'max_orders'  => $maxOrders,
+                    'date' => $businessDate,
+                    'started_at' => now(),
+                    'is_active' => true,
+                    'max_orders' => $maxOrders,
                 ]);
             }
 
             $message = 'تم بدء وردية ' . $delivery->name;
-            $is_on   = true;
+            $is_on = true;
+            $status = 'started';
         }
 
         ActivityLog::log(
@@ -156,6 +219,31 @@ class DeliveryViewController extends Controller
             subjectLabel: $delivery->name
         );
 
+        // ✅ أرسل WebSocket Event للموبايل (مثل الأدمن)
+        try {
+            $pusher = new \Pusher\Pusher(
+                config('broadcasting.connections.pusher.key'),
+                config('broadcasting.connections.pusher.secret'),
+                config('broadcasting.connections.pusher.app_id'),
+                [
+                    'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+                    'useTLS' => true,
+                    'curl_options' => [
+                        CURLOPT_SSL_VERIFYHOST => 0,
+                        CURLOPT_SSL_VERIFYPEER => 0,
+                    ],
+                ]
+            );
+            $pusher->trigger(
+                'delivery.' . $delivery->id,
+                'shift.updated',
+                ['user_id' => $delivery->id, 'status' => $status]
+            );
+            \Log::info('✅ CC ShiftUpdated sent for delivery: ' . $delivery->id . ' status: ' . $status);
+        } catch (\Exception $e) {
+            \Log::error('❌ CC ShiftUpdated failed: ' . $e->getMessage());
+        }
+
         return response()->json(['success' => true, 'message' => $message, 'is_on' => $is_on]);
     }
 
@@ -163,20 +251,20 @@ class DeliveryViewController extends Controller
     {
         $request->validate([
             'from' => ['nullable', 'date_format:Y-m-d'],
-            'to'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
 
         $from = $request->input('from');
-        $to   = $request->input('to');
+        $to = $request->input('to');
 
         // Only allow delivery and reserve_delivery
         $user = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
         $wallet = $user->getOrCreateWallet();
 
         $roleLabels = [
-            'admin'            => 'أدمن',
-            'callcenter'       => 'كول سينتر',
-            'delivery'         => 'مندوب',
+            'admin' => 'أدمن',
+            'callcenter' => 'كول سينتر',
+            'delivery' => 'مندوب',
             'reserve_delivery' => 'مندوب احتياطي',
         ];
 
@@ -204,13 +292,13 @@ class DeliveryViewController extends Controller
             ->get()
             ->map(function (\App\Models\WalletTransaction $tx) {
                 return [
-                    'id'               => $tx->id,
+                    'id' => $tx->id,
                     'transaction_date' => $tx->transaction_date->format('Y-m-d'),
-                    'description'      => $tx->description ?? '—',
-                    'type_label'       => $tx->type_label,
-                    'debit'            => $tx->direction === 'debit' ? number_format((float) $tx->amount, 2) : '',
-                    'credit'           => $tx->direction === 'credit' ? number_format((float) $tx->amount, 2) : '',
-                    'balance_after'    => number_format((float) $tx->balance_after, 2),
+                    'description' => $tx->description ?? '—',
+                    'type_label' => $tx->type_label,
+                    'debit' => $tx->direction === 'debit' ? number_format((float) $tx->amount, 2) : '',
+                    'credit' => $tx->direction === 'credit' ? number_format((float) $tx->amount, 2) : '',
+                    'balance_after' => number_format((float) $tx->balance_after, 2),
                 ];
             });
 
@@ -218,14 +306,14 @@ class DeliveryViewController extends Controller
 
         return response()->json([
             'user' => [
-                'id'         => $user->id,
-                'name'       => $user->name,
-                'role'       => $user->role,
+                'id' => $user->id,
+                'name' => $user->name,
+                'role' => $user->role,
                 'role_label' => $roleLabels[$user->role] ?? $user->role,
             ],
             'summary' => [
-                'total_debit'    => number_format((float) $totals->total_debit, 2),
-                'total_credit'   => number_format((float) $totals->total_credit, 2),
+                'total_debit' => number_format((float) $totals->total_debit, 2),
+                'total_credit' => number_format((float) $totals->total_credit, 2),
                 'period_balance' => number_format($periodBalance, 2),
                 'current_balance' => number_format((float) $wallet->balance, 2),
             ],

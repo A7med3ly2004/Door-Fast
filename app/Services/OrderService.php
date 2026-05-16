@@ -13,6 +13,7 @@ use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\NotifyReserveDeliveryOrder;
+use App\Jobs\NotifyPrimaryDeliveryOrder;
 
 /**
  * OrderService
@@ -49,31 +50,31 @@ class OrderService
             [$client, $addressWarning] = $this->resolveClient($data, $adminMode);
 
             // ── 2. Compute totals ──────────────────────────────────
-            $items       = $data['items'];
-            $itemsTotal  = collect($items)->sum(fn($i) => $i['quantity'] * $i['unit_price']);
+            $items = $data['items'];
+            $itemsTotal = collect($items)->sum(fn($i) => $i['quantity'] * $i['unit_price']);
             $deliveryFee = (float) ($data['delivery_fee'] ?? 0);
-            $baseTotal   = $itemsTotal + $deliveryFee;
+            $baseTotal = $itemsTotal + $deliveryFee;
 
-            $discount    = (float) ($data['discount'] ?? 0);
-            $discountType= $data['discount_type'] ?? 'amount';
+            $discount = (float) ($data['discount'] ?? 0);
+            $discountType = $data['discount_type'] ?? 'amount';
             $discountAmt = $discountType === 'percent'
                 ? ($baseTotal * $discount / 100)
                 : $discount;
 
-            $total       = $baseTotal - $discountAmt;
+            $total = $baseTotal - $discountAmt;
 
             // ── 3. Resolve delivery & status ───────────────────────
-            $deliveryId        = !empty($data['delivery_id']) ? $data['delivery_id'] : null;
-            $isDeliveryChosen  = (bool) $deliveryId;
-            $orderStatus       = $isDeliveryChosen ? 'received' : 'pending';
-            $acceptedAt        = $isDeliveryChosen ? Carbon::now() : null;
+            $deliveryId = !empty($data['delivery_id']) ? $data['delivery_id'] : null;
+            $isDeliveryChosen = (bool) $deliveryId;
+            $orderStatus = $isDeliveryChosen ? 'received' : 'pending';
+            $acceptedAt = $isDeliveryChosen ? Carbon::now() : null;
 
             // Admin: no hold period — sent_to_delivery_at = now() always.
             // CC:    pending orders wait for hold period before appearing.
             if ($adminMode) {
                 $sentToDeliveryAt = Carbon::now();
             } else {
-                $holdMinutes      = (int) Setting::get('order_hold_minutes', 10);
+                $holdMinutes = (int) Setting::get('order_hold_minutes', 10);
                 $sentToDeliveryAt = $isDeliveryChosen
                     ? Carbon::now()
                     : Carbon::now()->addMinutes($holdMinutes);
@@ -81,25 +82,25 @@ class OrderService
 
             // ── 4. Create order ────────────────────────────────────
             $order = Order::create([
-                'order_number'        => Order::generateNumber(),
-                'callcenter_id'       => $callcenterId,      // null = admin order
-                'admin_id'            => $adminMode ? auth()->id() : null,
-                'delivery_id'         => $deliveryId,
-                'is_delivery_chosen'  => $isDeliveryChosen,
-                'client_id'           => $client->id,
-                'client_address'      => $data['client_address'],
-                'client_delivery_link'  => $data['client_delivery_link'] ?? null ?: null,
-                'send_to_phone'       => $data['send_to_phone'] ?? null ?: null,
-                'send_to_phone2'      => $data['send_to_phone2'] ?? null ?: null,
-                'send_to_address'     => $data['send_to_address'] ?? null ?: null,
+                'order_number' => Order::generateNumber(),
+                'callcenter_id' => $callcenterId,      // null = admin order
+                'admin_id' => $adminMode ? auth()->id() : null,
+                'delivery_id' => $deliveryId,
+                'is_delivery_chosen' => $isDeliveryChosen,
+                'client_id' => $client->id,
+                'client_address' => $data['client_address'],
+                'client_delivery_link' => $data['client_delivery_link'] ?? null ?: null,
+                'send_to_phone' => $data['send_to_phone'] ?? null ?: null,
+                'send_to_phone2' => $data['send_to_phone2'] ?? null ?: null,
+                'send_to_address' => $data['send_to_address'] ?? null ?: null,
                 'send_to_delivery_link' => $data['send_to_delivery_link'] ?? null ?: null,
-                'notes'               => $data['notes'] ?? null,
-                'delivery_fee'        => $deliveryFee,
-                'discount'            => $discount,
-                'discount_type'       => $discountType,
-                'total'               => $total,
-                'status'              => $orderStatus,
-                'accepted_at'         => $acceptedAt,
+                'notes' => $data['notes'] ?? null,
+                'delivery_fee' => $deliveryFee,
+                'discount' => $discount,
+                'discount_type' => $discountType,
+                'total' => $total,
+                'status' => $orderStatus,
+                'accepted_at' => $acceptedAt,
                 'sent_to_delivery_at' => $sentToDeliveryAt,
             ]);
 
@@ -108,15 +109,16 @@ class OrderService
 
             // ── 6. Create order items ──────────────────────────────
             foreach ($items as $item) {
-                if (empty($item['item_name'])) continue;
+                if (empty($item['item_name']))
+                    continue;
 
                 OrderItem::create([
-                    'order_id'   => $order->id,
-                    'shop_id'    => $item['shop_id'] ?? null ?: null,
-                    'item_name'  => $item['item_name'],
-                    'quantity'   => $item['quantity'],
+                    'order_id' => $order->id,
+                    'shop_id' => $item['shop_id'] ?? null ?: null,
+                    'item_name' => $item['item_name'],
+                    'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
-                    'total'      => $item['quantity'] * $item['unit_price'],
+                    'total' => $item['quantity'] * $item['unit_price'],
                 ]);
             }
 
@@ -125,19 +127,23 @@ class OrderService
 
             // ── 8. Fire event (inside transaction) ────────────────
             try {
-                event(new OrderStatusUpdated([
-                    'order_id'     => $order->id,
-                    'status'       => $orderStatus,
-                    'order_number' => $order->order_number,
-                    'delivery_id'  => $order->delivery_id,
-                ]));
+                // للأدمن أو عند تحديد مندوب: أطلق الـ Event فوراً
+                if ($adminMode || $isDeliveryChosen) {
+                    event(new OrderStatusUpdated([
+                        'order_id' => $order->id,
+                        'status' => $orderStatus,
+                        'order_number' => $order->order_number,
+                        'delivery_id' => $order->delivery_id,
+                    ]));
+                }
+                // للكول سنتر بدون مندوب: الـ Event سيُطلق من الـ Job بعد انتهاء الـ hold
             } catch (\Throwable) {
                 // Never fail a write because of a broadcast failure
             }
 
             return [
-                'order'          => $order,
-                'client'         => $client,
+                'order' => $order,
+                'client' => $client,
                 'addressWarning' => $addressWarning,
                 'sentToDeliveryAt' => $sentToDeliveryAt,
                 'isDeliveryChosen' => $isDeliveryChosen,
@@ -148,16 +154,20 @@ class OrderService
         // يشتغل بعد commit الـ transaction — فقط للطلبات غير المسندة لمندوب بعينه
         if (!$result['isDeliveryChosen']) {
             $reserveDelay = (int) Setting::get('reserve_delay_minutes', 5);
-            $dispatchAt   = $result['sentToDeliveryAt']->copy()->addMinutes($reserveDelay);
- 
+            $dispatchAt = $result['sentToDeliveryAt']->copy()->addMinutes($reserveDelay);
+
+            NotifyPrimaryDeliveryOrder::dispatch($result['order']->id)
+                ->delay($result['sentToDeliveryAt']);
+
+            // ✅ أطلق Job للمندوب الاحتياطي بعد hold + reserve_delay
             NotifyReserveDeliveryOrder::dispatch($result['order']->id)
                 ->delay($dispatchAt);
         }
- 
+
         // نرجع نفس الـ keys الأصلية بالظبط — مفيش تغيير على الـ Controllers
         return [
-            'order'          => $result['order'],
-            'client'         => $result['client'],
+            'order' => $result['order'],
+            'client' => $result['client'],
             'addressWarning' => $result['addressWarning'],
         ];
     }
@@ -174,30 +184,33 @@ class OrderService
     private function resolveClient(array $data, bool $adminMode): array
     {
         $addressWarning = null;
-        $source         = $adminMode ? 'أدمن' : 'كول سنتر';
+        $source = $adminMode ? 'أدمن' : 'كول سنتر';
 
         $client = Client::where('phone', $data['phone'])->first();
 
         if ($client) {
             $update = [];
-            if (!empty($data['name'])  && $client->name  !== $data['name'])  $update['name']  = $data['name'];
-            if (!empty($data['phone2']) && $client->phone2 !== $data['phone2']) $update['phone2'] = $data['phone2'];
-            if ($update) $client->update($update);
+            if (!empty($data['name']) && $client->name !== $data['name'])
+                $update['name'] = $data['name'];
+            if (!empty($data['phone2']) && $client->phone2 !== $data['phone2'])
+                $update['phone2'] = $data['phone2'];
+            if ($update)
+                $client->update($update);
         } else {
             $client = Client::create([
-                'phone'  => $data['phone'],
+                'phone' => $data['phone'],
                 'phone2' => $data['phone2'] ?? null,
-                'name'   => $data['name'],
-                'code'   => $data['code'],
+                'name' => $data['name'],
+                'code' => $data['code'],
             ]);
 
             ActivityLog::log(
-                event:        'client.created_inline',
-                description:  "تم إضافة عميل جديد أثناء الفاتورة ({$source}) — " . $client->name,
-                subjectType:  'client',
-                subjectId:    $client->id,
+                event: 'client.created_inline',
+                description: "تم إضافة عميل جديد أثناء الفاتورة ({$source}) — " . $client->name,
+                subjectType: 'client',
+                subjectId: $client->id,
                 subjectLabel: $client->name,
-                properties:   ['client_code' => $client->code, 'phone' => $client->phone]
+                properties: ['client_code' => $client->code, 'phone' => $client->phone]
             );
         }
 
@@ -206,8 +219,8 @@ class OrderService
             $addrCount = $client->addresses()->count();
             if ($addrCount < 5) {
                 ClientAddress::create([
-                    'client_id'  => $client->id,
-                    'address'    => $data['client_address'],
+                    'client_id' => $client->id,
+                    'address' => $data['client_address'],
                     'is_default' => $addrCount === 0,
                 ]);
             } else {
@@ -243,8 +256,8 @@ class OrderService
         $sendToClient = Client::firstOrCreate(
             ['phone' => $data['send_to_phone']],
             [
-                'name'   => $data['send_to_name'] ?? 'Unnamed',
-                'code'   => $data['send_to_code'] ?? Client::generateCode(),
+                'name' => $data['send_to_name'] ?? 'Unnamed',
+                'code' => $data['send_to_code'] ?? Client::generateCode(),
                 'phone2' => $data['send_to_phone2'] ?? null,
             ]
         );
@@ -257,20 +270,20 @@ class OrderService
 
         if ($sendToClient->wasRecentlyCreated) {
             $sendToClient->addresses()->create([
-                'address'    => $data['send_to_address'] ?? '',
+                'address' => $data['send_to_address'] ?? '',
                 'is_default' => true,
             ]);
 
             ActivityLog::log(
-                event:        'client.created_sendto',
-                description:  'تم إضافة عميل الإرسال إليه تلقائياً — ' . $sendToClient->name,
-                subjectType:  'client',
-                subjectId:    $sendToClient->id,
+                event: 'client.created_sendto',
+                description: 'تم إضافة عميل الإرسال إليه تلقائياً — ' . $sendToClient->name,
+                subjectType: 'client',
+                subjectId: $sendToClient->id,
                 subjectLabel: $sendToClient->name,
-                properties:   ['phone' => $sendToClient->phone, 'code' => $sendToClient->code]
+                properties: ['phone' => $sendToClient->phone, 'code' => $sendToClient->code]
             );
         }
-        
+
         $order->update(['send_to_client_id' => $sendToClient->id]);
     }
 
@@ -278,48 +291,48 @@ class OrderService
      * Write OrderLog + ActivityLog after order creation.
      */
     private function writeOrderLogs(
-        Order   $order,
-        Client  $client,
-        ?int    $deliveryId,
-        ?int    $callcenterId,
-        bool    $adminMode
+        Order $order,
+        Client $client,
+        ?int $deliveryId,
+        ?int $callcenterId,
+        bool $adminMode
     ): void {
         if ($adminMode) {
-            $logAction   = $deliveryId
+            $logAction = $deliveryId
                 ? 'إنشاء طلب مباشر من الأدمن — تم تحديد مندوب'
                 : 'إنشاء طلب من الأدمن — بدون مندوب (طلبات جديدة)';
-            $logNotes    = 'بواسطة: ' . auth()->user()->name;
-            $actEvent    = 'order.created_admin';
-            $actDesc     = $deliveryId
+            $logNotes = 'بواسطة: ' . auth()->user()->name;
+            $actEvent = 'order.created_admin';
+            $actDesc = $deliveryId
                 ? 'تم إنشاء طلب من الأدمن مع تحديد مندوب'
                 : 'تم إنشاء طلب من الأدمن بدون مندوب';
         } else {
-            $logAction   = 'تم إنشاء الطلب';
-            $logNotes    = 'بواسطة كول سنتر: ' . auth()->user()->name;
-            $actEvent    = 'order.created_cc';
-            $actDesc     = 'تم إنشاء طلب جديد من كول سنتر';
+            $logAction = 'تم إنشاء الطلب';
+            $logNotes = 'بواسطة كول سنتر: ' . auth()->user()->name;
+            $actEvent = 'order.created_cc';
+            $actDesc = 'تم إنشاء طلب جديد من كول سنتر';
         }
 
         OrderLog::create([
             'order_id' => $order->id,
-            'user_id'  => auth()->id(),
-            'action'   => $logAction,
-            'notes'    => $logNotes,
+            'user_id' => auth()->id(),
+            'action' => $logAction,
+            'notes' => $logNotes,
         ]);
 
         ActivityLog::log(
-            event:        $actEvent,
-            description:  $actDesc,
-            subjectType:  'order',
-            subjectId:    $order->id,
+            event: $actEvent,
+            description: $actDesc,
+            subjectType: 'order',
+            subjectId: $order->id,
             subjectLabel: $order->order_number,
-            properties:   [
+            properties: [
                 'order_number' => $order->order_number,
-                'client_name'  => $client->name,
-                'client_code'  => $client->code,
+                'client_name' => $client->name,
+                'client_code' => $client->code,
                 'client_phone' => $client->phone,
-                'total'        => $order->total,
-                'delivery_id'  => $order->delivery_id,
+                'total' => $order->total,
+                'delivery_id' => $order->delivery_id,
             ]
         );
     }

@@ -92,7 +92,8 @@ class OrderController extends Controller
                 $q->where('delivery_id', $delivery->id)
                     ->orWhere(function ($q2) {
                         $q2->whereNull('delivery_id')
-                            ->where('status', 'pending');
+                            ->where('status', 'pending')
+                            ->where('sent_to_delivery_at', '<=', Carbon::now());
                     });
             })
             ->first();

@@ -18,9 +18,6 @@ class OrderController extends BaseDeliveryOrderController
         return 'تم قبول الطلب من المندوب الاحتياطي';
     }
 
-    /**
-     * Reserve delivery sees only UNASSIGNED orders after a delay window.
-     */
     public function newData()
     {
         $reserveDelay = (int) Setting::get('reserve_delay_minutes', 5);
@@ -36,9 +33,6 @@ class OrderController extends BaseDeliveryOrderController
         return response()->json(['orders' => $orders]);
     }
 
-    /**
-     * Reserve delivery can only accept UNASSIGNED orders.
-     */
     protected function findPendingOrder(int $id, mixed $delivery): ?Order
     {
         return Order::where('id', $id)

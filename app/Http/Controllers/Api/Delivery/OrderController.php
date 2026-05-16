@@ -325,7 +325,7 @@ class OrderController extends Controller
         return $pdf->download($order->order_number . '.pdf');
     }
 
-    private function formatOrder(Order $order): array
+    protected function formatOrder(Order $order): array
     {
         $client = $order->client;
 

@@ -12,6 +12,7 @@ use App\Models\OrderLog;
 use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\NotifyReserveDeliveryOrder;
 
 /**
  * OrderService
@@ -42,7 +43,7 @@ class OrderService
      */
     public function createOrder(array $data, ?int $callcenterId, bool $adminMode = false): array
     {
-        return DB::transaction(function () use ($data, $callcenterId, $adminMode): array {
+        $result = DB::transaction(function () use ($data, $callcenterId, $adminMode): array {
 
             // ── 1. Find or create client ───────────────────────────
             [$client, $addressWarning] = $this->resolveClient($data, $adminMode);
@@ -138,8 +139,27 @@ class OrderService
                 'order'          => $order,
                 'client'         => $client,
                 'addressWarning' => $addressWarning,
+                'sentToDeliveryAt' => $sentToDeliveryAt,
+                'isDeliveryChosen' => $isDeliveryChosen,
             ];
         });
+
+        // ── 9. ✅ Dispatch delayed job للمندوب الاحتياطي ──────────────────
+        // يشتغل بعد commit الـ transaction — فقط للطلبات غير المسندة لمندوب بعينه
+        if (!$result['isDeliveryChosen']) {
+            $reserveDelay = (int) Setting::get('reserve_delay_minutes', 5);
+            $dispatchAt   = $result['sentToDeliveryAt']->copy()->addMinutes($reserveDelay);
+ 
+            NotifyReserveDeliveryOrder::dispatch($result['order']->id)
+                ->delay($dispatchAt);
+        }
+ 
+        // نرجع نفس الـ keys الأصلية بالظبط — مفيش تغيير على الـ Controllers
+        return [
+            'order'          => $result['order'],
+            'client'         => $result['client'],
+            'addressWarning' => $result['addressWarning'],
+        ];
     }
 
     // ──────────────────────────────────────────────────────────────

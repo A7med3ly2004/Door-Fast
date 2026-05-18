@@ -26,13 +26,24 @@ class AutoEndShifts implements ShouldQueue
         [$startOfToday] = Setting::businessDayRange();
         $currentBusinessDate = $startOfToday->toDateString();
 
+        // شبكة أمان زمنية: أي وردية مفتوحة منذ أكثر من max_shift_hours
+        // تُعتبر متروكة حتى لو تطابق تاريخ business day. يحمي من حالة
+        // تشغيل الـ scheduler قبل business_day_start_hour.
+        $maxShiftHours = (int) Setting::get('max_shift_hours', 24);
+        $elapsedCutoff = now()->subHours($maxShiftHours);
+
         $staleShifts = Shift::where('is_active', true)
-            ->where('date', '<', $currentBusinessDate)
+            ->where(function ($q) use ($currentBusinessDate, $elapsedCutoff) {
+                $q->where('date', '<', $currentBusinessDate)
+                  ->orWhere('started_at', '<=', $elapsedCutoff);
+            })
             ->get();
 
-        // ✅ ورديات الكول سنتر المنتهية
         $staleCallcenterShifts = CallcenterShift::where('is_active', true)
-            ->where('date', '<', $currentBusinessDate)
+            ->where(function ($q) use ($currentBusinessDate, $elapsedCutoff) {
+                $q->where('date', '<', $currentBusinessDate)
+                  ->orWhere('started_at', '<=', $elapsedCutoff);
+            })
             ->get();
 
         if ($staleShifts->isEmpty() && $staleCallcenterShifts->isEmpty()) {

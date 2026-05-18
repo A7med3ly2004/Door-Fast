@@ -21,13 +21,13 @@
 <body>
 <h1>تقرير الطلبات</h1>
 <div class="meta">
-    from : <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ $filters['from'] ?? '—' }}</span>
+    من : <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ $filters['from'] ?? '—' }}</span>
     &nbsp;
-    To : <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ $filters['to'] ?? '—' }}</span>
+    إلى : <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ $filters['to'] ?? '—' }}</span>
     &nbsp; | &nbsp;
-    Total Orders: <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ $orders->count() }}</span>
+    إجمالي الطلبات: <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ $orders->count() }}</span>
     &nbsp; | &nbsp;
-    Export Date: <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ now()->format('Y-m-d H:i') }}</span>
+    تاريخ التصدير: <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ now()->format('Y-m-d H:i') }}</span>
 </div>
 
 <table>

@@ -38,7 +38,7 @@
             --input-bg: #0f172a;
             --success: #22c55e;
             --info: #3b82f6;
-            --sidebar-width: 220px;
+            --sidebar-width: 260px;
         }
 
         *,
@@ -193,7 +193,7 @@
         /* ── Main ── */
         .main-wrap {
             flex: 1;
-            margin-right: var(--sidebar-width);
+            margin-inline-start: var(--sidebar-width);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -731,7 +731,7 @@
             position: fixed;
             top: 58px;
             left: 0;
-            right: var(--sidebar-width, 220px);
+            right: var(--sidebar-width, 260px);
             bottom: 0;
             background-color: rgba(15, 23, 42, 0.95);
             display: none;

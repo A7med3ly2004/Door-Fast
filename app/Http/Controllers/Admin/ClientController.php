@@ -76,12 +76,14 @@ class ClientController extends Controller
     {
         $data = $request->validate([
             'name'            => 'required|string|max:255',
-            'phone'           => 'required|string|max:30|unique:clients,phone',
-            'phone2'          => 'nullable|string|max:30',
+            'phone'           => ['required', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/', 'unique:clients,phone'],
+            'phone2'          => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
             'code'            => 'nullable|string|max:20|unique:clients,code',
             'first_address'   => 'required|string|max:500',
         ], [
-            'phone.unique' => 'رقم الهاتف مسجل مسبقاً لعميل آخر.'
+            'phone.regex'  => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
+            'phone2.regex' => 'رقم الهاتف الثاني غير صحيح',
+            'phone.unique' => 'رقم الهاتف مسجل مسبقاً لعميل آخر.',
         ]);
 
         $client = Client::create([
@@ -171,10 +173,12 @@ class ClientController extends Controller
 
         $data = $request->validate([
             'name'   => 'required|string|max:255',
-            'phone'  => ['required', 'string', 'max:30', \Illuminate\Validation\Rule::unique('clients', 'phone')->ignore($client->id)],
-            'phone2' => 'nullable|string|max:30',
+            'phone'  => ['required', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/', \Illuminate\Validation\Rule::unique('clients', 'phone')->ignore($client->id)],
+            'phone2' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
         ], [
-            'phone.unique' => 'رقم الهاتف مسجل مسبقاً لعميل آخر.'
+            'phone.regex'  => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
+            'phone2.regex' => 'رقم الهاتف الثاني غير صحيح',
+            'phone.unique' => 'رقم الهاتف مسجل مسبقاً لعميل آخر.',
         ]);
 
         $client->update($data);

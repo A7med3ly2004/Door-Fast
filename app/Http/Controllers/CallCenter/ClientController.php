@@ -60,12 +60,14 @@ class ClientController extends Controller
     {
         $data = $request->validate([
             'name'          => 'required|string|max:255',
-            'phone'         => 'required|string|max:30|unique:clients,phone',
-            'phone2'        => 'nullable|string|max:30',
+            'phone'         => ['required', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/', 'unique:clients,phone'],
+            'phone2'        => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
             'first_address' => 'required|string|max:500',
         ], [
             'name.required'          => 'الاسم مطلوب',
             'phone.required'         => 'رقم الهاتف مطلوب',
+            'phone.regex'            => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
+            'phone2.regex'           => 'رقم الهاتف الثاني غير صحيح',
             'phone.unique'           => 'رقم الهاتف مسجل مسبقاً',
             'first_address.required' => 'العنوان مطلوب',
         ]);
@@ -100,11 +102,13 @@ class ClientController extends Controller
 
         $data = $request->validate([
             'name'   => 'required|string|max:255',
-            'phone'  => ['required', 'string', 'max:30', \Illuminate\Validation\Rule::unique('clients', 'phone')->ignore($client->id)],
-            'phone2' => 'nullable|string|max:30',
+            'phone'  => ['required', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/', \Illuminate\Validation\Rule::unique('clients', 'phone')->ignore($client->id)],
+            'phone2' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
         ], [
             'name.required'  => 'الاسم مطلوب',
             'phone.required' => 'رقم الهاتف مطلوب',
+            'phone.regex'    => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
+            'phone2.regex'   => 'رقم الهاتف الثاني غير صحيح',
             'phone.unique'   => 'رقم الهاتف مسجل مسبقاً لعميل آخر.',
         ]);
 

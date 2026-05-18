@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git mv *)",
+      "Bash(grep -nE \"^\\\\s*//\\\\s*\\(if|foreach|return|public|private|protected|use|\\\\\\\\\\\\$|\\\\\\\\\\\\$\\\\\\\\\\\\$|DB::|Log::|response|throw|abort\\)\" app/Http/Controllers/Admin/AdminLedgerController.php)",
+      "Bash(grep -nE \"^\\\\s*//\\\\s*[\\\\\\\\\\\\$\\\\\\(\\\\\\)a-zA-Z][a-zA-Z0-9_\\\\:\\\\->\\\\\\(\\\\\\)]*[\\\\\\(\\\\;=]\" app/Http/Controllers/Admin/TreasuryController.php app/Http/Controllers/Admin/AdminLedgerController.php app/Http/Controllers/CallCenter/DeliveryViewController.php app/Services/TreasuryService.php app/Services/OrderService.php app/Models/TreasuryTransaction.php)",
+      "Bash(grep -nE \"^\\\\s*//\\\\s*[\\\\\\\\\\\\$\\\\\\(\\\\\\)a-zA-Z]\" app/Http/Controllers/Admin/TreasuryController.php app/Services/TreasuryService.php app/Services/OrderService.php app/Models/TreasuryTransaction.php)",
+      "Bash(grep -nE \"^\\\\s*//\\\\s*[a-zA-Z\\\\\\\\\\\\$].*[;\\\\\\)]\" app/Http/Controllers/Admin/TreasuryController.php app/Services/TreasuryService.php app/Services/OrderService.php app/Models/TreasuryTransaction.php app/Http/Controllers/Admin/AdminLedgerController.php)",
+      "Bash(grep -nE \"^\\\\s*//\\\\s+\\(\\\\\\\\\\\\$|if|foreach|return|\\\\}|DB::|Log::|use\\\\s\\)\" app/Services/OrderService.php app/Services/TreasuryService.php)",
+      "Bash(composer dump-autoload *)",
+      "Bash(systemctl list-unit-files *)",
+      "Bash(php -m)",
+      "Bash(grep -iE \"^\\(gd|imagick\\)$\")",
+      "Bash(/opt/lampp/bin/php -m)",
+      "Bash(php -v)",
+      "Bash(php *)"
+    ]
+  }
+}

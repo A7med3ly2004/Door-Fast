@@ -106,17 +106,26 @@ class WalletService
             ]);
 
             // إرسال WebSocket Event للمندوب (إذا كانت المحفظة تابعة لمستخدم)
+            // قاعدة: لا تُفشل كتابة المحفظة بسبب فشل البث.
+            // عند الفشل نُسجّل بتفاصيل كافية لإعادة الإرسال يدوياً.
             if ($wallet->user_id) {
                 try {
                     broadcast(new \App\Events\WalletTransactionCreated([
-                        'user_id'   => $wallet->user_id,
-                        'balance'   => (float) $balanceAfter,
-                        'amount'    => (float) $amount,
-                        'type'      => $type,
-                        'direction' => $direction,
+                        'user_id'        => $wallet->user_id,
+                        'balance'        => (float) $balanceAfter,
+                        'amount'         => (float) $amount,
+                        'type'           => $type,
+                        'direction'      => $direction,
+                        'transaction_id' => $transaction->id,
                     ]))->toOthers();
-                } catch (\Exception $e) {
-                    \Log::error('❌ Wallet broadcast failed: ' . $e->getMessage());
+                } catch (\Throwable $e) {
+                    \Log::error('Wallet broadcast failed (transaction saved successfully)', [
+                        'wallet_id'      => $wallet->id,
+                        'user_id'        => $wallet->user_id,
+                        'transaction_id' => $transaction->id,
+                        'balance_after'  => $balanceAfter,
+                        'error'          => $e->getMessage(),
+                    ]);
                 }
             }
 

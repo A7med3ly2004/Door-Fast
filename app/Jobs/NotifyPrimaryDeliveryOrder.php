@@ -7,19 +7,28 @@ use App\Models\Order;
 use App\Models\User;
 use App\Services\FcmService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class NotifyPrimaryDeliveryOrder implements ShouldQueue
+class NotifyPrimaryDeliveryOrder implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
+    // منع تكرار إشعار نفس الطلب لمدة 30 دقيقة على الأكثر
+    public int $uniqueFor = 1800;
+
     public function __construct(public readonly int $orderId) {}
+
+    public function uniqueId(): string
+    {
+        return 'notify-primary-order-' . $this->orderId;
+    }
 
     public function handle(FcmService $fcm): void
     {

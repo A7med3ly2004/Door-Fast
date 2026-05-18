@@ -10,7 +10,7 @@ class CallCenterNotificationController extends Controller
 {
     public function index(): JsonResponse
     {
-        $items = AdminNotification::latest()->take(50)->get(['id', 'type', 'order_number', 'message', 'is_read', 'created_at']);
+        $items = AdminNotification::latest()->take(20)->get(['id', 'type', 'order_number', 'message', 'is_read', 'created_at']);
         return response()->json([
             'items'        => $items,
             'unread_count' => AdminNotification::where('is_read', false)->count(),

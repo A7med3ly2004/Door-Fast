@@ -159,11 +159,8 @@ abstract class BaseDeliveryOrderController extends Controller
 
     public function deliver($id)
     {
-        $deliveredOrder = null;
-        $deliveryUser   = null;
-
         try {
-            DB::transaction(function () use ($id, &$deliveredOrder, &$deliveryUser) {
+            DB::transaction(function () use ($id) {
                 $delivery = auth()->user();
                 $order    = Order::where('id', $id)
                     ->where('delivery_id', $delivery->id)
@@ -179,9 +176,6 @@ abstract class BaseDeliveryOrderController extends Controller
                     'status'       => 'delivered',
                     'delivered_at' => Carbon::now(),
                 ]);
-
-                $deliveredOrder = $order;
-                $deliveryUser   = $delivery;
 
                 // تسجيل رسوم التوصيل في خزينة المندوب
                 if ($order->delivery_fee > 0) {
@@ -203,14 +197,14 @@ abstract class BaseDeliveryOrderController extends Controller
                     'action'   => 'تم توصيل الطلب',
                 ]);
 
+                // داخل المعاملة: إذا فشلت إعادة احتساب أرباح اليوم،
+                // يتم rollback لكل ما سبق (الحالة، المحفظة، السجل).
+                app(\App\Services\DeliveryProfitService::class)
+                    ->recalculateDayProfits($delivery, $order);
+
                 $this->afterDeliver($order, $delivery);
                 event(new OrderStatusUpdated($order));
             });
-
-            if ($deliveredOrder && $deliveryUser) {
-                app(\App\Services\DeliveryProfitService::class)
-                    ->recalculateDayProfits($deliveryUser, $deliveredOrder);
-            }
 
             return response()->json(['success' => true]);
         } catch (Exception $e) {

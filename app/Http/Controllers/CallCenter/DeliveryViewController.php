@@ -108,57 +108,6 @@ class DeliveryViewController extends Controller
     }
 
 
-    // public function toggleShift(Request $request, $id)
-    // {
-    //     $delivery  = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);
-    //     list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
-    //     $businessDate = $startOfToday->toDateString();
-    //     $maxOrders = (int) Setting::get('max_orders_per_delivery', 10);
-
-    //     $shift = Shift::where('delivery_id', $id)
-    //                   ->where('date', $businessDate)
-    //                   ->first();
-
-    //     if ($shift && $shift->is_active) {
-    //         // ── Turn OFF ──────────────────────────────────────────
-    //         $shift->update(['is_active' => false, 'ended_at' => now()]);
-    //         // Revoke CC permission so the delivery agent cannot re-start on their own
-    //         $delivery->update(['cc_shift_enabled' => false]);
-
-    //         $message = 'تم إنهاء وردية ' . $delivery->name;
-    //         $is_on   = false;
-    //     } else {
-    //         // ── Turn ON ───────────────────────────────────────────
-    //         // Grant CC permission flag FIRST
-    //         $delivery->update(['cc_shift_enabled' => true]);
-
-    //         if ($shift) {
-    //             $shift->update(['is_active' => true, 'started_at' => now(), 'ended_at' => null]);
-    //         } else {
-    //             Shift::create([
-    //                 'delivery_id' => $id,
-    //                 'date'        => $businessDate,
-    //                 'started_at'  => now(),
-    //                 'is_active'   => true,
-    //                 'max_orders'  => $maxOrders,
-    //             ]);
-    //         }
-
-    //         $message = 'تم بدء وردية ' . $delivery->name;
-    //         $is_on   = true;
-    //     }
-
-    //     ActivityLog::log(
-    //         event: $is_on ? 'shift.cc_started' : 'shift.cc_ended',
-    //         description: $message,
-    //         subjectType: 'shift',
-    //         subjectId: $delivery->id,
-    //         subjectLabel: $delivery->name
-    //     );
-
-    //     return response()->json(['success' => true, 'message' => $message, 'is_on' => $is_on]);
-    // }
-
     public function toggleShift(Request $request, $id)
     {
         $delivery = User::whereIn('role', ['delivery', 'reserve_delivery'])->findOrFail($id);

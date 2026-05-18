@@ -365,6 +365,16 @@
             }
             document.getElementById('cancel-reason-input').style.borderColor = '';
 
+            // Second confirmation — destructive irreversible action
+            if (typeof confirmAction === 'function') {
+                const ok = await confirmAction(
+                    'تأكيد إلغاء الطلب',
+                    'لن يمكن التراجع عن هذا الإجراء. هل تريد المتابعة؟',
+                    'نعم، إلغاء الطلب'
+                );
+                if (!ok) return;
+            }
+
             const btn = document.getElementById('cancel-confirm-btn');
             const closeBtn = document.getElementById('cancel-modal-close-btn');
             const backBtn = document.getElementById('cancel-modal-back-btn');

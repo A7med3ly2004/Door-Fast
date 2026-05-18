@@ -49,7 +49,7 @@ class OrderController extends Controller
     {
         // ── Validation (Controller responsibility) ──────────────────
         $validated = $request->validate([
-            'phone' => 'required|string',
+            'phone' => ['required', 'string', 'regex:/^\+?[0-9]{7,15}$/'],
             'code' => 'required|string',
             'name' => 'required|string',
             'client_address' => 'required|string',
@@ -58,11 +58,13 @@ class OrderController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.shop_id' => 'nullable|exists:shops,id',
-            'send_to_phone2' => 'nullable|string|max:30',
+            'send_to_phone2' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
             'client_delivery_link' => 'nullable|url|max:500',
             'send_to_delivery_link' => 'nullable|url|max:500',
         ], [
             'phone.required' => 'رقم الهاتف مطلوب',
+            'phone.regex'    => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
+            'send_to_phone2.regex' => 'رقم الهاتف الثاني غير صحيح',
             'code.required' => 'الكود مطلوب',
             'name.required' => 'اسم العميل مطلوب',
             'client_address.required' => 'العنوان مطلوب',
@@ -156,7 +158,7 @@ class OrderController extends Controller
 
     public function listData(Request $request)
     {
-        $query = Order::with(['client', 'delivery', 'items'])
+        $query = Order::with(['client', 'recipientClient', 'delivery', 'items'])
             ->where('callcenter_id', auth()->id())
             ->latest();
 
@@ -205,7 +207,7 @@ class OrderController extends Controller
             if (!$s)
                 return response()->json([]);
 
-            $query = Order::with(['client', 'delivery', 'callcenter'])->latest();
+            $query = Order::with(['client', 'recipientClient', 'delivery', 'callcenter'])->latest();
             $query->where(function ($q) use ($s) {
                 $q->where('order_number', 'like', "%$s%")
                     ->orWhereHas(
@@ -274,6 +276,19 @@ class OrderController extends Controller
         $isDeliveryChosen = !empty($request->delivery_id);
 
         if ($isDeliveryChosen && $order->delivery_id != $request->delivery_id) {
+            // ── Role/active guard ────────────────────────────────────
+            // لا يُسمح بإسناد الطلب لمستخدم ليس بدور توصيل أو غير نشط.
+            $deliveryUser = \App\Models\User::where('id', $request->delivery_id)
+                ->whereIn('role', ['delivery', 'reserve_delivery'])
+                ->where('is_active', true)
+                ->first();
+
+            if (!$deliveryUser) {
+                return response()->json([
+                    'errors' => ['delivery_id' => ['المندوب غير موجود أو غير نشط.']],
+                ], 422);
+            }
+
             $maxActive = (int) Setting::get('max_active_orders', 3);
             [$startOfToday, $endOfToday] = \App\Models\Setting::businessDayRange();
             $activeCount = Order::where('delivery_id', $request->delivery_id)

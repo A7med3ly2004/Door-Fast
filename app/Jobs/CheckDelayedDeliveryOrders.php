@@ -7,19 +7,27 @@ use App\Models\AdminNotification;
 use App\Models\Order;
 use App\Models\Setting;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class CheckDelayedDeliveryOrders implements ShouldQueue
+class CheckDelayedDeliveryOrders implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
     public array $backoff = [30, 60, 120];
+
+    public int $uniqueFor = 60;
+
+    public function uniqueId(): string
+    {
+        return 'check-delayed-delivery-orders';
+    }
 
     public function handle(): void
     {

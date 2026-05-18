@@ -26,7 +26,7 @@ class OrderController extends Controller
         }
 
         if ($request->ajax() || $request->wantsJson()) {
-            $query = Order::with(['client', 'callcenter', 'admin', 'delivery', 'items.shop'])
+            $query = Order::with(['client', 'recipientClient', 'callcenter', 'admin', 'delivery', 'items.shop'])
                 ->withCount('items')
                 ->latest();
 
@@ -135,39 +135,72 @@ class OrderController extends Controller
             'reason.required' => 'يجب كتابة سبب الإلغاء',
         ]);
 
-        $order = Order::findOrFail($id);
+        try {
+            $order = \Illuminate\Support\Facades\DB::transaction(function () use ($id, $request) {
+                $order = Order::where('id', $id)->lockForUpdate()->firstOrFail();
 
-        if ($order->status === 'cancelled') {
-            return response()->json(['success' => false, 'message' => 'الطلب ملغي بالفعل'], 422);
+                if ($order->status === 'cancelled') {
+                    throw new \RuntimeException('الطلب ملغي بالفعل');
+                }
+                if ($order->status === 'delivered') {
+                    throw new \RuntimeException('لا يمكن إلغاء طلب تم توصيله');
+                }
+
+                $order->update(['status' => 'cancelled']);
+
+                // عكس أي حركات محفظة سُجّلت مسبقاً على هذا الطلب (مدين → دائن والعكس).
+                // اليوم لا تُسجَّل حركات قبل التوصيل، لكن نُبقي هذا الحارس لمنع
+                // تسريب مالي في حال أُضيفت "وديعة عند القبول" أو ما شابه مستقبلاً.
+                $relatedTxns = \App\Models\WalletTransaction::where('order_id', $order->id)->get();
+                if ($relatedTxns->isNotEmpty()) {
+                    $walletService = app(\App\Services\WalletService::class);
+                    foreach ($relatedTxns as $txn) {
+                        $wallet = \App\Models\Wallet::find($txn->wallet_id);
+                        if (!$wallet) continue;
+                        $args = [
+                            'wallet'      => $wallet,
+                            'amount'      => (float) $txn->amount,
+                            'type'        => $txn->type . '_reversal',
+                            'description' => 'إلغاء طلب — عكس حركة #' . $txn->id,
+                            'createdBy'   => auth()->id(),
+                            'orderId'     => $order->id,
+                        ];
+                        if ($txn->direction === 'debit') {
+                            $walletService->debit(...$args); // كان دخل → خصم
+                        } else {
+                            $walletService->credit(...$args); // كان خصم → إعادة
+                        }
+                    }
+                }
+
+                $notif = \App\Models\AdminNotification::create([
+                    'type'         => 'cancelled',
+                    'order_id'     => $order->id,
+                    'order_number' => $order->order_number,
+                    'message'      => "تم إلغاء الطلب #{$order->order_number}",
+                ]);
+                event(new \App\Events\AdminNotificationCreated($notif));
+                event(new \App\Events\OrderStatusUpdated($order));
+
+                OrderLog::create([
+                    'order_id' => $order->id,
+                    'user_id'  => auth()->id(),
+                    'action'   => 'إلغاء الطلب',
+                    'notes'    => 'سبب الإلغاء: ' . $request->reason . ' — بواسطة الأدمن: ' . auth()->user()->name,
+                ]);
+
+                return $order;
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
-        if ($order->status === 'delivered') {
-            return response()->json(['success' => false, 'message' => 'لا يمكن إلغاء طلب تم توصيله'], 422);
-        }
-
-        $order->update(['status' => 'cancelled']);
-
-        $notif = \App\Models\AdminNotification::create([
-            'type'         => 'cancelled',
-            'order_id'     => $order->id,
-            'order_number' => $order->order_number,
-            'message'      => "تم إلغاء الطلب #{$order->order_number}",
-        ]);
-        event(new \App\Events\AdminNotificationCreated($notif));
-        event(new \App\Events\OrderStatusUpdated(['order_id' => $order->id, 'status' => 'cancelled']));
-
-        OrderLog::create([
-            'order_id' => $order->id,
-            'user_id'  => auth()->id(),
-            'action'   => 'إلغاء الطلب',
-            'notes'    => 'سبب الإلغاء: ' . $request->reason . ' — بواسطة الأدمن: ' . auth()->user()->name,
-        ]);
 
         return response()->json(['success' => true, 'message' => 'تم إلغاء الطلب']);
     }
 
     public function exportPdf(Request $request)
     {
-        $query = Order::with(['client', 'callcenter', 'admin', 'delivery'])->latest();
+        $query = Order::with(['client', 'recipientClient', 'callcenter', 'admin', 'delivery'])->latest();
 
         if ($request->filled('status'))       $query->where('status', $request->status);
         if ($request->filled('from'))          $query->where('created_at', '>=', \Carbon\Carbon::parse($request->from)->startOfDay());

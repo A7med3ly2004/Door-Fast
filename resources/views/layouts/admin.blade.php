@@ -185,7 +185,7 @@
         /* ── Main ── */
         .main-wrap {
             flex: 1;
-            margin-right: var(--sidebar-width);
+            margin-inline-start: var(--sidebar-width);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -1251,16 +1251,19 @@
         <header class="topbar">
             <span class="topbar-title" id="spa-page-title">@yield('page-title', 'لوحة التحكم')</span>
             <div class="topbar-right">
-                <div style="position:relative;cursor:pointer" onclick="toggleNotifPanel()">
+                <button type="button" id="notif-toggle-btn"
+                    aria-label="التنبيهات" aria-expanded="false" aria-controls="notif-panel"
+                    onclick="toggleNotifPanel()"
+                    style="position:relative;cursor:pointer;background:none;border:0;padding:6px;color:inherit;display:inline-flex;align-items:center">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                        style="width: 24px; height: 24px;">
+                        style="width: 24px; height: 24px;" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                     <span id="notif-count-badge" style="display:none;position:absolute;top:-4px;left:-4px;background:var(--red);color:#fff;
                                font-size:10px;font-weight:800;min-width:18px;height:18px;line-height:18px;
                                text-align:center;border-radius:9px;padding:0 4px;">0</span>
-                </div>
+                </button>
                 <div class="admin-badge">
                     <span class="dot"></span>
                     <span>{{ auth()->user()->name }}</span>
@@ -1347,6 +1350,18 @@
             window._spaPollingIds.forEach(id => clearInterval(id));
             window._spaPollingIds = [];
         }
+
+        // ── Page-state save/restore (used by list pages for filter persistence) ──
+        // الصفحة تُسجّل حالتها (الفلاتر، رقم الصفحة) كي تُستعاد عند زر الرجوع.
+        window.savePageState = function (state) {
+            try {
+                const cur = history.state || {};
+                history.replaceState(Object.assign({}, cur, { url: location.href, pageState: state }), document.title, location.href);
+            } catch (e) { /* noop */ }
+        };
+        window.getPageState = function () {
+            try { return (history.state && history.state.pageState) || null; } catch (e) { return null; }
+        };
 
         // ── Re-execute injected <script> tags ──
         function executeScripts(container) {
@@ -1465,6 +1480,8 @@
         function toggleNotifPanel() {
             _notifOpen = !_notifOpen;
             document.getElementById('notif-panel').style.display = _notifOpen ? 'block' : 'none';
+            var btn = document.getElementById('notif-toggle-btn');
+            if (btn) btn.setAttribute('aria-expanded', _notifOpen ? 'true' : 'false');
             if (_notifOpen) loadNotifications();
         }
 
@@ -1540,8 +1557,19 @@
         // جلب أولي فوري عند تحميل الصفحة
         _refreshNotifCount();
 
-        // ثم كل 30 ثانية
-        setInterval(_refreshNotifCount, 30000);
+        // Polling fallback — يعمل فقط في حال انقطاع اتصال Pusher
+        // (يتجنّب تحديثات مزدوجة مع بثّ Echo).
+        function _isEchoConnected() {
+            try {
+                return window.Echo && window.Echo.connector &&
+                    window.Echo.connector.pusher &&
+                    window.Echo.connector.pusher.connection &&
+                    window.Echo.connector.pusher.connection.state === 'connected';
+            } catch (e) { return false; }
+        }
+        setInterval(function () {
+            if (!_isEchoConnected()) _refreshNotifCount();
+        }, 30000);
     </script>
 
     {{-- ── Shared Excel Export Utility ── --}}

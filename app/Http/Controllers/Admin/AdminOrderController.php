@@ -10,6 +10,7 @@ use App\Models\Shop;
 use App\Models\User;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * AdminOrderController
@@ -80,25 +81,32 @@ class AdminOrderController extends Controller
     {
         // ── Validation (Controller responsibility) ──────────────────
         $validated = $request->validate([
-            'phone'              => 'required|string',
+            'phone'              => ['required', 'string', 'regex:/^\+?[0-9]{7,15}$/'],
             'code'               => 'required|string',
             'name'               => 'required|string',
             'client_address'     => 'required|string',
-            'delivery_id'        => 'nullable|exists:users,id',
+            'delivery_id'        => [
+                'nullable',
+                Rule::exists('users', 'id')->where(fn($q) => $q
+                    ->whereIn('role', ['delivery', 'reserve_delivery'])
+                    ->where('is_active', true)),
+            ],
             'items'              => 'required|array|min:1',
             'items.*.item_name'  => 'required|string',
             'items.*.quantity'   => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.shop_id'    => 'nullable|exists:shops,id',
-            'send_to_phone2'     => 'nullable|string|max:30',
+            'send_to_phone2'     => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
             'client_delivery_link'  => 'nullable|url|max:500',
             'send_to_delivery_link' => 'nullable|url|max:500',
         ], [
             'phone.required'          => 'رقم الهاتف مطلوب',
+            'phone.regex'             => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
+            'send_to_phone2.regex'    => 'رقم الهاتف الثاني غير صحيح',
             'code.required'           => 'الكود مطلوب',
             'name.required'           => 'اسم العميل مطلوب',
             'client_address.required' => 'العنوان مطلوب',
-            'delivery_id.exists'      => 'المندوب غير موجود',
+            'delivery_id.exists'      => 'المندوب غير موجود أو غير نشط',
             'items.required'          => 'يجب إضافة صنف واحد على الأقل',
         ]);
 

@@ -12,6 +12,9 @@ use App\Http\Controllers\Api\Reserve\OrderController as ReserveOrderController;
 use App\Http\Controllers\Api\Delivery\FcmTokenController as DeliveryFcmTokenController;
 use App\Http\Controllers\Api\Reserve\FcmTokenController as ReserveFcmTokenController;
 
+// ── Public: App Version ────────────────────────────────────────────────────
+Route::get('/app/version', [\App\Http\Controllers\Api\App\VersionController::class, 'index']);
+
 // ── Public: Login ──────────────────────────────────────────────────────────
 Route::post('/delivery/login', [AuthController::class, 'login'])->name('api.delivery.login');
 Route::post('/reserve/login',  [AuthController::class, 'login'])->name('api.reserve.login');

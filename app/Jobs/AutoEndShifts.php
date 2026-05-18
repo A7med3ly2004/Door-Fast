@@ -2,9 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Models\ActivityLog;
 use App\Models\CallcenterShift;
 use App\Models\Setting;
 use App\Models\Shift;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -37,7 +39,24 @@ class AutoEndShifts implements ShouldQueue
             return;
         }
 
-        Log::info("AutoEndShifts: closing {$staleShifts->count()} delivery shifts and {$staleCallcenterShifts->count()} callcenter shifts for business date {$currentBusinessDate}");
+        // Reset the per-user check-in gate. Without this, deliveries can self-start
+        // the next day and skip the CC/admin check-in that gates BaseDeliveryShiftController::start.
+        $resetCount = User::whereIn('role', ['delivery', 'reserve_delivery'])
+            ->where('cc_shift_enabled', true)
+            ->update(['cc_shift_enabled' => false]);
+
+        if ($resetCount > 0) {
+            ActivityLog::log(
+                event: 'system.day_rolled_over',
+                description: "تم إنهاء يوم العمل وإعادة تعيين {$resetCount} مندوب",
+                subjectType: 'system',
+                subjectId: 0,
+                subjectLabel: 'يوم العمل',
+                properties: ['reset_count' => $resetCount, 'business_date' => $currentBusinessDate]
+            );
+        }
+
+        Log::info("AutoEndShifts: closing {$staleShifts->count()} delivery shifts and {$staleCallcenterShifts->count()} callcenter shifts, reset cc_shift_enabled for {$resetCount} users, business date {$currentBusinessDate}");
 
         try {
             $pusher = new Pusher(
@@ -45,8 +64,8 @@ class AutoEndShifts implements ShouldQueue
                 config('broadcasting.connections.pusher.secret'),
                 config('broadcasting.connections.pusher.app_id'),
                 [
-                    'cluster'      => config('broadcasting.connections.pusher.options.cluster'),
-                    'useTLS'       => true,
+                    'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+                    'useTLS' => true,
                     'curl_options' => [
                         CURLOPT_SSL_VERIFYHOST => 0,
                         CURLOPT_SSL_VERIFYPEER => 0,
@@ -64,7 +83,7 @@ class AutoEndShifts implements ShouldQueue
         foreach ($staleShifts as $shift) {
             $shift->update([
                 'is_active' => false,
-                'ended_at'  => $shift->started_at->copy()->endOfDay(),
+                'ended_at' => $shift->started_at->copy()->endOfDay(),
             ]);
 
             $affectedDeliveryIds[] = $shift->delivery_id;
@@ -87,9 +106,22 @@ class AutoEndShifts implements ShouldQueue
         foreach ($staleCallcenterShifts as $ccShift) {
             $ccShift->update([
                 'is_active' => false,
-                'ended_at'  => $ccShift->started_at->copy()->endOfDay(),
+                'ended_at' => $ccShift->started_at->copy()->endOfDay(),
             ]);
             Log::info("AutoEndShifts: closed callcenter shift #{$ccShift->id} for callcenter_id={$ccShift->callcenter_id}");
+
+            // أرسل event للكول سنتر المعني ليتم قفل شاشته لحظياً
+            if ($pusher) {
+                try {
+                    $pusher->trigger(
+                        'callcenter.' . $ccShift->callcenter_id,
+                        'shift.updated',
+                        ['user_id' => $ccShift->callcenter_id, 'status' => 'ended']
+                    );
+                } catch (\Exception $e) {
+                    Log::error("AutoEndShifts: web push failed for callcenter {$ccShift->callcenter_id}: " . $e->getMessage());
+                }
+            }
         }
 
         // ── أرسل event واحد للويب (الأدمن والكول سنتر) ──────────────

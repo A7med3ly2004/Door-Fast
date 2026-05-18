@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Events\ReserveOrderReady;
 use App\Models\Order;
+use App\Models\User;
+use App\Services\FcmService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -19,10 +21,8 @@ class NotifyReserveDeliveryOrder implements ShouldQueue
 
     public function __construct(public readonly int $orderId) {}
 
-    public function handle(): void
+    public function handle(FcmService $fcm): void
     {
-        // تحقق إن الطلب لسه pending وغير مسند لحد
-        // لو اتقبل أو اتلغى → مفيش داعي للإشعار
         $order = Order::where('id', $this->orderId)
             ->where('status', 'pending')
             ->whereNull('delivery_id')
@@ -33,9 +33,29 @@ class NotifyReserveDeliveryOrder implements ShouldQueue
             return;
         }
 
+        // 1) Pusher — موجود بالفعل، لم يتغير
         event(new ReserveOrderReady($this->orderId));
 
-        Log::info("NotifyReserveDelivery: fired reserve_new_order for order #{$this->orderId}");
+        // 2) FCM — جديد
+        $deliveries = User::where('role', 'reserve_delivery')
+            ->where('is_active', true)
+            ->whereNotNull('fcm_token')
+            ->get();
+
+        foreach ($deliveries as $delivery) {
+            $fcm->sendToToken(
+                $delivery->fcm_token,
+                'طلب احتياطي جديد 🛵',
+                'رقم الطلب: ' . $order->order_number,
+                [
+                    'type'         => 'reserve_new_order',
+                    'order_id'     => (string) $order->id,
+                    'order_number' => $order->order_number,
+                ]
+            );
+        }
+
+        Log::info("NotifyReserveDelivery: fired for order #{$this->orderId}, FCM sent to {$deliveries->count()} delivery(s)");
     }
 
     public function failed(\Throwable $e): void

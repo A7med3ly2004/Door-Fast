@@ -68,6 +68,18 @@ class DashboardController extends Controller
             ->whereBetween('delivered_at', [$start, $end])
             ->max('delivery_tier_number') ?? 0;
 
+        // Collection today (مجموع ما حصّله المندوب من العملاء)
+        $collectionToday = Order::where('delivery_id', $delivery->id)
+            ->where('status', 'delivered')
+            ->whereBetween('delivered_at', [$start, $end])
+            ->sum('total');
+
+        // Discount today (مجموع الخصومات على الطلبات الموصّلة)
+        $discountToday = Order::where('delivery_id', $delivery->id)
+            ->where('status', 'delivered')
+            ->whereBetween('delivered_at', [$start, $end])
+            ->sum('discount');
+
         return response()->json([
             'success' => true,
             'data'    => [
@@ -81,6 +93,8 @@ class DashboardController extends Controller
                 'fees_today'      => (float) $feesToday,
                 'profit_today'    => (float) $profitToday,
                 'current_tier'    => (int) $currentTier,
+                'collection_today' => (float) $collectionToday,
+                'discount_today'  => (float) $discountToday,
             ],
         ]);
     }

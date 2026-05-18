@@ -205,9 +205,10 @@ class OrderController extends Controller
 
                 $deliveredOrder = $order;
 
+                $walletTx = null;
                 if ($order->delivery_fee > 0) {
                     $wallet = $delivery->getOrCreateWallet();
-                    app(WalletService::class)->credit(
+                    $walletTx = app(WalletService::class)->credit(
                         wallet: $wallet,
                         amount: (float) $order->delivery_fee,
                         type: 'delivery_fee_received',
@@ -224,7 +225,7 @@ class OrderController extends Controller
                     'action' => 'تم توصيل الطلب (موبايل)',
                 ]);
 
-                ActivityLog::log(
+                $log = ActivityLog::log(
                     event: 'order.delivered',
                     description: 'تم توصيل طلب — ' . $order->order_number,
                     subjectType: 'order',
@@ -233,6 +234,10 @@ class OrderController extends Controller
                     properties: ['order_number' => $order->order_number, 'total' => $order->total],
                     causerId: $delivery->id
                 );
+
+                if ($walletTx && $log) {
+                    $walletTx->update(['log_id' => $log->id]);
+                }
 
                 event(new OrderStatusUpdated($order));
             });

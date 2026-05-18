@@ -728,10 +728,10 @@
 
         /* ── Shift Overlay ── */
         .shift-overlay {
-            position: absolute;
-            top: 0;
+            position: fixed;
+            top: 58px;
             left: 0;
-            right: 0;
+            right: var(--sidebar-width, 220px);
             bottom: 0;
             background-color: rgba(15, 23, 42, 0.95);
             display: none;
@@ -1310,13 +1310,26 @@
     <script>
         (function () {
             try {
-                window._adminNotifChannel = new Pusher(
-                    '{{ config("broadcasting.connections.pusher.key") }}',
-                    {
-                        cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}',
-                        forceTLS: true
+                const pusherKey = '{{ config("broadcasting.connections.pusher.key") }}';
+                const pusherCluster = '{{ config("broadcasting.connections.pusher.options.cluster") }}';
+
+                const pusher = new Pusher(pusherKey, {
+                    cluster: pusherCluster,
+                    forceTLS: true
+                });
+
+                window._adminNotifChannel = pusher.subscribe('admin-notifications');
+
+                // الاشتراك في القناة اللحظية الخاصة بالكول سنتر
+                const myChannel = pusher.subscribe('callcenter.{{ auth()->id() }}');
+                myChannel.bind('shift.updated', function (data) {
+                    if (data.status === 'ended') {
+                        updateCCShiftBtn(false);
+                        if (typeof showError === 'function') {
+                            showError('تم إنهاء الوردية تلقائياً لانتهاء يوم العمل.');
+                        }
                     }
-                ).subscribe('admin-notifications');
+                });
             } catch (e) {
                 console.warn('Pusher init failed:', e);
                 window._adminNotifChannel = null;

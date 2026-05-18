@@ -207,6 +207,7 @@ class DeliveryManagementController extends Controller
                 'ended_at' => Carbon::now(),
                 'is_active' => false,
             ]);
+            $delivery->update(['cc_shift_enabled' => false]);
             $msg = 'تم إنهاء الوردية للمندوب بنجاح';
             $status = 'ended';
             $shift = $activeShift;
@@ -217,6 +218,7 @@ class DeliveryManagementController extends Controller
                 'started_at' => Carbon::now(),
                 'is_active' => true,
             ]);
+            $delivery->update(['cc_shift_enabled' => true]);
             $msg = 'تم بدء وردية جديدة للمندوب بنجاح';
             $status = 'started';
         }

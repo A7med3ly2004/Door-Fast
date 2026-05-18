@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\Delivery\WalletController;
 
 // ✅ كنترولر الطلبات المخصص للمندوب الاحتياطي (يطبّق نافذة التأخير)
 use App\Http\Controllers\Api\Reserve\OrderController as ReserveOrderController;
+use App\Http\Controllers\Api\Delivery\FcmTokenController as DeliveryFcmTokenController;
+use App\Http\Controllers\Api\Reserve\FcmTokenController as ReserveFcmTokenController;
 
 // ── Public: Login ──────────────────────────────────────────────────────────
 Route::post('/delivery/login', [AuthController::class, 'login'])->name('api.delivery.login');
@@ -36,6 +38,7 @@ Route::middleware(['auth:sanctum', 'role:delivery'])
         Route::get('/orders/delivered',     [OrderController::class, 'delivered']);
         Route::get('/orders/{id}',          [OrderController::class, 'show']);
         Route::get('/orders/{id}/invoice',  [OrderController::class, 'downloadInvoice']);
+        Route::post('/fcm-token',            [DeliveryFcmTokenController::class, 'store']);
     });
 
 // ── Protected: Reserve Delivery Mobile API ────────────────────────────────
@@ -63,4 +66,5 @@ Route::middleware(['auth:sanctum', 'role:reserve_delivery'])
         Route::get('/orders/delivered',     [OrderController::class, 'delivered']);
         Route::get('/orders/{id}',          [OrderController::class, 'show']);
         Route::get('/orders/{id}/invoice',  [OrderController::class, 'downloadInvoice']);
+        Route::post('/fcm-token',           [ReserveFcmTokenController::class, 'store']);
     });

@@ -51,12 +51,6 @@ abstract class BaseDeliveryDashboardController extends Controller
             ->get();
 
         $previous_worked_seconds = 0;
-        foreach ($allShiftsToday as $s) {
-            if (!$s->is_active && $s->started_at && $s->ended_at) {
-                $previous_worked_seconds += Carbon::parse($s->ended_at)->timestamp
-                                          - Carbon::parse($s->started_at)->timestamp;
-            }
-        }
 
         $activeShift       = $allShiftsToday->where('is_active', true)->first();
         $started_at        = $activeShift ? Carbon::parse($activeShift->started_at)->format('H:i') : null;
@@ -64,9 +58,12 @@ abstract class BaseDeliveryDashboardController extends Controller
 
         $orders = Order::where('delivery_id', $delivery->id)
             ->where(function ($query) use ($startOfToday, $endOfToday) {
-                $query->whereBetween('accepted_at',  [$startOfToday, $endOfToday])
-                      ->orWhereBetween('delivered_at', [$startOfToday, $endOfToday])
-                      ->orWhereBetween('created_at',   [$startOfToday, $endOfToday]);
+                $query->where('status', 'received')
+                      ->orWhere(function ($subQuery) use ($startOfToday, $endOfToday) {
+                          $subQuery->whereBetween('accepted_at',  [$startOfToday, $endOfToday])
+                                   ->orWhereBetween('delivered_at', [$startOfToday, $endOfToday])
+                                   ->orWhereBetween('created_at',   [$startOfToday, $endOfToday]);
+                      });
             })
             ->get();
 

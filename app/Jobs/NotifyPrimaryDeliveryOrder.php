@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Events\OrderStatusUpdated;
 use App\Models\Order;
+use App\Models\User;
+use App\Services\FcmService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,13 +19,10 @@ class NotifyPrimaryDeliveryOrder implements ShouldQueue
 
     public int $tries = 3;
 
-    public function __construct(public readonly int $orderId)
-    {
-    }
+    public function __construct(public readonly int $orderId) {}
 
-    public function handle(): void
+    public function handle(FcmService $fcm): void
     {
-        // تحقق إن الطلب لا يزال pending وبدون مندوب
         $order = Order::where('id', $this->orderId)
             ->where('status', 'pending')
             ->whereNull('delivery_id')
@@ -34,21 +33,41 @@ class NotifyPrimaryDeliveryOrder implements ShouldQueue
             return;
         }
 
+        // 1) Pusher — موجود بالفعل، لم يتغير
         event(new OrderStatusUpdated([
-            'order_id' => $order->id,
-            'status' => 'pending',
+            'order_id'     => $order->id,
+            'status'       => 'pending',
             'order_number' => $order->order_number,
-            'delivery_id' => null,
+            'delivery_id'  => null,
         ]));
 
-        Log::info("NotifyPrimaryDelivery: fired order_updated for order #{$this->orderId}");
+        // 2) FCM — جديد
+        $deliveries = User::where('role', 'delivery')
+            ->where('is_active', true)
+            ->whereNotNull('fcm_token')
+            ->get();
+
+        foreach ($deliveries as $delivery) {
+            $fcm->sendToToken(
+                $delivery->fcm_token,
+                'طلب جديد 🛵',
+                'رقم الطلب: ' . $order->order_number,
+                [
+                    'type'         => 'new_order',
+                    'order_id'     => (string) $order->id,
+                    'order_number' => $order->order_number,
+                ]
+            );
+        }
+
+        Log::info("NotifyPrimaryDelivery: fired for order #{$this->orderId}, FCM sent to {$deliveries->count()} delivery(s)");
     }
 
     public function failed(\Throwable $e): void
     {
         Log::error('NotifyPrimaryDeliveryOrder failed', [
             'order_id' => $this->orderId,
-            'error' => $e->getMessage(),
+            'error'    => $e->getMessage(),
         ]);
     }
 }

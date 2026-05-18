@@ -18,6 +18,7 @@ class User extends Authenticatable
         'role',
         'phone',
         'personal_phone',
+        'fcm_token',
         'code',
         'is_active',
         'cc_shift_enabled',

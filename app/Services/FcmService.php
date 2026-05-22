@@ -27,8 +27,10 @@ class FcmService
 
         try {
             $message = CloudMessage::withTarget('token', $token)
-                ->withNotification(Notification::create($title, $body))
-                ->withData($data);
+                ->withData(array_merge([
+                    'title' => $title,
+                    'body'  => $body,
+                ], $data));
 
             $this->messaging->send($message);
 
@@ -41,7 +43,6 @@ class FcmService
                 'error'         => $e->getMessage(),
                 'token_preview' => substr($token, 0, 20) . '...',
             ]);
-            // لا نرمي exception حتى لا يفشل الـ Job بسبب FCM
         }
     }
 }

@@ -207,7 +207,12 @@
             // Refresh categories dropdowns
             const opt = `<option value="${data.category.id}">${data.category.name}</option>`;
             document.getElementById('s-category').innerHTML += opt;
-            document.getElementById('f-category').innerHTML += opt;
+
+            // ✅ إزالة السطر القديم واستبداله بـ null check
+            const fCategory = document.getElementById('f-category');
+            if (fCategory) fCategory.innerHTML += opt;
+
+
         } catch (e) { showError(e.response?.data?.message || 'حدث خطأ'); }
     }
 

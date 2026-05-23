@@ -290,4 +290,23 @@ class TreasuryTransaction extends Model
             default => 'secondary',
         };
     }
+
+    /**
+     * الرصيد الحالي للخزينة الرئيسية (بدون فلتر تاريخ أو مستخدم)
+     */
+    public static function currentBalance(): float
+    {
+        $rows = static::query()
+            ->selectRaw('type, SUM(amount) as total')
+            ->groupBy('type')
+            ->pluck('total', 'type');
+
+        return (float) ($rows['income'] ?? 0)
+            + (float) ($rows['settlement'] ?? 0)
+            + (float) ($rows['receive_from_user'] ?? 0)
+            - (float) ($rows['expense'] ?? 0)
+            - (float) ($rows['dain'] ?? 0)
+            - (float) ($rows['discount'] ?? 0)
+            - (float) ($rows['pay_to_user'] ?? 0);
+    }
 }

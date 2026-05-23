@@ -37,27 +37,27 @@ class AdminLedgerController extends Controller
         $admin = auth()->user();
 
         $callcenters = User::callcenters()->active()->with('wallet')->get(['id', 'name']);
-        $deliveries  = User::whereIn('role', ['delivery', 'reserve_delivery'])->active()->with('wallet')->get(['id', 'name']);
+        $deliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])->active()->with('wallet')->get(['id', 'name']);
 
         // جلب بيانات أولية
         $initialData = $this->buildStatementData($request, $admin);
 
         $data = [
-            'callcenters'  => $callcenters,
-            'deliveries'   => $deliveries,
-            'initialData'  => $initialData,
-            'filters'      => [
-                'date_from'     => $request->input('date_from'),
-                'date_to'       => $request->input('date_to'),
+            'callcenters' => $callcenters,
+            'deliveries' => $deliveries,
+            'initialData' => $initialData,
+            'filters' => [
+                'date_from' => $request->input('date_from'),
+                'date_to' => $request->input('date_to'),
                 'callcenter_id' => $request->input('callcenter_id'),
-                'delivery_id'   => $request->input('delivery_id'),
+                'delivery_id' => $request->input('delivery_id'),
             ],
         ];
 
         if ($request->header('X-SPA-Navigation')) {
             return response()->json([
-                'html'       => view('admin.admin-ledger.partials.content', $data)->render(),
-                'title'      => 'كشف حساب خاص',
+                'html' => view('admin.admin-ledger.partials.content', $data)->render(),
+                'title' => 'كشف حساب خاص',
                 'csrf_token' => csrf_token(),
             ]);
         }
@@ -72,14 +72,14 @@ class AdminLedgerController extends Controller
     public function statement(Request $request): JsonResponse
     {
         $request->validate([
-            'date_from'     => ['nullable', 'date_format:Y-m-d'],
-            'date_to'       => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
+            'date_from' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'callcenter_id' => ['nullable', 'exists:users,id'],
-            'delivery_id'   => ['nullable', 'exists:users,id'],
+            'delivery_id' => ['nullable', 'exists:users,id'],
         ]);
 
         $admin = auth()->user();
-        $data  = $this->buildStatementData($request, $admin);
+        $data = $this->buildStatementData($request, $admin);
 
         return response()->json($data);
     }
@@ -92,64 +92,76 @@ class AdminLedgerController extends Controller
     {
         $validated = $request->validate([
             'employee_id' => ['required', 'exists:users,id'],
-            'amount'      => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
-            'date'        => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
-            'note'        => ['nullable', 'string', 'max:500'],
+            'amount' => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
+            'date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'note' => ['nullable', 'string', 'max:500'],
         ], $this->messages());
 
-        $admin    = auth()->user();
+        $admin = auth()->user();
         $employee = User::findOrFail($validated['employee_id']);
 
-        // التحقق من أن الموظف المختار هو CC أو مندوب
         if (!in_array($employee->role, ['callcenter', 'delivery', 'reserve_delivery'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'يجب اختيار موظف كول سنتر أو مندوب.',
-                'errors'  => ['employee_id' => ['الموظف المختار ليس كول سنتر أو مندوباً.']],
+                'errors' => ['employee_id' => ['الموظف المختار ليس كول سنتر أو مندوباً.']],
             ], 422);
         }
 
         $walletService = app(WalletService::class);
-        $date          = $validated['date'] ?? now()->toDateString();
-        $note          = $validated['note'] ?? ('أصال دفع إلى ' . $employee->name);
-        $amount        = (float) $validated['amount'];
+        $date = $validated['date'] ?? now()->toDateString();
+        $note = $validated['note'] ?? ('أصال دفع إلى ' . $employee->name);
+        $amount = (float) $validated['amount'];
 
-        $txIds = DB::transaction(function () use ($admin, $employee, $walletService, $amount, $date, $note) {
-            $adminWallet    = $admin->getOrCreateWallet();
-            $employeeWallet = $employee->getOrCreateWallet();
+        try {
+            $txIds = DB::transaction(function () use ($admin, $employee, $walletService, $amount, $date, $note) {
+                // ✅ lockForUpdate يضمن قراءة الرصيد الحقيقي ويمنع Race Condition
+                $adminWallet = Wallet::where('user_id', $admin->id)->lockForUpdate()->firstOrFail();
+                $employeeWallet = $employee->getOrCreateWallet();
 
-            // خصم من رصيد المدير (debit = خروج)
-            $adminTx = $walletService->debit(
-                wallet:          $adminWallet,
-                amount:          $amount,
-                type:            'admin_pay',
-                description:     'أصال دفع إلى ' . $employee->name . ($note ? ' — ' . $note : ''),
-                createdBy:       $admin->id,
-                relatedWalletId: $employeeWallet->id,
-                date:            $date
-            );
+                if ($amount > (float) $adminWallet->balance) {
+                    throw new \Exception(
+                        'رصيدك غير كافٍ. الرصيد الحالي: ' . number_format($adminWallet->balance, 2) . ' ج'
+                    );
+                }
 
-            // إضافة لرصيد الموظف (credit = دخول)
-            $empTx = $walletService->credit(
-                wallet:          $employeeWallet,
-                amount:          $amount,
-                type:            'cash_received',
-                description:     'استلام نقدي من الإدارة — ' . ($note ?: ''),
-                createdBy:       $admin->id,
-                relatedWalletId: $adminWallet->id,
-                date:            $date
-            );
+                $adminTx = $walletService->debit(
+                    wallet: $adminWallet,
+                    amount: $amount,
+                    type: 'admin_pay',
+                    description: 'أصال دفع إلى ' . $employee->name . ($note ? ' — ' . $note : ''),
+                    createdBy: $admin->id,
+                    relatedWalletId: $employeeWallet->id,
+                    date: $date
+                );
 
-            return [$adminTx->id, $empTx->id];
-        });
+                $empTx = $walletService->credit(
+                    wallet: $employeeWallet,
+                    amount: $amount,
+                    type: 'cash_received',
+                    description: 'استلام نقدي من الإدارة — ' . ($note ?: ''),
+                    createdBy: $admin->id,
+                    relatedWalletId: $adminWallet->id,
+                    date: $date
+                );
+
+                return [$adminTx->id, $empTx->id];
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => ['amount' => [$e->getMessage()]],
+            ], 422);
+        }
 
         $log = ActivityLog::log(
-            event:        'admin_ledger.pay',
-            description:  'أصال دفع إلى ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج',
-            subjectType:  'admin_ledger',
-            subjectId:    $admin->id,
+            event: 'admin_ledger.pay',
+            description: 'أصال دفع إلى ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج',
+            subjectType: 'admin_ledger',
+            subjectId: $admin->id,
             subjectLabel: $admin->name,
-            properties:   ['employee_id' => $employee->id, 'amount' => $amount, 'note' => $note]
+            properties: ['employee_id' => $employee->id, 'amount' => $amount, 'note' => $note]
         );
 
         \App\Models\WalletTransaction::whereIn('id', $txIds)->update(['log_id' => $log->id]);
@@ -168,22 +180,24 @@ class AdminLedgerController extends Controller
     {
         $validated = $request->validate([
             'employee_id' => ['required'], // Can be ID or 'revenue'
-            'amount'      => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
-            'date'        => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
-            'note'        => [
+            'amount' => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
+            'date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'note' => [
                 Rule::requiredIf(fn() => $request->input('employee_id') === 'revenue'),
-                'nullable', 'string', 'max:500'
+                'nullable',
+                'string',
+                'max:500'
             ],
         ], array_merge($this->messages(), [
-            'employee_id.required' => 'يجب اختيار موظف أو نوع العملية.',
-            'note.required'        => 'الملاحظة إلزامية عند اختيار إيراد.',
-        ]));
+                'employee_id.required' => 'يجب اختيار موظف أو نوع العملية.',
+                'note.required' => 'الملاحظة إلزامية عند اختيار إيراد.',
+            ]));
 
-        $admin         = auth()->user();
+        $admin = auth()->user();
         $walletService = app(WalletService::class);
-        $date          = $validated['date'] ?? now()->toDateString();
-        $amount        = (float) $validated['amount'];
-        $note          = $validated['note'] ?? null;
+        $date = $validated['date'] ?? now()->toDateString();
+        $amount = (float) $validated['amount'];
+        $note = $validated['note'] ?? null;
 
         $txIds = DB::transaction(function () use ($admin, $validated, $walletService, $amount, $date, $note) {
             $adminWallet = $admin->getOrCreateWallet();
@@ -192,12 +206,12 @@ class AdminLedgerController extends Controller
             if ($validated['employee_id'] === 'revenue') {
                 // ── إيراد: فقط زيادة حساب الأدمن — لا يوجد موظف ──────────────
                 $tx = $walletService->credit(
-                    wallet:      $adminWallet,
-                    amount:      $amount,
-                    type:        'admin_receive',
+                    wallet: $adminWallet,
+                    amount: $amount,
+                    type: 'admin_receive',
                     description: 'إيراد — ' . $note,
-                    createdBy:   $admin->id,
-                    date:        $date
+                    createdBy: $admin->id,
+                    date: $date
                 );
 
                 $results['ids'] = [$tx->id];
@@ -206,30 +220,30 @@ class AdminLedgerController extends Controller
                 $results['properties'] = ['amount' => $amount, 'note' => $note];
             } else {
                 // ── استلام عادي من موظف ─────────────────────────────────────────
-                $employee       = User::findOrFail((int) $validated['employee_id']);
+                $employee = User::findOrFail((int) $validated['employee_id']);
                 $employeeWallet = $employee->getOrCreateWallet();
 
                 // إضافة لرصيد المدير (credit = دخول)
                 $adminTx = $walletService->credit(
-                    wallet:          $adminWallet,
-                    amount:          $amount,
-                    type:            'admin_receive',
-                    description:     'أصال استلام من ' . $employee->name . ($note ? ' — ' . $note : ''),
-                    createdBy:       $admin->id,
+                    wallet: $adminWallet,
+                    amount: $amount,
+                    type: 'admin_receive',
+                    description: 'أصال استلام من ' . $employee->name . ($note ? ' — ' . $note : ''),
+                    createdBy: $admin->id,
                     relatedWalletId: $employeeWallet->id,
-                    date:            $date
+                    date: $date
                 );
 
                 // خصم من رصيد الموظف (debit = خروج)
                 $debitType = $employee->role === 'admin' ? 'admin_pay' : 'cash_paid';
                 $empTx = $walletService->debit(
-                    wallet:          $employeeWallet,
-                    amount:          $amount,
-                    type:            $debitType,
-                    description:     'دفع نقدي للإدارة — ' . ($note ?: ''),
-                    createdBy:       $admin->id,
+                    wallet: $employeeWallet,
+                    amount: $amount,
+                    type: $debitType,
+                    description: 'دفع نقدي للإدارة — ' . ($note ?: ''),
+                    createdBy: $admin->id,
                     relatedWalletId: $adminWallet->id,
-                    date:            $date
+                    date: $date
                 );
 
                 $results['ids'] = [$adminTx->id, $empTx->id];
@@ -241,12 +255,12 @@ class AdminLedgerController extends Controller
         });
 
         $log = ActivityLog::log(
-            event:        $txIds['event'],
-            description:  $txIds['description'],
-            subjectType:  'admin_ledger',
-            subjectId:    $admin->id,
+            event: $txIds['event'],
+            description: $txIds['description'],
+            subjectType: 'admin_ledger',
+            subjectId: $admin->id,
             subjectLabel: $admin->name,
-            properties:   $txIds['properties']
+            properties: $txIds['properties']
         );
 
         \App\Models\WalletTransaction::whereIn('id', $txIds['ids'])->update(['log_id' => $log->id]);
@@ -265,39 +279,54 @@ class AdminLedgerController extends Controller
     {
         $validated = $request->validate([
             'description' => ['required', 'string', 'max:200'],
-            'amount'      => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
-            'date'        => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
-            'note'        => ['nullable', 'string', 'max:500'],
+            'amount' => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
+            'date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'note' => ['nullable', 'string', 'max:500'],
         ], $this->messages());
 
-        $admin         = auth()->user();
+        $admin = auth()->user();
         $walletService = app(WalletService::class);
-        $date          = $validated['date'] ?? now()->toDateString();
-        $amount        = (float) $validated['amount'];
-        $fullDesc      = $validated['description'] . ($validated['note'] ? ' — ' . $validated['note'] : '');
+        $date = $validated['date'] ?? now()->toDateString();
+        $amount = (float) $validated['amount'];
+        $fullDesc = $validated['description'] . ($validated['note'] ? ' — ' . $validated['note'] : '');
 
-        $txId = DB::transaction(function () use ($admin, $walletService, $amount, $date, $fullDesc) {
-            $adminWallet = $admin->getOrCreateWallet();
+        try {
+            $txId = DB::transaction(function () use ($admin, $walletService, $amount, $date, $fullDesc) {
+                // ✅ lockForUpdate يضمن قراءة الرصيد الحقيقي
+                $adminWallet = Wallet::where('user_id', $admin->id)->lockForUpdate()->firstOrFail();
 
-            // خصم من رصيد المدير فقط — لا يؤثر على الخزينة أو أي رصيد آخر
-            $tx = $walletService->debit(
-                wallet:      $adminWallet,
-                amount:      $amount,
-                type:        'admin_expense',
-                description: $fullDesc,
-                createdBy:   $admin->id,
-                date:        $date
-            );
-            return $tx->id;
-        });
+                if ($amount > (float) $adminWallet->balance) {
+                    throw new \Exception(
+                        'رصيدك غير كافٍ. الرصيد الحالي: ' . number_format($adminWallet->balance, 2) . ' ج'
+                    );
+                }
+
+                $tx = $walletService->debit(
+                    wallet: $adminWallet,
+                    amount: $amount,
+                    type: 'admin_expense',
+                    description: $fullDesc,
+                    createdBy: $admin->id,
+                    date: $date
+                );
+
+                return $tx->id;
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => ['amount' => [$e->getMessage()]],
+            ], 422);
+        }
 
         $log = ActivityLog::log(
-            event:        'admin_ledger.expense',
-            description:  'صرف مصروف — ' . $validated['description'] . ' — ' . number_format($amount, 2) . ' ج',
-            subjectType:  'admin_ledger',
-            subjectId:    $admin->id,
+            event: 'admin_ledger.expense',
+            description: 'صرف مصروف — ' . $validated['description'] . ' — ' . number_format($amount, 2) . ' ج',
+            subjectType: 'admin_ledger',
+            subjectId: $admin->id,
             subjectLabel: $admin->name,
-            properties:   ['description' => $validated['description'], 'amount' => $amount, 'note' => $validated['note'] ?? null]
+            properties: ['description' => $validated['description'], 'amount' => $amount, 'note' => $validated['note'] ?? null]
         );
 
         \App\Models\WalletTransaction::where('id', $txId)->update(['log_id' => $log->id]);
@@ -324,19 +353,19 @@ class AdminLedgerController extends Controller
             ->firstOrFail();
 
         return response()->json([
-            'id'              => $tx->id,
-            'log_id'          => $tx->activityLog?->id ?? '-',
-            'date'            => $tx->transaction_date->format('d/m/Y'),
-            'type'            => $tx->type,
-            'type_label'      => $this->typeLabel($tx->type),
-            'can_edit'        => in_array($tx->type, ['admin_pay', 'admin_receive', 'admin_expense']),
-            'direction'       => $tx->direction,
-            'amount'          => number_format((float) $tx->amount, 2),
-            'description'     => $tx->description ?? '—',
-            'balance_after'   => number_format((float) $tx->balance_after, 2),
-            'related_user'    => $tx->relatedWallet?->user?->name ?? '—',
-            'created_by'      => $tx->createdBy?->name ?? '—',
-            'created_at'      => $tx->created_at->format('d/m/Y H:i'),
+            'id' => $tx->id,
+            'log_id' => $tx->activityLog?->id ?? '-',
+            'date' => $tx->transaction_date->format('d/m/Y'),
+            'type' => $tx->type,
+            'type_label' => $this->typeLabel($tx->type),
+            'can_edit' => in_array($tx->type, ['admin_pay', 'admin_receive', 'admin_expense']),
+            'direction' => $tx->direction,
+            'amount' => number_format((float) $tx->amount, 2),
+            'description' => $tx->description ?? '—',
+            'balance_after' => number_format((float) $tx->balance_after, 2),
+            'related_user' => $tx->relatedWallet?->user?->name ?? '—',
+            'created_by' => $tx->createdBy?->name ?? '—',
+            'created_at' => $tx->created_at->format('d/m/Y H:i'),
         ]);
     }
 
@@ -348,12 +377,12 @@ class AdminLedgerController extends Controller
     {
         $validated = $request->validate([
             'description' => ['nullable', 'string', 'max:200'],
-            'amount'      => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
-            'date'        => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
-            'note'        => ['nullable', 'string', 'max:500'],
+            'amount' => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
+            'date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'note' => ['nullable', 'string', 'max:500'],
         ], $this->messages());
 
-        $admin       = auth()->user();
+        $admin = auth()->user();
         $adminWallet = $admin->getOrCreateWallet();
 
         $tx = WalletTransaction::where('id', $id)
@@ -363,7 +392,7 @@ class AdminLedgerController extends Controller
 
         $oldAmount = (float) $tx->amount;
         $newAmount = (float) $validated['amount'];
-        $diff      = $newAmount - $oldAmount;
+        $diff = $newAmount - $oldAmount;
 
         DB::transaction(function () use ($tx, $validated, $diff, $adminWallet, $admin) {
             // تحديث رصيد الـ wallet بالفرق
@@ -383,10 +412,10 @@ class AdminLedgerController extends Controller
                 : $tx->description;
 
             $tx->update([
-                'amount'           => $validated['amount'],
-                'description'      => $newDesc,
+                'amount' => $validated['amount'],
+                'description' => $newDesc,
                 'transaction_date' => $validated['date'] ?? $tx->transaction_date,
-                'balance_after'    => $tx->balance_after + $diff,
+                'balance_after' => $tx->balance_after + $diff,
             ]);
         });
 
@@ -400,11 +429,11 @@ class AdminLedgerController extends Controller
     public function exportExcel(Request $request)
     {
         $admin = auth()->user();
-        $data  = $this->buildStatementData($request, $admin);
-        $rows  = $data['rows'];
+        $data = $this->buildStatementData($request, $admin);
+        $rows = $data['rows'];
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet       = $spreadsheet->getActiveSheet();
+        $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('كشف الحساب');
 
         // Headers
@@ -423,9 +452,9 @@ class AdminLedgerController extends Controller
             $sheet->setCellValue([6, $i + 2], $row['running_balance']);
         }
 
-        $writer   = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $filename = 'admin-ledger-' . now()->format('Y-m-d') . '.xlsx';
-        $path     = storage_path('app/temp/' . $filename);
+        $path = storage_path('app/temp/' . $filename);
 
         if (!is_dir(storage_path('app/temp'))) {
             mkdir(storage_path('app/temp'), 0755, true);
@@ -442,7 +471,7 @@ class AdminLedgerController extends Controller
 
     public function downloadPdf($id)
     {
-        $admin       = auth()->user();
+        $admin = auth()->user();
         $adminWallet = $admin->getOrCreateWallet();
 
         $tx = WalletTransaction::where('id', $id)
@@ -451,16 +480,16 @@ class AdminLedgerController extends Controller
             ->with(['relatedWallet.user:id,name', 'createdBy:id,name'])
             ->firstOrFail();
 
-        $typeLabel   = $this->typeLabel($tx->type);
+        $typeLabel = $this->typeLabel($tx->type);
         $relatedUser = $tx->relatedWallet?->user?->name ?? null;
 
         $html = view('admin.admin-ledger.pdf', compact('tx', 'typeLabel', 'relatedUser', 'admin'))->render();
 
         $Arabic = new \ArPHP\I18N\Arabic();
-        $p      = $Arabic->arIdentify($html);
+        $p = $Arabic->arIdentify($html);
         for ($i = count($p) - 1; $i >= 0; $i -= 2) {
             $utf8ar = $Arabic->utf8Glyphs(substr($html, $p[$i - 1], $p[$i] - $p[$i - 1]));
-            $html   = substr_replace($html, $utf8ar, $p[$i - 1], $p[$i] - $p[$i - 1]);
+            $html = substr_replace($html, $utf8ar, $p[$i - 1], $p[$i] - $p[$i - 1]);
         }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper('a5', 'portrait');
@@ -493,7 +522,7 @@ class AdminLedgerController extends Controller
 
         // فلتر الكول سنتر
         if ($request->filled('callcenter_id')) {
-            $ccId    = (int) $request->input('callcenter_id');
+            $ccId = (int) $request->input('callcenter_id');
             $ccWallet = Wallet::where('user_id', $ccId)->first();
             if ($ccWallet) {
                 $query->where('related_wallet_id', $ccWallet->id);
@@ -502,8 +531,8 @@ class AdminLedgerController extends Controller
 
         // فلتر المندوب
         if ($request->filled('delivery_id')) {
-            $dId      = (int) $request->input('delivery_id');
-            $dWallet  = Wallet::where('user_id', $dId)->first();
+            $dId = (int) $request->input('delivery_id');
+            $dWallet = Wallet::where('user_id', $dId)->first();
             if ($dWallet) {
                 $query->where('related_wallet_id', $dWallet->id);
             }
@@ -520,7 +549,7 @@ class AdminLedgerController extends Controller
             ->get();
 
         // حساب KPIs
-        $totalDebit  = $transactions->where('direction', 'credit')->sum('amount'); // credit (خصم) = مدين
+        $totalDebit = $transactions->where('direction', 'credit')->sum('amount'); // credit (خصم) = مدين
         $totalCredit = $transactions->where('direction', 'debit')->sum('amount');  // debit (إضافة) = دائن
 
         // ملاحظة: WalletService::credit() يُسجّل direction='debit'  (إضافة للرصيد)
@@ -539,25 +568,25 @@ class AdminLedgerController extends Controller
             $running += ($tx->direction === 'debit' ? $tx->amount : -$tx->amount);
 
             return [
-                'id'              => $tx->id,
-                'log_id'          => $tx->activityLog?->id ?? '-',
-                'date'            => $tx->transaction_date->format('d/m/Y'),
-                'description'     => $tx->description ?? '—',
-                'type'            => $tx->type,
-                'type_label'      => $this->typeLabel($tx->type),
-                'direction'       => $tx->direction,
-                'debit'           => $tx->direction === 'credit' ? number_format((float) $tx->amount, 2) : '—',
-                'credit'          => $tx->direction === 'debit'  ? number_format((float) $tx->amount, 2) : '—',
+                'id' => $tx->id,
+                'log_id' => $tx->activityLog?->id ?? '-',
+                'date' => $tx->transaction_date->format('d/m/Y'),
+                'description' => $tx->description ?? '—',
+                'type' => $tx->type,
+                'type_label' => $this->typeLabel($tx->type),
+                'direction' => $tx->direction,
+                'debit' => $tx->direction === 'credit' ? number_format((float) $tx->amount, 2) : '—',
+                'credit' => $tx->direction === 'debit' ? number_format((float) $tx->amount, 2) : '—',
                 'running_balance' => number_format($running, 2),
-                'related_user'    => $tx->relatedWallet?->user?->name ?? null,
+                'related_user' => $tx->relatedWallet?->user?->name ?? null,
             ];
         })->values()->toArray();
 
         return [
-            'rows'         => $rows,
-            'total_debit'  => number_format($totalDebit, 2),
+            'rows' => $rows,
+            'total_debit' => number_format($totalDebit, 2),
             'total_credit' => number_format($totalCredit, 2),
-            'balance'      => number_format($balance, 2),
+            'balance' => number_format($balance, 2),
         ];
     }
 
@@ -567,17 +596,17 @@ class AdminLedgerController extends Controller
     private function typeLabel(string $type): string
     {
         return match ($type) {
-            'admin_pay'             => 'أصال دفع (خاص)',
-            'admin_receive'         => 'أصال استلام (خاص)',
-            'admin_expense'         => 'صرف مصروف',
-            'cash_paid'             => 'دفع نقدي',
-            'cash_received'         => 'استلام نقدي',
-            'debt_received'         => 'تحصيل مديونية',
-            'debt_paid'             => 'سداد مديونية',
+            'admin_pay' => 'أصال دفع (خاص)',
+            'admin_receive' => 'أصال استلام (خاص)',
+            'admin_expense' => 'صرف مصروف',
+            'cash_paid' => 'دفع نقدي',
+            'cash_received' => 'استلام نقدي',
+            'debt_received' => 'تحصيل مديونية',
+            'debt_paid' => 'سداد مديونية',
             'delivery_fee_received' => 'أرباح توصيل',
-            'discount'              => 'خصم',
-            'company_revenue'       => 'إيرادات شركة',
-            default                 => $type,
+            'discount' => 'خصم',
+            'company_revenue' => 'إيرادات شركة',
+            default => $type,
         };
     }
 
@@ -587,17 +616,17 @@ class AdminLedgerController extends Controller
     private function messages(): array
     {
         return [
-            'employee_id.required'  => 'يجب اختيار الموظف.',
-            'employee_id.exists'    => 'الموظف المختار غير موجود.',
-            'amount.required'       => 'حقل المبلغ مطلوب.',
-            'amount.numeric'        => 'يجب أن يكون المبلغ رقماً.',
-            'amount.gt'             => 'يجب أن يكون المبلغ أكبر من صفر.',
-            'amount.max'            => 'المبلغ كبير جداً.',
-            'date.date_format'      => 'صيغة التاريخ غير صحيحة.',
-            'date.before_or_equal'  => 'لا يمكن إدخال تاريخ مستقبلي.',
-            'description.required'  => 'حقل التعريف مطلوب.',
-            'description.max'       => 'يجب ألا يتجاوز التعريف 200 حرف.',
-            'note.max'              => 'يجب ألا تتجاوز الملاحظة 500 حرف.',
+            'employee_id.required' => 'يجب اختيار الموظف.',
+            'employee_id.exists' => 'الموظف المختار غير موجود.',
+            'amount.required' => 'حقل المبلغ مطلوب.',
+            'amount.numeric' => 'يجب أن يكون المبلغ رقماً.',
+            'amount.gt' => 'يجب أن يكون المبلغ أكبر من صفر.',
+            'amount.max' => 'المبلغ كبير جداً.',
+            'date.date_format' => 'صيغة التاريخ غير صحيحة.',
+            'date.before_or_equal' => 'لا يمكن إدخال تاريخ مستقبلي.',
+            'description.required' => 'حقل التعريف مطلوب.',
+            'description.max' => 'يجب ألا يتجاوز التعريف 200 حرف.',
+            'note.max' => 'يجب ألا تتجاوز الملاحظة 500 حرف.',
         ];
     }
 }

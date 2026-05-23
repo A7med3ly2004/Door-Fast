@@ -28,24 +28,24 @@ class TreasuryService
     public function addIncome(array $data, int $recordedBy): TreasuryTransaction
     {
         $transaction = TreasuryTransaction::createManual(
-            type:            'income',
-            byWhom:          $data['by_whom'],
-            amount:          (float) $data['amount'],
-            note:            $data['note'] ?? null,
-            recordedBy:      $recordedBy,
+            type: 'income',
+            byWhom: $data['by_whom'],
+            amount: (float) $data['amount'],
+            note: $data['note'] ?? null,
+            recordedBy: $recordedBy,
             transactionDate: $data['date'] ?? null,
         );
 
         $log = ActivityLog::log(
-            event:        'treasury.income',
-            description:  'تم إضافة وارد في الخزينة — ' . $data['by_whom'],
-            subjectType:  'treasury',
-            subjectId:    $transaction->id,
+            event: 'treasury.income',
+            description: 'تم إضافة وارد في الخزينة — ' . $data['by_whom'],
+            subjectType: 'treasury',
+            subjectId: $transaction->id,
             subjectLabel: number_format((float) $data['amount'], 2) . ' ج',
-            properties:   [
+            properties: [
                 'by_whom' => $data['by_whom'],
-                'amount'  => $data['amount'],
-                'note'    => $data['note'] ?? null,
+                'amount' => $data['amount'],
+                'note' => $data['note'] ?? null,
             ]
         );
 
@@ -69,30 +69,30 @@ class TreasuryService
     public function addDain(array $data, int $recordedBy): TreasuryTransaction
     {
         $userId = $data['callcenter_id'] ?? $data['delivery_id'];
-        $user   = User::find($userId);
+        $user = User::find($userId);
 
         $transaction = TreasuryTransaction::create([
-            'type'             => 'dain',
-            'source_type'      => 'manual',
-            'source_id'        => $user->id,
-            'amount'           => (float) $data['amount'],
-            'by_whom'          => $user->name,
-            'note'             => $data['note'] ?? null,
-            'recorded_by'      => $recordedBy,
+            'type' => 'dain',
+            'source_type' => 'manual',
+            'source_id' => $user->id,
+            'amount' => (float) $data['amount'],
+            'by_whom' => $user->name,
+            'note' => $data['note'] ?? null,
+            'recorded_by' => $recordedBy,
             'transaction_date' => $data['date'] ?? now()->toDateString(),
         ]);
 
         $log = ActivityLog::log(
-            event:        'treasury.dain',
-            description:  'تم إضافة صرف مديونية في الخزينة — ' . $user->name,
-            subjectType:  'treasury',
-            subjectId:    $transaction->id,
+            event: 'treasury.dain',
+            description: 'تم إضافة صرف مديونية في الخزينة — ' . $user->name,
+            subjectType: 'treasury',
+            subjectId: $transaction->id,
             subjectLabel: number_format((float) $data['amount'], 2) . ' ج',
-            properties:   [
+            properties: [
                 'user_id' => $user->id,
-                'role'    => $user->role,
-                'amount'  => $data['amount'],
-                'note'    => $data['note'] ?? null,
+                'role' => $user->role,
+                'amount' => $data['amount'],
+                'note' => $data['note'] ?? null,
             ]
         );
 
@@ -113,57 +113,72 @@ class TreasuryService
      */
     public function payToUser(array $data, User $admin): TreasuryTransaction
     {
-        $targetUser    = User::findOrFail($data['user_id']);
+        $targetUser = User::findOrFail($data['user_id']);
         $walletService = app(WalletService::class);
-        $date          = $data['date'] ?? now()->toDateString();
-        $description   = $data['description'] ?? ('دفع نقدي إلى ' . $targetUser->name);
+        $amount = (float) $data['amount'];
+        $date = $data['date'] ?? now()->toDateString();
+        $description = $data['description'] ?? ('دفع نقدي إلى ' . $targetUser->name);
 
-        $treasuryTx = DB::transaction(function () use (
-            $admin, $targetUser, $walletService, $data, $date, $description
-        ): TreasuryTransaction {
+        $treasuryBalance = TreasuryTransaction::currentBalance();
+        if ($amount > $treasuryBalance) {
+            throw new \Exception(
+                'رصيد الخزينة غير كافٍ. الرصيد الحالي: ' . number_format($treasuryBalance, 2) . ' ج'
+            );
+        }
+
+        // تعديل: إرجاع كائن الخزينة ومعرف حركة المحفظة من داخل الـ transaction
+        $result = DB::transaction(function () use ($admin, $targetUser, $walletService, $data, $date, $description): array {
             $targetWallet = $targetUser->getOrCreateWallet();
 
-            // نوع المعاملة يعتمد على دور المستخدم المستهدف
-            // إذا كان المستهدف أدمن → admin_receive حتى يظهر في كشف حسابه الخاص
-            // إذا كان موظفاً → cash_received
             $creditType = $targetUser->role === 'admin' ? 'admin_receive' : 'cash_received';
 
-            $walletService->credit(
-                wallet:      $targetWallet,
-                amount:      (float) $data['amount'],
-                type:        $creditType,
+            $walletTx = $walletService->credit(
+                wallet: $targetWallet,
+                amount: (float) $data['amount'],
+                type: $creditType,
                 description: 'استلام نقدي من الإدارة' . ($description ? ' — ' . $description : ''),
-                createdBy:   $admin->id,
-                date:        $date
+                createdBy: $admin->id,
+                date: $date
             );
 
-            // سجل العملية في الخزينة المستقلة
-            return TreasuryTransaction::create([
-                'type'             => 'pay_to_user',
-                'source_type'      => 'manual',
-                'source_id'        => $targetUser->id,
-                'amount'           => (float) $data['amount'],
-                'by_whom'          => $targetUser->name,
-                'note'             => $data['description'] ?? ('دفع نقدي إلى ' . $targetUser->name),
-                'recorded_by'      => $admin->id,
+            $treasuryTx = TreasuryTransaction::create([
+                'type' => 'pay_to_user',
+                'source_type' => 'manual',
+                'source_id' => $targetUser->id,
+                'amount' => (float) $data['amount'],
+                'by_whom' => $targetUser->name,
+                'note' => $data['description'] ?? ('دفع نقدي إلى ' . $targetUser->name),
+                'recorded_by' => $admin->id,
                 'transaction_date' => $date,
             ]);
+
+            return [
+                'treasury' => $treasuryTx,
+                'wallet_tx_id' => $walletTx?->id
+            ];
         });
 
+        $treasuryTx = $result['treasury'];
+
         $log = ActivityLog::log(
-            event:        'treasury.pay_to_user',
-            description:  'دفع نقدي إلى ' . $targetUser->name . ' — ' . number_format((float) $data['amount'], 2) . ' ج',
-            subjectType:  'treasury',
-            subjectId:    $targetUser->id,
+            event: 'treasury.pay_to_user',
+            description: 'دفع نقدي إلى ' . $targetUser->name . ' — ' . number_format((float) $data['amount'], 2) . ' ج',
+            subjectType: 'treasury',
+            subjectId: $targetUser->id,
             subjectLabel: $targetUser->name,
-            properties:   [
+            properties: [
                 'user_id' => $targetUser->id,
-                'amount'  => $data['amount'],
-                'note'    => $data['description'] ?? null,
+                'amount' => $data['amount'],
+                'note' => $data['description'] ?? null,
             ]
         );
 
         $treasuryTx->update(['log_id' => $log->id]);
+
+        // ✅ إضافة: تحديث log_id لحركة المحفظة الخاصة بالمدير
+        if (!empty($result['wallet_tx_id'])) {
+            \App\Models\WalletTransaction::where('id', $result['wallet_tx_id'])->update(['log_id' => $log->id]);
+        }
 
         return $treasuryTx;
     }
@@ -180,65 +195,76 @@ class TreasuryService
      */
     public function receiveFromUser(array $data, User $admin): TreasuryTransaction
     {
-        $targetUser    = isset($data['user_id']) ? User::find($data['user_id']) : null;
+        $targetUser = isset($data['user_id']) ? User::find($data['user_id']) : null;
         $walletService = app(WalletService::class);
-        $date          = $data['date'] ?? now()->toDateString();
+        $date = $data['date'] ?? now()->toDateString();
 
         $defaultDesc = $targetUser
             ? ('استلام نقدي من ' . $targetUser->name)
             : 'استلام نقدي لحساب الإدارة';
         $description = $data['description'] ?? $defaultDesc;
 
-        $treasuryTx = DB::transaction(function () use (
-            $admin, $targetUser, $walletService, $data, $date, $description
-        ): TreasuryTransaction {
+        // تعديل: إرجاع كائن الخزينة ومعرف حركة المحفظة من داخل الـ transaction
+        $result = DB::transaction(function () use ($admin, $targetUser, $walletService, $data, $date, $description): array {
+
+            $walletTxId = null;
 
             if ($targetUser) {
-                // نوع المعاملة يعتمد على دور المستخدم المستهدف
-                // إذا كان المستهدف أدمن → admin_pay حتى يظهر في كشف حسابه الخاص
-                // إذا كان موظفاً → cash_paid
                 $debitType = $targetUser->role === 'admin' ? 'admin_pay' : 'cash_paid';
 
                 $targetWallet = $targetUser->getOrCreateWallet();
-                $walletService->debit(
-                    wallet:      $targetWallet,
-                    amount:      (float) $data['amount'],
-                    type:        $debitType,
+                $walletTx = $walletService->debit(
+                    wallet: $targetWallet,
+                    amount: (float) $data['amount'],
+                    type: $debitType,
                     description: 'دفع نقدي للإدارة' . ($description ? ' — ' . $description : ''),
-                    createdBy:   $admin->id,
-                    date:        $date
+                    createdBy: $admin->id,
+                    date: $date
                 );
+
+                $walletTxId = $walletTx?->id;
             }
 
-            // سجل العملية في الخزينة المستقلة
-            return TreasuryTransaction::create([
-                'type'             => 'receive_from_user',
-                'source_type'      => 'manual',
-                'source_id'        => $targetUser?->id,
-                'amount'           => (float) $data['amount'],
-                'by_whom'          => $targetUser ? $targetUser->name : 'بدون موظف',
-                'note'             => $description,
-                'recorded_by'      => $admin->id,
+            $treasuryTx = TreasuryTransaction::create([
+                'type' => 'receive_from_user',
+                'source_type' => 'manual',
+                'source_id' => $targetUser?->id,
+                'amount' => (float) $data['amount'],
+                'by_whom' => $targetUser ? $targetUser->name : 'بدون موظف',
+                'note' => $description,
+                'recorded_by' => $admin->id,
                 'transaction_date' => $date,
             ]);
+
+            return [
+                'treasury' => $treasuryTx,
+                'wallet_tx_id' => $walletTxId
+            ];
         });
 
+        $treasuryTx = $result['treasury'];
+
         $log = ActivityLog::log(
-            event:        'treasury.receive_from_user',
-            description:  $targetUser
-                ? ('استلام نقدي من ' . $targetUser->name . ' — ' . number_format((float) $data['amount'], 2) . ' ج')
-                : ('استلام نقدي (بدون موظف) — ' . number_format((float) $data['amount'], 2) . ' ج'),
-            subjectType:  'treasury',
-            subjectId:    $targetUser ? $targetUser->id : $admin->id,
+            event: 'treasury.receive_from_user',
+            description: $targetUser
+            ? ('استلام نقدي من ' . $targetUser->name . ' — ' . number_format((float) $data['amount'], 2) . ' ج')
+            : ('استلام نقدي (بدون موظف) — ' . number_format((float) $data['amount'], 2) . ' ج'),
+            subjectType: 'treasury',
+            subjectId: $targetUser ? $targetUser->id : $admin->id,
             subjectLabel: $targetUser ? $targetUser->name : 'الإدارة',
-            properties:   [
+            properties: [
                 'user_id' => $targetUser?->id,
-                'amount'  => $data['amount'],
-                'note'    => $data['description'] ?? null,
+                'amount' => $data['amount'],
+                'note' => $data['description'] ?? null,
             ]
         );
 
         $treasuryTx->update(['log_id' => $log->id]);
+
+        // ✅ إضافة: تحديث log_id لحركة المحفظة الخاصة بالمدير (إن وُجدت)
+        if (!empty($result['wallet_tx_id'])) {
+            \App\Models\WalletTransaction::where('id', $result['wallet_tx_id'])->update(['log_id' => $log->id]);
+        }
 
         return $treasuryTx;
     }
@@ -252,21 +278,87 @@ class TreasuryService
      */
     public function update(TreasuryTransaction $transaction, array $data): TreasuryTransaction
     {
-        $transaction->update([
-            'amount'           => $data['amount'],
-            'note'             => $data['note'] ?? $transaction->note,
-            'transaction_date' => $data['date'] ?? $transaction->transaction_date,
-        ]);
+        $oldAmount = (float) $transaction->amount;
+        $newAmount = (float) $data['amount'];
+        $diff = $newAmount - $oldAmount;
+
+        $walletTxId = null; // ← لتتبع WalletTransaction الجديد إن وُجد
+
+        DB::transaction(function () use ($transaction, $data, $oldAmount, $newAmount, $diff, &$walletTxId) {
+
+            $transaction->update([
+                'amount' => $newAmount,
+                'note' => $data['note'] ?? $transaction->note,
+                'transaction_date' => $data['date'] ?? $transaction->transaction_date,
+            ]);
+
+            if ($diff == 0 || !in_array($transaction->type, ['pay_to_user', 'receive_from_user'])) {
+                return;
+            }
+
+            $targetUser = \App\Models\User::find($transaction->source_id);
+            if (!$targetUser)
+                return;
+
+            $targetWallet = $targetUser->getOrCreateWallet();
+            $walletService = app(WalletService::class);
+
+            if ($transaction->type === 'pay_to_user') {
+                $walletTx = $diff > 0
+                    ? $walletService->credit(
+                        wallet: $targetWallet,
+                        amount: $diff,
+                        type: $targetUser->role === 'admin' ? 'admin_receive' : 'cash_received',
+                        description: 'تعديل إيصال دفع #' . $transaction->id,
+                        createdBy: $transaction->recorded_by,
+                        date: $data['date'] ?? $transaction->transaction_date->toDateString(),
+                    )
+                    : $walletService->debit(
+                        wallet: $targetWallet,
+                        amount: abs($diff),
+                        type: $targetUser->role === 'admin' ? 'admin_pay' : 'cash_paid',
+                        description: 'تعديل إيصال دفع #' . $transaction->id,
+                        createdBy: $transaction->recorded_by,
+                        date: $data['date'] ?? $transaction->transaction_date->toDateString(),
+                    );
+            } else {
+                $walletTx = $diff > 0
+                    ? $walletService->debit(
+                        wallet: $targetWallet,
+                        amount: $diff,
+                        type: $targetUser->role === 'admin' ? 'admin_pay' : 'cash_paid',
+                        description: 'تعديل إيصال استلام #' . $transaction->id,
+                        createdBy: $transaction->recorded_by,
+                        date: $data['date'] ?? $transaction->transaction_date->toDateString(),
+                    )
+                    : $walletService->credit(
+                        wallet: $targetWallet,
+                        amount: abs($diff),
+                        type: $targetUser->role === 'admin' ? 'admin_receive' : 'cash_received',
+                        description: 'تعديل إيصال استلام #' . $transaction->id,
+                        createdBy: $transaction->recorded_by,
+                        date: $data['date'] ?? $transaction->transaction_date->toDateString(),
+                    );
+            }
+
+            $walletTxId = $walletTx->id; // ← احفظ الـ id للاستخدام بعد الـ transaction
+        });
 
         $log = ActivityLog::log(
-            event:        'treasury.updated',
-            description:  'تم تعديل معاملة مالية',
-            subjectType:  'treasury',
-            subjectId:    $transaction->id,
-            subjectLabel: number_format((float) $transaction->amount, 2) . ' ج'
+            event: 'treasury.updated',
+            description: 'تم تعديل معاملة مالية',
+            subjectType: 'treasury',
+            subjectId: $transaction->id,
+            subjectLabel: number_format($newAmount, 2) . ' ج'
         );
 
         $transaction->update(['log_id' => $log->id]);
+
+        // ✅ تحديث log_id في WalletTransaction الجديد إن وُجد
+        if ($walletTxId) {
+            \App\Models\WalletTransaction::where('id', $walletTxId)
+                ->update(['log_id' => $log->id]);
+        }
 
         return $transaction->fresh();
     }

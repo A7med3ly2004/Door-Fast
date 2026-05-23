@@ -29,8 +29,8 @@ class WalletController extends Controller
 
         if ($request->header('X-SPA-Navigation')) {
             return response()->json([
-                'html'       => view('callcenter.wallet.partials.content', $data)->render(),
-                'title'      => 'كشف حسابي',
+                'html' => view('callcenter.wallet.partials.content', $data)->render(),
+                'title' => 'كشف حسابي',
                 'csrf_token' => csrf_token(),
             ]);
         }
@@ -45,22 +45,24 @@ class WalletController extends Controller
     public function statement(Request $request): JsonResponse
     {
         $request->validate([
-            'from'        => ['nullable', 'date_format:Y-m-d'],
-            'to'          => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'delivery_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
-        $user   = auth()->user();
+        $user = auth()->user();
         $wallet = $user->getOrCreateWallet();
 
-        $from       = $request->input('from');
-        $to         = $request->input('to');
+        $from = $request->input('from');
+        $to = $request->input('to');
         $deliveryId = $request->input('delivery_id');
 
         $query = WalletTransaction::where('wallet_id', $wallet->id);
 
-        if ($from) $query->where('transaction_date', '>=', $from);
-        if ($to)   $query->where('transaction_date', '<=', $to);
+        if ($from)
+            $query->where('transaction_date', '>=', $from);
+        if ($to)
+            $query->where('transaction_date', '<=', $to);
 
         if ($deliveryId) {
             $deliveryWallet = User::find($deliveryId)?->wallet;
@@ -84,20 +86,20 @@ class WalletController extends Controller
             ->with('activityLog')
             ->get()
             ->map(fn(WalletTransaction $tx) => [
-                'id'               => $tx->id,
-                'log_id'           => $tx->activityLog?->id ?? '-',
+                'id' => $tx->id,
+                'log_id' => $tx->activityLog?->id ?? '-',
                 'transaction_date' => $tx->transaction_date->format('Y-m-d'),
-                'description'      => $tx->description ?? '—',
-                'type_label'       => $tx->type_label,
-                'debit'            => $tx->direction === 'debit' ? number_format((float) $tx->amount, 2) : '',
-                'credit'           => $tx->direction === 'credit' ? number_format((float) $tx->amount, 2) : '',
-                'balance_after'    => number_format((float) $tx->balance_after, 2),
+                'description' => $tx->description ?? '—',
+                'type_label' => $tx->type_label,
+                'debit' => $tx->direction === 'debit' ? number_format((float) $tx->amount, 2) : '',
+                'credit' => $tx->direction === 'credit' ? number_format((float) $tx->amount, 2) : '',
+                'balance_after' => number_format((float) $tx->balance_after, 2),
             ]);
 
         return response()->json([
             'summary' => [
-                'total_debit'     => number_format((float) $totals->total_debit, 2),
-                'total_credit'    => number_format((float) $totals->total_credit, 2),
+                'total_debit' => number_format((float) $totals->total_debit, 2),
+                'total_credit' => number_format((float) $totals->total_credit, 2),
                 'current_balance' => number_format((float) $wallet->balance, 2),
             ],
             'transactions' => $transactions,
@@ -112,52 +114,67 @@ class WalletController extends Controller
     {
         $validated = $request->validate([
             'delivery_id' => ['required', 'exists:users,id'],
-            'amount'      => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
+            'amount' => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
             'description' => ['nullable', 'string', 'max:500'],
-            'date'        => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
         ], $this->messages());
 
-        $cc       = auth()->user();
+        $cc = auth()->user();
         $delivery = User::findOrFail($validated['delivery_id']);
-        $service  = app(WalletService::class);
-        $date     = $validated['date'] ?? now()->toDateString();
-        $desc     = $validated['description'] ?? null;
+        $service = app(WalletService::class);
+        $date = $validated['date'] ?? now()->toDateString();
+        $desc = $validated['description'] ?? null;
 
-        $txIds = DB::transaction(function () use ($cc, $delivery, $service, $validated, $date, $desc): array {
-            $ccWallet  = $cc->getOrCreateWallet();
-            $delWallet = $delivery->getOrCreateWallet();
+        try {
+            $txIds = DB::transaction(function () use ($cc, $delivery, $service, $validated, $date, $desc): array {
+                // ✅ lockForUpdate يضمن قراءة الرصيد الحقيقي ويمنع Race Condition
+                $ccWallet = \App\Models\Wallet::where('user_id', $cc->id)->lockForUpdate()->firstOrFail();
+                $delWallet = $delivery->getOrCreateWallet();
 
-            $ccTx = $service->debit(
-                wallet:          $ccWallet,
-                amount:          (float) $validated['amount'],
-                type:            'cash_paid',
-                description:     'دفع نقدي إلى ' . $delivery->name . ($desc ? ' — ' . $desc : ''),
-                createdBy:       $cc->id,
-                relatedWalletId: $delWallet->id,
-                date:            $date,
-            );
+                if ((float) $validated['amount'] > (float) $ccWallet->balance) {
+                    throw new \Exception(
+                        'رصيدك غير كافٍ. الرصيد الحالي: ' . number_format($ccWallet->balance, 2) . ' ج'
+                    );
+                }
 
-            $delTx = $service->credit(
-                wallet:          $delWallet,
-                amount:          (float) $validated['amount'],
-                type:            'cash_received',
-                description:     'استلام نقدي من ' . $cc->name . ($desc ? ' — ' . $desc : ''),
-                createdBy:       $cc->id,
-                relatedWalletId: $ccWallet->id,
-                date:            $date,
-            );
+                $ccTx = $service->debit(
+                    wallet: $ccWallet,
+                    amount: (float) $validated['amount'],
+                    type: 'cash_paid',
+                    description: 'دفع نقدي إلى ' . $delivery->name . ($desc ? ' — ' . $desc : ''),
+                    createdBy: $cc->id,
+                    relatedWalletId: $delWallet->id,
+                    date: $date,
+                );
 
-            return [$ccTx->id, $delTx->id];
-        });
+                $delTx = $service->credit(
+                    wallet: $delWallet,
+                    amount: (float) $validated['amount'],
+                    type: 'cash_received',
+                    description: 'استلام نقدي من ' . $cc->name . ($desc ? ' — ' . $desc : ''),
+                    createdBy: $cc->id,
+                    relatedWalletId: $ccWallet->id,
+                    date: $date,
+                );
+
+                return [$ccTx->id, $delTx->id];
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => ['amount' => [$e->getMessage()]],
+            ], 422);
+        }
 
         $log = ActivityLog::log(
-            event:        'wallet.cc_pay_delivery',
-            description:  $cc->name . ' دفع ' . number_format((float) $validated['amount'], 2) . ' ج إلى ' . $delivery->name,
-            subjectType:  'wallet',
-            subjectId:    $delivery->id,
+            event: 'wallet.cc_pay_delivery',
+            description: $cc->name . ' دفع ' . number_format((float) $validated['amount'], 2) . ' ج إلى ' . $delivery->name,
+            subjectType: 'wallet',
+            subjectId: $delivery->id,
             subjectLabel: $delivery->name,
-            properties:   ['amount' => $validated['amount'], 'note' => $desc],
-            causerId:     $cc->id,
+            properties: ['amount' => $validated['amount'], 'note' => $desc],
+            causerId: $cc->id,
         );
 
         \App\Models\WalletTransaction::whereIn('id', $txIds)
@@ -177,52 +194,52 @@ class WalletController extends Controller
     {
         $validated = $request->validate([
             'delivery_id' => ['required', 'exists:users,id'],
-            'amount'      => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
+            'amount' => ['required', 'numeric', 'gt:0', 'max:9999999.99'],
             'description' => ['nullable', 'string', 'max:500'],
-            'date'        => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
         ], $this->messages());
 
-        $cc       = auth()->user();
+        $cc = auth()->user();
         $delivery = User::findOrFail($validated['delivery_id']);
-        $service  = app(WalletService::class);
-        $date     = $validated['date'] ?? now()->toDateString();
-        $desc     = $validated['description'] ?? null;
+        $service = app(WalletService::class);
+        $date = $validated['date'] ?? now()->toDateString();
+        $desc = $validated['description'] ?? null;
 
         $txIds = DB::transaction(function () use ($cc, $delivery, $service, $validated, $date, $desc): array {
-            $ccWallet  = $cc->getOrCreateWallet();
+            $ccWallet = $cc->getOrCreateWallet();
             $delWallet = $delivery->getOrCreateWallet();
 
             $ccTx = $service->credit(
-                wallet:          $ccWallet,
-                amount:          (float) $validated['amount'],
-                type:            'cash_received',
-                description:     'استلام نقدي من ' . $delivery->name . ($desc ? ' — ' . $desc : ''),
-                createdBy:       $cc->id,
+                wallet: $ccWallet,
+                amount: (float) $validated['amount'],
+                type: 'cash_received',
+                description: 'استلام نقدي من ' . $delivery->name . ($desc ? ' — ' . $desc : ''),
+                createdBy: $cc->id,
                 relatedWalletId: $delWallet->id,
-                date:            $date,
+                date: $date,
             );
 
             $delTx = $service->debit(
-                wallet:          $delWallet,
-                amount:          (float) $validated['amount'],
-                type:            'cash_paid',
-                description:     'دفع نقدي إلى ' . $cc->name . ($desc ? ' — ' . $desc : ''),
-                createdBy:       $cc->id,
+                wallet: $delWallet,
+                amount: (float) $validated['amount'],
+                type: 'cash_paid',
+                description: 'دفع نقدي إلى ' . $cc->name . ($desc ? ' — ' . $desc : ''),
+                createdBy: $cc->id,
                 relatedWalletId: $ccWallet->id,
-                date:            $date,
+                date: $date,
             );
 
             return [$ccTx->id, $delTx->id];
         });
 
         $log = ActivityLog::log(
-            event:        'wallet.cc_receive_delivery',
-            description:  $cc->name . ' استلم ' . number_format((float) $validated['amount'], 2) . ' ج من ' . $delivery->name,
-            subjectType:  'wallet',
-            subjectId:    $delivery->id,
+            event: 'wallet.cc_receive_delivery',
+            description: $cc->name . ' استلم ' . number_format((float) $validated['amount'], 2) . ' ج من ' . $delivery->name,
+            subjectType: 'wallet',
+            subjectId: $delivery->id,
             subjectLabel: $delivery->name,
-            properties:   ['amount' => $validated['amount'], 'note' => $desc],
-            causerId:     $cc->id,
+            properties: ['amount' => $validated['amount'], 'note' => $desc],
+            causerId: $cc->id,
         );
 
         \App\Models\WalletTransaction::whereIn('id', $txIds)
@@ -254,13 +271,13 @@ class WalletController extends Controller
     {
         return [
             'delivery_id.required' => 'يجب اختيار المندوب.',
-            'delivery_id.exists'   => 'المندوب المختار غير موجود.',
-            'amount.required'      => 'حقل المبلغ مطلوب.',
-            'amount.numeric'       => 'يجب أن يكون المبلغ رقمًا.',
-            'amount.gt'            => 'يجب أن يكون المبلغ أكبر من صفر.',
-            'amount.max'           => 'المبلغ كبير جدًا.',
-            'description.max'      => 'يجب ألا تتجاوز الملاحظة 500 حرف.',
-            'date.date_format'     => 'صيغة التاريخ غير صحيحة.',
+            'delivery_id.exists' => 'المندوب المختار غير موجود.',
+            'amount.required' => 'حقل المبلغ مطلوب.',
+            'amount.numeric' => 'يجب أن يكون المبلغ رقمًا.',
+            'amount.gt' => 'يجب أن يكون المبلغ أكبر من صفر.',
+            'amount.max' => 'المبلغ كبير جدًا.',
+            'description.max' => 'يجب ألا تتجاوز الملاحظة 500 حرف.',
+            'date.date_format' => 'صيغة التاريخ غير صحيحة.',
             'date.before_or_equal' => 'لا يمكن إدخال تاريخ مستقبلي.',
         ];
     }

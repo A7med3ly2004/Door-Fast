@@ -199,6 +199,7 @@ Route::middleware(['auth', 'role:callcenter'])
         Route::get('/shops', [CCShops::class, 'index'])->name('shops.index');
         Route::post('/shops', [CCShops::class, 'store'])->name('shops.store');
         Route::get('/shops/{id}', [CCShops::class, 'show'])->name('shops.show');
+        Route::put('/shops/{id}', [CCShops::class, 'update'])->name('shops.update');
         Route::post('/shop-categories', [CCShops::class, 'storeCategory'])->name('shop-categories.store');
 
         // Delivery

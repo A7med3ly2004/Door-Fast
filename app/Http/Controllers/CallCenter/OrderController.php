@@ -57,7 +57,7 @@ class OrderController extends Controller
             'items.*.item_name' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.shop_id' => 'nullable|exists:shops,id',
+            'items.*.shop_id' => 'required|exists:shops,id',
             'send_to_phone2' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
             'client_delivery_link' => 'nullable|url|max:500',
             'send_to_delivery_link' => 'nullable|url|max:500',
@@ -69,6 +69,8 @@ class OrderController extends Controller
             'name.required' => 'اسم العميل مطلوب',
             'client_address.required' => 'العنوان مطلوب',
             'items.required' => 'يجب إضافة صنف واحد على الأقل',
+            'items.*.shop_id.required' => 'يجب اختيار المتجر لكل صنف',
+            'items.*.shop_id.exists' => 'المتجر المختار غير موجود',
         ]);
 
         // Merge remaining (non-validated) fields the service needs
@@ -88,6 +90,7 @@ class OrderController extends Controller
             'send_to_client_id',
             'client_delivery_link',
             'send_to_delivery_link',
+            'opened_at',
         ]));
 
         // ── Discount guard (HTTP-layer: return JSON error, not exception) ─
@@ -207,7 +210,7 @@ class OrderController extends Controller
             if (!$s)
                 return response()->json([]);
 
-            $query = Order::with(['client', 'recipientClient', 'delivery', 'callcenter'])->latest();
+            $query = Order::with(['client', 'recipientClient', 'delivery', 'callcenter', 'admin', 'items'])->latest();
             $query->where(function ($q) use ($s) {
                 $q->where('order_number', 'like', "%$s%")
                     ->orWhereHas(
@@ -223,8 +226,11 @@ class OrderController extends Controller
                 'status' => $o->status,
                 'client_name' => $o->client?->name ?? '—',
                 'client_phone' => $o->client?->phone ?? '—',
+                'created_by_name' => $o->callcenter?->name ?? ($o->admin?->name ?? '—'),
+                'created_by_role' => $o->callcenter_id ? 'callcenter' : ($o->admin_id ? 'admin' : ''),
                 'delivery_name' => $o->delivery?->name ?? '—',
-                'callcenter_name' => $o->callcenter?->name ?? '—',
+                'shops_count' => $o->items->pluck('shop_id')->unique()->filter()->count(),
+                'delivery_fee' => $o->delivery_fee,
                 'total' => $o->total,
                 'created_at' => $o->created_at->toIso8601String(),
             ]));
@@ -371,16 +377,25 @@ class OrderController extends Controller
         }
 
         $order->items()->delete();
+
+        // Validate shop per item before saving
         foreach ($items as $item) {
-            if (empty($item['item_name']))
-                continue;
+            if (!empty($item['item_name']) && empty($item['shop_id'])) {
+                return response()->json([
+                    'errors' => ['items' => ['يجب اختيار المتجر لكل صنف']],
+                ], 422);
+            }
+        }
+
+        foreach ($items as $item) {
+            if (empty($item['item_name'])) continue;
             OrderItem::create([
-                'order_id' => $order->id,
-                'shop_id' => $item['shop_id'] ?: null,
-                'item_name' => $item['item_name'],
-                'quantity' => $item['quantity'],
+                'order_id'   => $order->id,
+                'shop_id'    => $item['shop_id'] ?? null,
+                'item_name'  => $item['item_name'],
+                'quantity'   => $item['quantity'],
                 'unit_price' => $item['unit_price'],
-                'total' => $item['quantity'] * $item['unit_price'],
+                'total'      => $item['quantity'] * $item['unit_price'],
             ]);
         }
 
@@ -395,6 +410,12 @@ class OrderController extends Controller
 
     public function cancel(Request $request, $id)
     {
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ], [
+            'reason.required' => 'يجب كتابة سبب الإلغاء',
+        ]);
+
         $order = Order::where('callcenter_id', auth()->id())->where('status', 'pending')->findOrFail($id);
 
         $order->update(['status' => 'cancelled']);
@@ -404,6 +425,14 @@ class OrderController extends Controller
             'action' => 'إلغاء الطلب',
             'notes' => $request->reason ?? null,
         ]);
+
+        $notif = \App\Models\AdminNotification::create([
+            'type'         => 'cancelled',
+            'order_id'     => $order->id,
+            'order_number' => $order->order_number,
+            'message'      => "تم إلغاء الطلب #{$order->order_number} من قبل الكول سنتر",
+        ]);
+        event(new \App\Events\AdminNotificationCreated($notif));
 
         event(new OrderStatusUpdated(['order_id' => $order->id, 'status' => 'cancelled']));
 
@@ -533,6 +562,7 @@ class OrderController extends Controller
             'logs' => $order->logs->map(fn($l) => [
                 'user' => $l->user?->name ?? 'النظام',
                 'action' => $l->action,
+                'notes' => $l->notes,
                 'created_at' => $l->created_at->toIso8601String(),
             ]),
         ];

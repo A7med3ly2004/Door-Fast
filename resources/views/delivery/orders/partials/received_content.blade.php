@@ -654,7 +654,7 @@
         // تنسيق الرقم: إزالة مسافات وإضافة كود الدولة
         let formattedPhone = phone.replace(/\s+/g, '').replace(/^0/, '20');
 
-        const message = `مرحباً ${clientName}، معك مندوب DoorFast بخصوص طلبك رقم ${orderNumber}. كيف يمكنني مساعدتك؟`;
+        const message = `اهلا وسهلا , مع حضرتك {{ auth()->user()->name }} مندوب توصيل دوور فاست.`;
 
         const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');

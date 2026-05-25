@@ -71,9 +71,9 @@ class ReportController extends Controller
             list($dStart, $dEnd) = \App\Models\Setting::businessDayRange($calDay);
             $dayOrders = $orders->filter(fn($o) => $o->created_at->between($dStart, $dEnd));
             $chart[] = [
-                'label'     => $calDay->format('m/d'),
-                'count'     => $dayOrders->count(),
-                'revenue'   => $dayOrders->where('status', 'delivered')->sum('total'),
+                'label'         => $calDay->format('m/d'),
+                'count'         => $dayOrders->count(),
+                'delivery_fees' => $dayOrders->where('status', 'delivered')->sum('delivery_fee'),
             ];
         }
 

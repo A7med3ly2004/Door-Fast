@@ -13,8 +13,8 @@
 <div class="section-header">
     <h2>كشف الحساب الخاص</h2>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn" style="background:#0891b2;color:#fff;" onclick="openModal('modal-pay')">أصال دفع</button>
-        <button class="btn" style="background:#059669;color:#fff;" onclick="openModal('modal-receive')">أصال
+        <button class="btn" style="background:#0891b2;color:#fff;" onclick="openModal('modal-pay')">ايصال دفع</button>
+        <button class="btn" style="background:#059669;color:#fff;" onclick="openModal('modal-receive')">ايصال
             استلام</button>
         <button class="btn btn-danger" onclick="openModal('modal-expense')">صرف مصروف</button>
         <a href="{{ route('admin.admin-ledger.export') }}" id="export-link" class="btn"
@@ -139,11 +139,11 @@
     </div>
 </div>
 
-{{-- Modal: أصال دفع --}}
+{{-- Modal: ايصال دفع --}}
 <div class="modal-overlay" id="modal-pay">
     <div class="modal">
         <div class="modal-header" style="background:rgba(8,145,178,.08);border-bottom:0;">
-            <h3 style="color:#0891b2;">أصال دفع</h3>
+            <h3 style="color:#0891b2;">ايصال دفع</h3>
             <button class="btn-close" onclick="closeModal('modal-pay')">✕</button>
         </div>
         <div class="modal-body">
@@ -189,11 +189,11 @@
     </div>
 </div>
 
-{{-- Modal: أصال استلام --}}
+{{-- Modal: ايصال استلام --}}
 <div class="modal-overlay" id="modal-receive">
     <div class="modal">
         <div class="modal-header" style="background:rgba(5,150,105,.08);border-bottom:0;">
-            <h3 style="color:#059669;">أصال استلام</h3>
+            <h3 style="color:#059669;">ايصال استلام</h3>
             <button class="btn-close" onclick="closeModal('modal-receive')">✕</button>
         </div>
         <div class="modal-body">

@@ -2,13 +2,16 @@
     #activity-feed::-webkit-scrollbar {
         width: 5px;
     }
+
     #activity-feed::-webkit-scrollbar-track {
         background: transparent;
     }
+
     #activity-feed::-webkit-scrollbar-thumb {
         background: var(--border);
         border-radius: 10px;
     }
+
     #activity-feed::-webkit-scrollbar-thumb:hover {
         background: var(--text-muted);
     }
@@ -20,6 +23,38 @@
         <div class="kpi-label">إجمالي الطلبات اليوم</div>
         <div class="kpi-value" id="v-orders">—</div>
     </div>
+    <div class="kpi-card green">
+        <div class="kpi-label">إيرادات اليوم</div>
+        <div class="kpi-value" id="v-daily">—</div>
+        <div class="kpi-sub">ج.م</div>
+    </div>
+    <div class="kpi-card green">
+        <div class="kpi-label">خدمة التوصيل اليومي</div>
+        <div class="kpi-value" id="v-daily-delivery">—</div>
+        <div class="kpi-sub">ج.م</div>
+    </div>
+    <div class="kpi-card red">
+        <div class="kpi-label">ملغاة اليوم</div>
+        <div class="kpi-value" id="v-cancelled">—</div>
+    </div>
+    <div class="kpi-card blue">
+        <div class="kpi-label">إجمالي طلبات الشهر</div>
+        <div class="kpi-value" id="v-orders-month">—</div>
+    </div>
+    <div class="kpi-card green">
+        <div class="kpi-label">إيرادات الشهر</div>
+        <div class="kpi-value" id="v-monthly">—</div>
+        <div class="kpi-sub">ج.م</div>
+    </div>
+    <div class="kpi-card green">
+        <div class="kpi-label">خدمة التوصيل الشهري</div>
+        <div class="kpi-value" id="v-monthly-delivery">—</div>
+        <div class="kpi-sub">ج.م</div>
+    </div>
+    <div class="kpi-card red">
+        <div class="kpi-label">طلبات ملغاة (الشهر)</div>
+        <div class="kpi-value" id="v-cancelled-month">—</div>
+    </div>
     <div class="kpi-card green" id="kpi-completed">
         <div class="kpi-label">تم التوصيلة اليوم</div>
         <div class="kpi-value" id="v-completed">—</div>
@@ -28,28 +63,16 @@
         <div class="kpi-label">معلقة اليوم</div>
         <div class="kpi-value" id="v-pending">—</div>
     </div>
-    <div class="kpi-card red">
-        <div class="kpi-label">ملغاة اليوم</div>
-        <div class="kpi-value" id="v-cancelled">—</div>
-    </div>
-    <div class="kpi-card green">
-        <div class="kpi-label">إيرادات اليوم</div>
-        <div class="kpi-value" id="v-daily">—</div>
+    <div class="kpi-card yellow">
+        <div class="kpi-label">متوسط التوصيل الشهري</div>
+        <div class="kpi-value" id="v-monthly-avg-delivery">—</div>
         <div class="kpi-sub">ج.م</div>
     </div>
-    <div class="kpi-card blue">
-        <div class="kpi-label">إجمالي طلبات الشهر</div>
-        <div class="kpi-value" id="v-orders-month">—</div>
-    </div>  
-    <div class="kpi-card green">
-        <div class="kpi-label">إيرادات الشهر</div>
-        <div class="kpi-value" id="v-monthly">—</div>
-        <div class="kpi-sub">ج.م</div>
-    </div>
-    <div class="kpi-card blue">
+    <div class="kpi-card purple">
         <div class="kpi-label">إجمالي العملاء</div>
         <div class="kpi-value" id="v-clients">—</div>
     </div>
+
 </div>
 
 <div class="grid-2" style="gap:20px; margin-bottom:20px">
@@ -76,17 +99,20 @@
             <thead>
                 <tr>
                     <th style="text-align:center">رقم الطلب</th>
+                    <th style="text-align:center">التاريخ</th>
                     <th style="text-align:center">العميل</th>
                     <th style="text-align:center">تم انشاؤه</th>
                     <th style="text-align:center">المندوب</th>
+                    <th style="text-align:center">عدد الأصناف</th>
+                    <th style="text-align:center">خدمة التوصيل</th>
+                    <th style="text-align:center">خصم</th>
                     <th style="text-align:center">الإجمالي</th>
                     <th style="text-align:center">الحالة</th>
-                    <th style="text-align:center">التاريخ</th>
                 </tr>
             </thead>
             <tbody id="recent-orders-body">
                 <tr>
-                    <td colspan="7" style="text-align:center;color:var(--text-muted)">جاري التحميل...</td>
+                    <td colspan="10" style="text-align:center;color:var(--text-muted)">جاري التحميل...</td>
                 </tr>
             </tbody>
         </table>
@@ -153,6 +179,10 @@
             document.getElementById('v-daily').textContent = parseFloat(k.daily_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
             document.getElementById('v-monthly').textContent = parseFloat(k.monthly_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
             document.getElementById('v-clients').textContent = k.total_clients;
+            document.getElementById('v-daily-delivery').textContent = parseFloat(k.daily_delivery_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('v-monthly-delivery').textContent = parseFloat(k.monthly_delivery_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('v-monthly-avg-delivery').textContent = parseFloat(k.monthly_avg_delivery).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('v-cancelled-month').textContent = k.cancelled_month;
 
             var labels = data.chart.map(d => d.label);
             var counts = data.chart.map(d => d.count);
@@ -190,18 +220,21 @@
             var body = document.getElementById('recent-orders-body');
             if (!body) return;
             body.innerHTML = !data.orders.length
-                ? '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">لا طلبات</td></tr>'
+                ? '<tr><td colspan="10" style="text-align:center;color:var(--text-muted)">لا طلبات</td></tr>'
                 : data.orders.map(o => `<tr>
                 <td style="text-align:center"><strong>${o.order_number}</strong></td>
+                <td style="text-align:center;color:var(--text-muted);font-size:12px">${formatDate(o.created_at)}</td>
                 <td style="text-align:center">${o.client}</td>
                 <td style="text-align:center">
                     ${o.creator_name}
                     ${o.creator_type === 'admin' ? '<div class="kpi-sub" style="font-size:11px;margin-top:2px;color:var(--info)">أدمن</div>' : ''}
                 </td>
                 <td style="text-align:center">${o.delivery}</td>
+                <td style="text-align:center">${o.items_count}</td>
+                <td style="text-align:center">${parseFloat(o.delivery_fee).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td>
+                <td style="text-align:center">${parseFloat(o.discount).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td>
                 <td style="text-align:center">${parseFloat(o.total).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td>
                 <td style="text-align:center">${statusBadge(o.status)}</td>
-                <td style="text-align:center;color:var(--text-muted);font-size:12px">${formatDate(o.created_at)}</td>
             </tr>`).join('');
         } catch (e) { console.error('orders error', e); }
     }

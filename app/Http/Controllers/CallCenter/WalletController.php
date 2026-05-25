@@ -205,32 +205,47 @@ class WalletController extends Controller
         $date = $validated['date'] ?? now()->toDateString();
         $desc = $validated['description'] ?? null;
 
-        $txIds = DB::transaction(function () use ($cc, $delivery, $service, $validated, $date, $desc): array {
-            $ccWallet = $cc->getOrCreateWallet();
-            $delWallet = $delivery->getOrCreateWallet();
+        try {
+            $txIds = DB::transaction(function () use ($cc, $delivery, $service, $validated, $date, $desc): array {
+                $ccWallet = $cc->getOrCreateWallet();
+                // ✅ lockForUpdate على محفظة المندوب للتحقق من رصيده
+                $delWallet = \App\Models\Wallet::where('user_id', $delivery->id)->lockForUpdate()->firstOrFail();
 
-            $ccTx = $service->credit(
-                wallet: $ccWallet,
-                amount: (float) $validated['amount'],
-                type: 'cash_received',
-                description: 'استلام نقدي من ' . $delivery->name . ($desc ? ' — ' . $desc : ''),
-                createdBy: $cc->id,
-                relatedWalletId: $delWallet->id,
-                date: $date,
-            );
+                if ((float) $validated['amount'] > (float) $delWallet->balance) {
+                    throw new \Exception(
+                        'رصيد المندوب غير كافٍ. الرصيد الحالي: ' . number_format($delWallet->balance, 2) . ' ج'
+                    );
+                }
 
-            $delTx = $service->debit(
-                wallet: $delWallet,
-                amount: (float) $validated['amount'],
-                type: 'cash_paid',
-                description: 'دفع نقدي إلى ' . $cc->name . ($desc ? ' — ' . $desc : ''),
-                createdBy: $cc->id,
-                relatedWalletId: $ccWallet->id,
-                date: $date,
-            );
+                $ccTx = $service->credit(
+                    wallet: $ccWallet,
+                    amount: (float) $validated['amount'],
+                    type: 'cash_received',
+                    description: 'استلام نقدي من ' . $delivery->name . ($desc ? ' — ' . $desc : ''),
+                    createdBy: $cc->id,
+                    relatedWalletId: $delWallet->id,
+                    date: $date,
+                );
 
-            return [$ccTx->id, $delTx->id];
-        });
+                $delTx = $service->debit(
+                    wallet: $delWallet,
+                    amount: (float) $validated['amount'],
+                    type: 'cash_paid',
+                    description: 'دفع نقدي إلى ' . $cc->name . ($desc ? ' — ' . $desc : ''),
+                    createdBy: $cc->id,
+                    relatedWalletId: $ccWallet->id,
+                    date: $date,
+                );
+
+                return [$ccTx->id, $delTx->id];
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => ['amount' => [$e->getMessage()]],
+            ], 422);
+        }
 
         $log = ActivityLog::log(
             event: 'wallet.cc_receive_delivery',

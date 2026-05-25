@@ -95,7 +95,7 @@ class AdminOrderController extends Controller
             'items.*.item_name'  => 'required|string',
             'items.*.quantity'   => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.shop_id'    => 'nullable|exists:shops,id',
+            'items.*.shop_id'    => 'required|exists:shops,id',
             'send_to_phone2'     => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
             'client_delivery_link'  => 'nullable|url|max:500',
             'send_to_delivery_link' => 'nullable|url|max:500',
@@ -108,6 +108,8 @@ class AdminOrderController extends Controller
             'client_address.required' => 'العنوان مطلوب',
             'delivery_id.exists'      => 'المندوب غير موجود أو غير نشط',
             'items.required'          => 'يجب إضافة صنف واحد على الأقل',
+            'items.*.shop_id.required' => 'يجب اختيار المتجر لكل صنف',
+            'items.*.shop_id.exists'   => 'المتجر المختار غير موجود',
         ]);
 
         // Merge remaining fields the service needs
@@ -116,7 +118,7 @@ class AdminOrderController extends Controller
             'discount', 'discount_type', 'delivery_fee',
             'notes', 'send_to_phone', 'send_to_phone2', 'send_to_address',
             'send_to_name', 'send_to_code', 'send_to_client_id',
-            'client_delivery_link', 'send_to_delivery_link',
+            'client_delivery_link', 'send_to_delivery_link', 'opened_at',
         ]));
 
         // ── Discount guard (HTTP-layer) ──────────────────────────────

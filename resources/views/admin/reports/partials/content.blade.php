@@ -197,7 +197,7 @@
             if (reportChart) reportChart.destroy();
             reportChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: data.chart.map(d => d.label), datasets: [{ label: 'الطلبات', data: data.chart.map(d => d.count), backgroundColor: '#f59e0b', borderRadius: 4 }, { label: 'الإيراد', data: data.chart.map(d => d.revenue), backgroundColor: '#3b82f6', borderRadius: 4, yAxisID: 'y2' }] },
+                data: { labels: data.chart.map(d => d.label), datasets: [{ label: 'الطلبات', data: data.chart.map(d => d.count), backgroundColor: '#f59e0b', borderRadius: 4 }, { label: 'إجمالي التوصيل', data: data.chart.map(d => d.delivery_fees), backgroundColor: '#3b82f6', borderRadius: 4, yAxisID: 'y2' }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8' } } }, scales: { x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' }, beginAtZero: true }, y2: { position: 'left', grid: { display: false }, ticks: { color: '#3b82f6' }, beginAtZero: true } } }
             });
             document.getElementById('delivery-breakdown').innerHTML = data.delivery_breakdown.length ? data.delivery_breakdown.map(d => `<tr><td style="text-align: right;">${d.name}</td><td style="text-align: center;">${d.total}</td><td style="text-align: center;"><span class="badge badge-green">${d.completed}</span></td><td style="text-align: center;">${parseFloat(d.revenue).toFixed(2)} ج</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">لا بيانات</td></tr>';

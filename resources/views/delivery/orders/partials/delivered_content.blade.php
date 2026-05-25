@@ -887,7 +887,7 @@
             if (!response.ok) throw new Error('Network response was not ok');
             const blob = await response.blob();
 
-            const fileName = 'Invoice_ORD-' + orderNumber + '.pdf';
+            const fileName = orderNumber + '.pdf';
             const file = new File([blob], fileName, { type: 'application/pdf' });
 
             var msg = "مرحباً،\n\nإليك فاتورة طلبك رقم #" + orderNumber + " من DoorFast .\n\nشكراً لثقتك بنا!";
@@ -941,7 +941,7 @@
         if (phoneNum.length > 0 && !phoneNum.startsWith('20')) {
             if (phoneNum.length == 11) phoneNum = '20' + phoneNum;
         }
-        var msg = `مرحباً ${clientName || 'العميل'}، معك مندوب DoorFast بخصوص طلبك رقم ${orderNumber}. كيف يمكنني مساعدتك؟`;
+        var msg = `اهلا وسهلا , مع حضرتك {{ auth()->user()->name }} مندوب توصيل دوور فاست.`;
         var encodedMsg = encodeURIComponent(msg);
         window.open("https://wa.me/" + phoneNum + "?text=" + encodedMsg, '_blank');
     }

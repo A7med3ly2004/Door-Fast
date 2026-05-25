@@ -22,7 +22,8 @@
                     @foreach($callcenters as $cc)
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
                             onclick="selectDropdown('filter-callcenter-id', '{{ $cc->id }}', '{{ $cc->name }}')">
-                            {{ $cc->name }}</div>
+                            {{ $cc->name }}
+                        </div>
                     @endforeach
                 </div>
             </div>
@@ -48,72 +49,54 @@
     <div class="card" style="margin-bottom:20px;padding:24px;">
         <h3 id="report-agent-name" style="margin-bottom:20px;font-size:18px;color:var(--info);"></h3>
 
-        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);gap:20px;">
-            <div class="kpi-card cyan">
+        <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);gap:20px;">
+            <div class="kpi-card yellow">
                 <div class="kpi-label">إجمالي الطلبات</div>
                 <div class="kpi-value" id="kpi-total-orders">0</div>
             </div>
             <div class="kpi-card green">
-                <div class="kpi-label">إجمالي المستلم (مُوصل)</div>
+                <div class="kpi-label">إجمالي الموصله</div>
                 <div class="kpi-value" id="kpi-total-received">0</div>
-            </div>
-            <div class="kpi-card red">
-                <div class="kpi-label">الطلبات الملغية</div>
-                <div class="kpi-value" id="kpi-cancelled">0</div>
             </div>
             <div class="kpi-card yellow">
                 <div class="kpi-label">الطلبات المعلقة</div>
                 <div class="kpi-value" id="kpi-pending">0</div>
                 <div class="kpi-sub">معلقة + مستلمة للمندوب</div>
             </div>
+            <div class="kpi-card red">
+                <div class="kpi-label">الطلبات الملغية</div>
+                <div class="kpi-value" id="kpi-cancelled">0</div>
+            </div>
+            <div class="kpi-card red">
+                <div class="kpi-label">إجمالي الخصومات</div>
+                <div class="kpi-value" id="kpi-total-discounts">0</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
+            <div class="kpi-card yellow" id="kpi-period-safe-card">
+                <div class="kpi-label">رصيد الخزنة في الفترة</div>
+                <div class="kpi-value" id="kpi-period-safe-balance">0</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
+            <div class="kpi-card red">
+                <div class="kpi-label">مدين</div>
+                <div class="kpi-value" id="kpi-debtor">0</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-label">دائن</div>
+                <div class="kpi-value" id="kpi-creditor">0</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
             <div class="kpi-card cyan">
                 <div class="kpi-label">إجمالي الطلبات الموصلة</div>
                 <div class="kpi-value" id="kpi-total-delivered-revenue">0</div>
-                <div class="kpi-sub">ج.م (الإجمالي الصافي)</div>
+                <div class="kpi-sub">ج.م</div>
             </div>
             <div class="kpi-card green">
                 <div class="kpi-label">إجمالي رسوم التوصيل</div>
                 <div class="kpi-value" id="kpi-total-fees">0</div>
                 <div class="kpi-sub">ج.م</div>
             </div>
-
-            <div class="kpi-card red">
-                <div class="kpi-label">إجمالي الخصومات</div>
-                <div class="kpi-value" id="kpi-total-discounts">0</div>
-                <div class="kpi-sub">ج.م</div>
-            </div>
-
-            <div class="kpi-card blue" id="kpi-period-safe-card">
-                <div class="kpi-label">رصيد الخزنة في الفترة</div>
-                <div class="kpi-value" id="kpi-period-safe-balance">0</div>
-                <div class="kpi-sub">ج.م (الرصيد الفعلي للفترة)</div>
-            </div>
-
-
-            <div class="kpi-card cyan">
-                <div class="kpi-label">دائن</div>
-                <div class="kpi-value" id="kpi-creditor">0</div>
-                <div class="kpi-sub">ج.م</div>
-            </div>
-
-            <div class="kpi-card green">
-                <div class="kpi-label">مدين</div>
-                <div class="kpi-value" id="kpi-debtor">0</div>
-                <div class="kpi-sub">ج.م</div>
-            </div>
-
-            <div class="kpi-card" style="border-right:4px solid lightblue;">
-                <div class="kpi-label">إجمالي ساعات العمل</div>
-                <div class="kpi-value" id="kpi-total-work-hours" style="color:lightblue">00:00</div>
-                <div class="kpi-sub">ساعة : دقيقة</div>
-            </div>
-
-            <div class="kpi-card" style="border-right:4px solid lightblue;">
-                <div class="kpi-label">إجمالي أيام العمل</div>
-                <div class="kpi-value" id="kpi-total-work-days" style="color:lightblue">0</div>
-                <div class="kpi-sub">يوم عمل</div>
-            </div>
-
             <div class="kpi-card" style="border-right:4px solid #a855f7;">
                 <div class="kpi-label">الشريحة المحققة</div>
                 <div class="kpi-value" id="kpi-cc-tier-number" style="color:#a855f7">—</div>
@@ -122,6 +105,16 @@
                 <div class="kpi-label">إجمالي الأرباح</div>
                 <div class="kpi-value" id="kpi-total-cc-profits" style="color:#a855f7">0</div>
                 <div class="kpi-sub">ج.م</div>
+            </div>
+            <div class="kpi-card" style="border-right:4px solid lightblue;">
+                <div class="kpi-label">إجمالي ساعات العمل</div>
+                <div class="kpi-value" id="kpi-total-work-hours" style="color:lightblue">00:00</div>
+                <div class="kpi-sub">ساعة : دقيقة</div>
+            </div>
+            <div class="kpi-card" style="border-right:4px solid lightblue;">
+                <div class="kpi-label">إجمالي أيام العمل</div>
+                <div class="kpi-value" id="kpi-total-work-days" style="color:lightblue">0</div>
+                <div class="kpi-sub">يوم عمل</div>
             </div>
         </div>
     </div>

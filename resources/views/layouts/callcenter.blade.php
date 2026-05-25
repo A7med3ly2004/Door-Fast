@@ -1163,7 +1163,7 @@
                         icon +
                         '<div style="flex:1">' +
                         '<div style="font-size:13px;font-weight:600;line-height:1.4">' + n.message + '</div>' +
-                        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">' + new Date(n.created_at).toLocaleString('ar-EG') + '</div>' +
+                        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">' + new Date(n.created_at).toLocaleString("en-GB") + '</div>' +
                         '</div></div>' +
                         '</div>';
                 }).join('');

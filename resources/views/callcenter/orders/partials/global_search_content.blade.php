@@ -18,10 +18,12 @@
                 <tr>
                     <th style="text-align:center;">رقم الطلب</th>
                     <th style="text-align:center;">التاريخ</th>
-                    <th style="text-align:center;">الكول سنتر</th>
                     <th style="text-align:center;">العميل</th>
                     <th style="text-align:center;">الهاتف</th>
+                    <th style="text-align:center;">تم انشائه</th>
                     <th style="text-align:center;">المندوب</th>
+                    <th style="text-align:center;">المتاجر</th>
+                    <th style="text-align:center;">قيمة التوصيل</th>
                     <th style="text-align:center;">الإجمالي</th>
                     <th style="text-align:center;">الحالة</th>
                     <th style="text-align:center;">إجراءات</th>
@@ -29,7 +31,7 @@
             </thead>
             <tbody id="global-orders-body">
                 <tr>
-                    <td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">أدخل كود للبحث...
+                    <td colspan="11" style="text-align:center;padding:40px;color:var(--text-muted)">أدخل كود للبحث...
                     </td>
                 </tr>
             </tbody>
@@ -42,7 +44,8 @@
         <div class="modal-header">
             <div style="display:flex;align-items:center;gap:12px;">
                 <h3>تفاصيل الطلب — <span id="view-num"></span></h3><a id="modal-pdf-btn" href="#" target="_blank"
-                    class="btn btn-sm btn-secondary" onclick="if(this.href==='#'){event.preventDefault();}" style="background-color: #c92f2f;">إنشاء PDF</a>
+                    class="btn btn-sm btn-secondary" onclick="if(this.href==='#'){event.preventDefault();}"
+                    style="background-color: #c92f2f;">إنشاء PDF</a>
             </div><button class="btn-close" onclick="closeModal('modal-view')">✕</button>
         </div>
         <div class="modal-body" id="view-body"></div>
@@ -58,10 +61,25 @@
         try {
             const { data } = await axios.get('{{ route("callcenter.orders.global-search") }}', { params: { search } });
             var body = document.getElementById('global-orders-body');
-            if (!data.length) { body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد نتائج</td></tr>'; return; }
+            if (!data.length) { body.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-muted)">لا توجد نتائج</td></tr>'; return; }
 
             body.innerHTML = data.map(o => {
-                return `<tr><td style="text-align:center;"><strong style="color:var(--yellow)">${o.order_number}</strong></td><td style="text-align:center;font-size:11px;color:var(--text-muted)">${formatDate(o.created_at)}</td><td style="text-align:center;">${o.callcenter_name}</td><td style="text-align:center;">${o.client_name}</td><td style="text-align:center;">${o.client_phone}</td><td style="text-align:center;">${o.delivery_name}</td><td style="text-align:center;">${parseFloat(o.total).toFixed(2)} ج</td><td style="text-align:center;">${statusBadge(o.status)}</td><td style="text-align:center;"><button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">عرض</button></td></tr>`;
+                const roleLabel = o.created_by_role === 'admin'
+                    ? `<span style="font-size:10px;background:rgba(168,85,247,0.15);color:#a855f7;padding:2px 6px;border-radius:6px;margin-right:4px;">مدير</span>`
+                    : `<span style="font-size:10px;background:rgba(var(--primary-rgb, 59,130,246),0.15);color:var(--primary);padding:2px 6px;border-radius:6px;margin-right:4px;">كول سنتر</span>`;
+                return `<tr>
+                    <td style="text-align:center;"><strong style="color:var(--yellow)">${o.order_number}</strong></td>
+                    <td style="text-align:center;font-size:11px;color:var(--text-muted)">${formatDate(o.created_at)}</td>
+                    <td style="text-align:center;">${o.client_name}</td>
+                    <td style="text-align:center;">${o.client_phone}</td>
+                    <td style="text-align:center;">${o.created_by_name}</td>
+                    <td style="text-align:center;">${o.delivery_name}</td>
+                    <td style="text-align:center;">${o.shops_count}</td>
+                    <td style="text-align:center;">${parseFloat(o.delivery_fee).toFixed(2)} ج</td>
+                    <td style="text-align:center;">${parseFloat(o.total).toFixed(2)} ج</td>
+                    <td style="text-align:center;">${statusBadge(o.status)}</td>
+                    <td style="text-align:center;"><button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">عرض</button></td>
+                </tr>`;
             }).join('');
         } catch (e) { console.error(e); } finally { document.getElementById('tbl-loading-g').classList.remove('show'); }
     }
@@ -179,31 +197,27 @@
             </div>
         </div>`;
 
-            let timelineEvents = [];
-            if (o.created_at) timelineEvents.push({ label: 'تاريخ الإنشاء', date: o.created_at, icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' });
-            if (o.sent_to_delivery_at) timelineEvents.push({ label: 'إرسال للمندوب', date: o.sent_to_delivery_at, icon: 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8' });
-            if (o.accepted_at) timelineEvents.push({ label: 'قبول المندوب', date: o.accepted_at, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' });
-            if (o.delivered_at) timelineEvents.push({ label: 'تم التوصيل', date: o.delivered_at, icon: 'M5 13l4 4L19 7' });
 
-            if (timelineEvents.length > 0) {
+            if (o.logs && o.logs.length) {
                 html += `<div style="background:var(--bg); border-radius:12px; padding:16px; border:1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <div style="font-size:14px; font-weight:700; color:var(--text-muted); margin-bottom:16px; display:flex; align-items:center; gap:8px;">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    التسلسل الزمني
-                </div>
-                <div style="display:flex; flex-direction:column; gap:16px; position:relative;">
-                    <div style="position:absolute; right:15px; top:10px; bottom:10px; width:2px; background:var(--border); z-index:1;"></div>
-                    ${timelineEvents.map((ev, index) => `<div style="display:flex; align-items:center; gap:16px; position:relative; z-index:2;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:${index === timelineEvents.length - 1 ? 'var(--yellow)' : 'var(--bg)'}; border:2px solid ${index === timelineEvents.length - 1 ? 'var(--yellow)' : 'var(--border)'}; display:flex; align-items:center; justify-content:center; color:${index === timelineEvents.length - 1 ? '#000' : 'var(--text-muted)'};">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${ev.icon}"></path></svg>
-                        </div>
-                        <div style="flex:1;">
-                            <div style="font-size:13px; font-weight:700; color:${index === timelineEvents.length - 1 ? 'var(--text)' : 'var(--text-muted)'};">${ev.label}</div>
-                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px; direction:ltr; text-align:right;">${formatDate(ev.date)}</div>
-                        </div>
-                    </div>`).join('')}
-                </div>
-            </div>`;
+                    <div style="font-size:14px; font-weight:700; color:var(--text-muted); margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        سجل النشاط
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:16px; position:relative;">
+                        <div style="position:absolute; right:15px; top:10px; bottom:10px; width:2px; background:var(--border); z-index:1;"></div>
+                        ${o.logs.map((l, index) => `<div style="display:flex; align-items:flex-start; gap:16px; position:relative; z-index:2;">
+                            <div style="width:32px; height:32px; border-radius:50%; background:${index === 0 ? 'var(--yellow)' : 'var(--bg)'}; border:2px solid ${index === 0 ? 'var(--yellow)' : 'var(--border)'}; display:flex; align-items:center; justify-content:center; color:${index === 0 ? '#000' : 'var(--text-muted)'}; flex-shrink:0; margin-top:2px;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${index === 0 ? 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' : 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}"></path></svg>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:13px; font-weight:700; color:${index === 0 ? 'var(--text)' : 'var(--text-muted)'};">${l.action} <span style="font-weight:400; color:var(--text-muted); margin-right:4px;">— ${l.user}</span></div>
+                                ${l.notes ? `<div style="font-size:12px; color:var(--text-muted); margin-top:5px; padding:6px 10px; line-height:1.5;">${l.notes}</div>` : ''}
+                                <div style="font-size:12px; color:var(--text-muted); margin-top:4px; direction:ltr; text-align:right;">${formatDate(l.created_at)}</div>
+                            </div>
+                        </div>`).join('')}
+                    </div>
+                </div>`;
             }
 
             document.getElementById('view-body').innerHTML = html;

@@ -42,9 +42,9 @@ class StatsController extends Controller
         $ccTierNumber  = (int) ($todayProfit?->tier_number ?? 0);
         $ccTotalProfit = (float) ($todayProfit?->total_profit ?? 0);
 
-        // Bar chart: last 7 days
+        // Bar chart: last 10 days
         $chart = [];
-        for ($i = 6; $i >= 0; $i--) {
+        for ($i = 9; $i >= 0; $i--) {
             $day = Carbon::today()->subDays($i);
             $dayRange = \App\Models\Setting::businessDayRange($day);
             $chart[] = [

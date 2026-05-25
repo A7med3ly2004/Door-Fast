@@ -40,8 +40,16 @@ class Shop extends Model
 
     public static function generateCode(): string
     {
-        $last = static::latest('id')->value('id') ?? 0;
-        $next = $last + 1;
-        return 'SHP-' . str_pad($next, 3, '0', STR_PAD_LEFT);
+        $baseNumber = 8000;
+        $lastCode = static::get(['code'])
+            ->filter(fn($s) => is_numeric($s->code))
+            ->map(fn($s) => (int) $s->code)
+            ->max();
+
+        if ($lastCode && $lastCode >= $baseNumber) {
+            return (string)($lastCode + 1);
+        }
+
+        return (string)($baseNumber + 1);
     }
 }

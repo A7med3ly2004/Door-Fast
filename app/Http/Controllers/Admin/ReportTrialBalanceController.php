@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\TreasuryTransaction;
+use App\Models\WalletTransaction;
 
 class ReportTrialBalanceController extends Controller
 {
@@ -43,7 +44,15 @@ class ReportTrialBalanceController extends Controller
         $mainSafe = ($safeRows['income'] ?? 0) + ($safeRows['settlement'] ?? 0) + ($safeRows['receive_from_user'] ?? 0)
                   - ($safeRows['expense'] ?? 0) - ($safeRows['dain'] ?? 0) - ($safeRows['discount'] ?? 0) - ($safeRows['pay_to_user'] ?? 0);
 
-        $totalExpenses = $safeRows['expense'] ?? 0;
+        $totalExpenses = 0;
+        {
+            // إجمالي المصروفات من "كشف حساب خاص" فقط (admin_expense في wallet_transactions)
+            $expQuery = WalletTransaction::where('type', 'admin_expense');
+            if (!$isAlways) {
+                $expQuery->whereBetween('transaction_date', [$from->toDateString(), $to->toDateString()]);
+            }
+            $totalExpenses = (float) $expQuery->sum('amount');
+        }
 
         // 2. CALLCENTER ROWS (كول سنتر) — يعتمد على رصيد المحفظة مثل المناديب والمديرين
         $ccAgents = User::callcenters()->with('wallet')->get(['id', 'name', 'code']);

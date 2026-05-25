@@ -48,7 +48,8 @@
         <div class="modal-header">
             <div style="display:flex;align-items:center;gap:12px;">
                 <h3>تفاصيل الطلب — <span id="view-num"></span></h3><a id="modal-pdf-btn" href="#" target="_blank"
-                    class="btn btn-sm btn-secondary" onclick="if(this.href==='#'){event.preventDefault();}" style="background-color: #c92f2f;">إنشاء PDF</a>
+                    class="btn btn-sm btn-secondary" onclick="if(this.href==='#'){event.preventDefault();}"
+                    style="background-color: #c92f2f;">إنشاء PDF</a>
             </div><button class="btn-close" onclick="closeModal('modal-view')">✕</button>
         </div>
         <div class="modal-body" id="view-body"></div>
@@ -60,8 +61,8 @@
             <h3>إلغاء الطلب</h3><button class="btn-close" onclick="closeModal('modal-cancel')">✕</button>
         </div>
         <div class="modal-body"><input type="hidden" id="cancel-id">
-            <div class="form-group"><label class="form-label">سبب الإلغاء (اختياري)</label><textarea
-                    class="form-control" id="cancel-reason" rows="3" placeholder="اكتب سبب الإلغاء..."></textarea></div>
+            <div class="form-group"><label class="form-label">سبب الإلغاء</label><textarea class="form-control"
+                    id="cancel-reason" rows="3" placeholder="اكتب سبب الإلغاء..."></textarea></div>
             <div class="modal-footer"><button class="btn btn-secondary"
                     onclick="closeModal('modal-cancel')">تراجع</button><button class="btn btn-danger"
                     onclick="doCancel()">إلغاء الطلب</button></div>
@@ -80,18 +81,22 @@
                         class="form-select" id="edit-delivery"></select></div>
                 <div class="form-group">
                     <label class="form-label">عنوان العميل *</label>
-                    <select class="form-select" id="edit-address-select" onchange="toggleNewAddress('edit-address-select', 'edit-address-txt')"></select>
-                    <input type="text" class="form-control" id="edit-address-txt" style="display:none; margin-top:8px;" placeholder="اكتب العنوان الجديد...">
+                    <select class="form-select" id="edit-address-select"
+                        onchange="toggleNewAddress('edit-address-select', 'edit-address-txt')"></select>
+                    <input type="text" class="form-control" id="edit-address-txt" style="display:none; margin-top:8px;"
+                        placeholder="اكتب العنوان الجديد...">
                 </div>
             </div>
             <div class="grid-2" style="margin-bottom:12px">
                 <div class="form-group">
                     <label class="form-label">هاتف العميل</label>
-                    <input type="text" class="form-control" id="edit-client-phone" readonly dir="ltr" style="text-align:right">
+                    <input type="text" class="form-control" id="edit-client-phone" readonly dir="ltr"
+                        style="text-align:right">
                 </div>
                 <div class="form-group" id="edit-client-phone2-group" style="display:none;">
                     <label class="form-label">هاتف 2</label>
-                    <input type="text" class="form-control" id="edit-client-phone2" readonly dir="ltr" style="text-align:right">
+                    <input type="text" class="form-control" id="edit-client-phone2" readonly dir="ltr"
+                        style="text-align:right">
                 </div>
             </div>
             <div id="edit-send-to-section"
@@ -102,15 +107,18 @@
                     <div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text"
                             class="form-control" id="edit-send-to-phone" dir="ltr" style="text-align:right"></div>
                     <div class="form-group"><label class="form-label">هاتف 2 (العميل المستلم)</label><input type="text"
-                            class="form-control" id="edit-send-to-phone2" dir="ltr" style="text-align:right" placeholder="اختياري"></div>
+                            class="form-control" id="edit-send-to-phone2" dir="ltr" style="text-align:right"
+                            placeholder="اختياري"></div>
                 </div>
                 <div class="grid-2" style="margin-top:12px">
                     <div class="form-group"><label class="form-label">اسم العميل المستلم</label><input type="text"
                             class="form-control" id="edit-send-to-name"></div>
                     <div class="form-group">
                         <label class="form-label">عنوان المستلم</label>
-                        <select class="form-select" id="edit-send-to-address-select" onchange="toggleNewAddress('edit-send-to-address-select', 'edit-send-to-address-txt')"></select>
-                        <input type="text" class="form-control" id="edit-send-to-address-txt" style="display:none; margin-top:8px;" placeholder="اكتب العنوان الجديد...">
+                        <select class="form-select" id="edit-send-to-address-select"
+                            onchange="toggleNewAddress('edit-send-to-address-select', 'edit-send-to-address-txt')"></select>
+                        <input type="text" class="form-control" id="edit-send-to-address-txt"
+                            style="display:none; margin-top:8px;" placeholder="اكتب العنوان الجديد...">
                     </div>
                 </div>
             </div>
@@ -150,12 +158,12 @@
                         style="font-size:14px">0 ج</strong></div>
                 <div
                     style="display:flex;justify-content:space-between;font-size:18px;color:var(--yellow);font-weight:800;border-top:1px solid var(--border);padding-top:6px">
-                    <span>الإجمالي النهائي:</span> <span id="edit-grand-total">0 ج</span></div>
+                    <span>الإجمالي النهائي:</span> <span id="edit-grand-total">0 ج</span>
+                </div>
             </div>
         </div>
-        <div class="modal-footer"><button class="btn btn-secondary"
-                onclick="closeEditModal()">تراجع</button><button class="btn btn-primary" id="btn-save-edit"
-                onclick="saveEdit()">حفظ التعديلات ✔</button></div>
+        <div class="modal-footer"><button class="btn btn-secondary" onclick="closeEditModal()">تراجع</button><button
+                class="btn btn-primary" id="btn-save-edit" onclick="saveEdit()">حفظ التعديلات ✔</button></div>
     </div>
 </div>
 
@@ -313,30 +321,27 @@
                 </table>
             </div>
         </div>`;
-            const timelineEvents = [
-                { label: 'تاريخ الإنشاء', time: o.created_at, icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>' },
-                { label: 'إرسال للمندوب', time: o.sent_to_delivery_at, icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>' },
-                { label: 'قبول المندوب', time: o.accepted_at, icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>' },
-                { label: 'تم التوصيل', time: o.delivered_at, icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>' }
-            ].filter(e => e.time);
-            html += `<div style="background:var(--bg); border-radius:12px; padding:16px; border:1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-            <div style="font-size:14px; font-weight:700; color:var(--text-muted); margin-bottom:16px; display:flex; align-items:center; gap:8px;">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                التسلسل الزمني
-            </div>
-            <div style="display:flex; flex-direction:column; gap:16px; position:relative;">
-                <div style="position:absolute; right:15px; top:10px; bottom:10px; width:2px; background:var(--border); z-index:1;"></div>
-                ${timelineEvents.map((e, index) => `<div style="display:flex; align-items:center; gap:16px; position:relative; z-index:2;">
-                    <div style="width:32px; height:32px; border-radius:50%; background:${index === timelineEvents.length - 1 ? 'var(--yellow)' : 'var(--bg)'}; border:2px solid ${index === timelineEvents.length - 1 ? 'var(--yellow)' : 'var(--border)'}; display:flex; align-items:center; justify-content:center; color:${index === timelineEvents.length - 1 ? '#000' : 'var(--text-muted)'};">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">${e.icon}</svg>
+            if (o.logs && o.logs.length) {
+                html += `<div style="background:var(--bg); border-radius:12px; padding:16px; border:1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div style="font-size:14px; font-weight:700; color:var(--text-muted); margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        سجل النشاط
                     </div>
-                    <div style="flex:1;">
-                        <div style="font-size:13px; font-weight:700; color:${index === timelineEvents.length - 1 ? 'var(--text)' : 'var(--text-muted)'};">${e.label}</div>
-                        <div style="font-size:12px; color:var(--text-muted); margin-top:2px; direction:ltr; text-align:right;">${formatDate(e.time)}</div>
+                    <div style="display:flex; flex-direction:column; gap:16px; position:relative;">
+                        <div style="position:absolute; right:15px; top:10px; bottom:10px; width:2px; background:var(--border); z-index:1;"></div>
+                        ${o.logs.map((l, index) => `<div style="display:flex; align-items:flex-start; gap:16px; position:relative; z-index:2;">
+                            <div style="width:32px; height:32px; border-radius:50%; background:${index === 0 ? 'var(--yellow)' : 'var(--bg)'}; border:2px solid ${index === 0 ? 'var(--yellow)' : 'var(--border)'}; display:flex; align-items:center; justify-content:center; color:${index === 0 ? '#000' : 'var(--text-muted)'}; flex-shrink:0; margin-top:2px;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${index === 0 ? 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' : 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}"></path></svg>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:13px; font-weight:700; color:${index === 0 ? 'var(--text)' : 'var(--text-muted)'};">${l.action} <span style="font-weight:400; color:var(--text-muted); margin-right:4px;">— ${l.user}</span></div>
+                                ${l.notes ? `<div style="font-size:12px; color:var(--text-muted); margin-top:5px; padding:6px 10px; line-height:1.5;">${l.notes}</div>` : ''}
+                                <div style="font-size:12px; color:var(--text-muted); margin-top:4px; direction:ltr; text-align:right;">${formatDate(l.created_at)}</div>
+                            </div>
+                        </div>`).join('')}
                     </div>
-                </div>`).join('')}
-            </div>
-        </div>`;
+                </div>`;
+            }
             document.getElementById('view-body').innerHTML = html;
         } catch (e) {
             document.getElementById('view-body').innerHTML = `<div style="padding:40px; text-align:center;">
@@ -363,8 +368,8 @@
     // ── Edit modal — timer freeze (keepalive) ───────────────────────
     // بينما الفورم مفتوح نُرسل pause-edit كل 30 ثانية باستمرار
     // حتى يظل المؤقت متجمداً تماماً.
-    var _editingOrderId  = null;   // id الطلب المفتوح حالياً
-    var _editKeepalive   = null;   // intervalId الـ keepalive
+    var _editingOrderId = null;   // id الطلب المفتوح حالياً
+    var _editKeepalive = null;   // intervalId الـ keepalive
     // كل كم ثانية نُجدد المؤقت (أقل من نصف hold_minutes)
     var EDIT_KEEPALIVE_MS = 20000; // 20 ثانية
 
@@ -399,7 +404,7 @@
         closeModal('modal-edit');
         if (id) {
             // إعادة ضبط المؤقت من الصفر بعد الإغلاق
-            try { await axios.patch(`/callcenter/orders/${id}/pause-edit`); } catch (_) {}
+            try { await axios.patch(`/callcenter/orders/${id}/pause-edit`); } catch (_) { }
         }
         loadList(currentPage);
     }
@@ -522,7 +527,7 @@
             if (name) items.push({ item_name: name, shop_id: sel.value || null, quantity: parseFloat(inputs[1].value) || 1, unit_price: parseFloat(inputs[2].value) || 0 });
         });
         if (!items.length) { showError('يجب إضافة صنف واحد على الأقل'); return; }
-        
+
         let address = document.getElementById('edit-address-select').value;
         if (address === 'new') address = document.getElementById('edit-address-txt').value.trim();
         if (!address) { showError('يحب إدخال عنوان العميل'); return; }

@@ -18,8 +18,8 @@ use Illuminate\View\View;
  * AdminLedgerController
  *
  * كشف الحساب الخاص بالمدير — يتتبع:
- *  - أصال دفع  (admin_pay)     : المدير يدفع لموظف CC أو مندوب
- *  - أصال استلام (admin_receive): المدير يستلم من موظف
+ *  - ايصال دفع  (admin_pay)     : المدير يدفع لموظف CC أو مندوب
+ *  - ايصال استلام (admin_receive): المدير يستلم من موظف
  *  - صرف مصروف (admin_expense) : ينقص من رصيد المدير فقط
  *
  * الـ Running Balance:
@@ -85,7 +85,7 @@ class AdminLedgerController extends Controller
     }
 
     // ──────────────────────────────────────────────────────────────
-    // payToEmployee — أصال دفع: المدير يدفع لموظف (CC أو مندوب)
+    // payToEmployee — ايصال دفع: المدير يدفع لموظف (CC أو مندوب)
     // ──────────────────────────────────────────────────────────────
 
     public function payToEmployee(Request $request): JsonResponse
@@ -110,7 +110,7 @@ class AdminLedgerController extends Controller
 
         $walletService = app(WalletService::class);
         $date = $validated['date'] ?? now()->toDateString();
-        $note = $validated['note'] ?? ('أصال دفع إلى ' . $employee->name);
+        $note = $validated['note'] ?? ('ايصال دفع إلى ' . $employee->name);
         $amount = (float) $validated['amount'];
 
         try {
@@ -129,7 +129,7 @@ class AdminLedgerController extends Controller
                     wallet: $adminWallet,
                     amount: $amount,
                     type: 'admin_pay',
-                    description: 'أصال دفع إلى ' . $employee->name . ($note ? ' — ' . $note : ''),
+                    description: 'ايصال دفع إلى ' . $employee->name . ($note ? ' — ' . $note : ''),
                     createdBy: $admin->id,
                     relatedWalletId: $employeeWallet->id,
                     date: $date
@@ -157,7 +157,7 @@ class AdminLedgerController extends Controller
 
         $log = ActivityLog::log(
             event: 'admin_ledger.pay',
-            description: 'أصال دفع إلى ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج',
+            description: 'ايصال دفع إلى ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج',
             subjectType: 'admin_ledger',
             subjectId: $admin->id,
             subjectLabel: $admin->name,
@@ -173,7 +173,7 @@ class AdminLedgerController extends Controller
     }
 
     // ──────────────────────────────────────────────────────────────
-    // receiveFromEmployee — أصال استلام: المدير يستلم من موظف
+    // receiveFromEmployee — ايصال استلام: المدير يستلم من موظف
     // ──────────────────────────────────────────────────────────────
 
     public function receiveFromEmployee(Request $request): JsonResponse
@@ -199,60 +199,77 @@ class AdminLedgerController extends Controller
         $amount = (float) $validated['amount'];
         $note = $validated['note'] ?? null;
 
-        $txIds = DB::transaction(function () use ($admin, $validated, $walletService, $amount, $date, $note) {
-            $adminWallet = $admin->getOrCreateWallet();
-            $results = ['ids' => [], 'event' => '', 'description' => '', 'properties' => []];
+        try {
+            $txIds = DB::transaction(function () use ($admin, $validated, $walletService, $amount, $date, $note) {
+                $adminWallet = $admin->getOrCreateWallet();
+                $results = ['ids' => [], 'event' => '', 'description' => '', 'properties' => []];
 
-            if ($validated['employee_id'] === 'revenue') {
-                // ── إيراد: فقط زيادة حساب الأدمن — لا يوجد موظف ──────────────
-                $tx = $walletService->credit(
-                    wallet: $adminWallet,
-                    amount: $amount,
-                    type: 'admin_receive',
-                    description: 'إيراد — ' . $note,
-                    createdBy: $admin->id,
-                    date: $date
-                );
+                if ($validated['employee_id'] === 'revenue') {
+                    // ── إيراد: فقط زيادة حساب الأدمن — لا يوجد موظف ──────────────
+                    $tx = $walletService->credit(
+                        wallet: $adminWallet,
+                        amount: $amount,
+                        type: 'admin_receive',
+                        description: 'إيراد — ' . $note,
+                        createdBy: $admin->id,
+                        date: $date
+                    );
 
-                $results['ids'] = [$tx->id];
-                $results['event'] = 'admin_ledger.revenue';
-                $results['description'] = 'إيراد في حساب ' . $admin->name . ' — ' . number_format($amount, 2) . ' ج';
-                $results['properties'] = ['amount' => $amount, 'note' => $note];
-            } else {
-                // ── استلام عادي من موظف ─────────────────────────────────────────
-                $employee = User::findOrFail((int) $validated['employee_id']);
-                $employeeWallet = $employee->getOrCreateWallet();
+                    $results['ids'] = [$tx->id];
+                    $results['event'] = 'admin_ledger.revenue';
+                    $results['description'] = 'إيراد في حساب ' . $admin->name . ' — ' . number_format($amount, 2) . ' ج';
+                    $results['properties'] = ['amount' => $amount, 'note' => $note];
 
-                // إضافة لرصيد المدير (credit = دخول)
-                $adminTx = $walletService->credit(
-                    wallet: $adminWallet,
-                    amount: $amount,
-                    type: 'admin_receive',
-                    description: 'أصال استلام من ' . $employee->name . ($note ? ' — ' . $note : ''),
-                    createdBy: $admin->id,
-                    relatedWalletId: $employeeWallet->id,
-                    date: $date
-                );
+                } else {
+                    // ── استلام عادي من موظف ─────────────────────────────────────────
+                    $employee = User::findOrFail((int) $validated['employee_id']);
+                    $employeeWallet = \App\Models\Wallet::where('user_id', $employee->id)->lockForUpdate()->firstOrFail();
 
-                // خصم من رصيد الموظف (debit = خروج)
-                $debitType = $employee->role === 'admin' ? 'admin_pay' : 'cash_paid';
-                $empTx = $walletService->debit(
-                    wallet: $employeeWallet,
-                    amount: $amount,
-                    type: $debitType,
-                    description: 'دفع نقدي للإدارة — ' . ($note ?: ''),
-                    createdBy: $admin->id,
-                    relatedWalletId: $adminWallet->id,
-                    date: $date
-                );
+                    // ✅ التحقق من رصيد الموظف
+                    if ($amount > (float) $employeeWallet->balance) {
+                        throw new \Exception(
+                            'رصيد ' . $employee->name . ' غير كافٍ. الرصيد الحالي: ' . number_format($employeeWallet->balance, 2) . ' ج'
+                        );
+                    }
 
-                $results['ids'] = [$adminTx->id, $empTx->id];
-                $results['event'] = 'admin_ledger.receive';
-                $results['description'] = 'أصال استلام من ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج';
-                $results['properties'] = ['employee_id' => $employee->id, 'amount' => $amount, 'note' => $note];
-            }
-            return $results;
-        });
+                    // إضافة لرصيد المدير (credit = دخول)
+                    $adminTx = $walletService->credit(
+                        wallet: $adminWallet,
+                        amount: $amount,
+                        type: 'admin_receive',
+                        description: 'ايصال استلام من ' . $employee->name . ($note ? ' — ' . $note : ''),
+                        createdBy: $admin->id,
+                        relatedWalletId: $employeeWallet->id,
+                        date: $date
+                    );
+
+                    // خصم من رصيد الموظف (debit = خروج)
+                    $debitType = $employee->role === 'admin' ? 'admin_pay' : 'cash_paid';
+                    $empTx = $walletService->debit(
+                        wallet: $employeeWallet,
+                        amount: $amount,
+                        type: $debitType,
+                        description: 'دفع نقدي للإدارة — ' . ($note ?: ''),
+                        createdBy: $admin->id,
+                        relatedWalletId: $adminWallet->id,
+                        date: $date
+                    );
+
+                    $results['ids'] = [$adminTx->id, $empTx->id];
+                    $results['event'] = 'admin_ledger.receive';
+                    $results['description'] = 'ايصال استلام من ' . $employee->name . ' — ' . number_format($amount, 2) . ' ج';
+                    $results['properties'] = ['employee_id' => $employee->id, 'amount' => $amount, 'note' => $note];
+                }
+
+                return $results;
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => ['amount' => [$e->getMessage()]],
+            ], 422);
+        }
 
         $log = ActivityLog::log(
             event: $txIds['event'],
@@ -596,8 +613,8 @@ class AdminLedgerController extends Controller
     private function typeLabel(string $type): string
     {
         return match ($type) {
-            'admin_pay' => 'أصال دفع (خاص)',
-            'admin_receive' => 'أصال استلام (خاص)',
+            'admin_pay' => 'ايصال دفع (خاص)',
+            'admin_receive' => 'ايصال استلام (خاص)',
             'admin_expense' => 'صرف مصروف',
             'cash_paid' => 'دفع نقدي',
             'cash_received' => 'استلام نقدي',

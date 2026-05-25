@@ -2,14 +2,29 @@
 <div class="section-header">
     <h2>المتاجر النشطة</h2>
 </div>
-<div class="card" style="padding:12px 16px;margin-bottom:14px">
-    <div class="filter-bar">
-        <input type="text" id="f-search" class="form-control" placeholder="بحث بالاسم أو الكود أو رقم الهاتف"
-            style="min-width:280px" onkeydown="if(event.key==='Enter') loadShops(1)">
-        <button class="btn btn-primary" onclick="loadShops(1)">بحث</button>
-        <button class="btn btn-success" onclick="openModal('modal-add-shop')" style="margin-right:auto">إضافة
-            متجر</button>
-        <button class="btn btn-secondary" onclick="openModal('modal-add-category')">إضافة فئة</button>
+<div class="card" style="margin-bottom:20px">
+    <div class="filter-bar" style="align-items: flex-end;">
+        <div>
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث</label>
+            <input type="text" id="f-search" class="form-control" placeholder="بحث بالاسم أو الكود"
+                style="min-width:220px" onkeydown="if(event.key==='Enter') loadShops(1)">
+        </div>
+        <div>
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الفئة</label>
+            <select id="f-category" class="form-select" style="min-width:180px;">
+                <option value="">كل الفئات</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div style="display: flex; gap: 5px; margin-bottom: 2px;">
+            <button class="btn btn-primary" onclick="loadShops(1)">بحث</button>
+        </div>
+        <div style="margin-right:auto; display: flex; gap: 10px; align-items: flex-end; margin-bottom: 2px;">
+            <button class="btn btn-success" onclick="openModal('modal-add-shop')">إضافة متجر</button>
+            <button class="btn btn-secondary" onclick="openModal('modal-add-category')">إضافة فئة</button>
+        </div>
     </div>
 </div>
 <div class="card" style="padding:0;position:relative">
@@ -32,7 +47,7 @@
         </table>
     </div>
     <div id="shops-prompt" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px">
-        ابدأ بالبحث عن متجر بالاسم أو الكود أو رقم الهاتف
+        ابدأ بالبحث عن متجر بالاسم أو الكود، أو تصفية حسب الفئة
     </div>
     <div id="pg-wrap" style="padding:14px"></div>
 </div>
@@ -86,6 +101,44 @@
     </div>
 </div>
 
+{{-- Edit Shop Modal --}}
+<div class="modal-overlay" id="modal-edit-shop">
+    <div class="modal" style="max-width:620px">
+        <div class="modal-header">
+            <h3>تعديل متجر</h3><button class="btn-close" onclick="closeModal('modal-edit-shop')">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="edit-id">
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">الاسم *</label><input type="text" id="edit-name" class="form-control"></div>
+                <div class="form-group"><label class="form-label">الكود</label><input type="text" id="edit-code" class="form-control" readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">الفئة *</label>
+                    <select id="edit-category" class="form-select">
+                        <option value="">اختر الفئة...</option>
+                        @foreach($categories as $cat) <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">العنوان</label><input type="text" id="edit-address" class="form-control"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">الهاتف الأساسي</label><input id="edit-phone" type="text" class="form-control" placeholder="الهاتف الرئيسي"></div>
+                <div class="form-group"><label class="form-label">هاتف 2</label><input id="edit-phone2" type="text" class="form-control" placeholder="اختياري"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">هاتف 3</label><input id="edit-phone3" type="text" class="form-control" placeholder="اختياري"></div>
+                <div class="form-group"><label class="form-label">هاتف 4</label><input id="edit-phone4" type="text" class="form-control" placeholder="اختياري"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('modal-edit-shop')">إلغاء</button>
+            <button class="btn btn-primary" onclick="saveEditShop()">حفظ التعديلات</button>
+        </div>
+    </div>
+</div>
+
 {{-- Add Category Modal --}}
 <div class="modal-overlay" id="modal-add-category">
     <div class="modal" style="max-width:400px">
@@ -102,19 +155,23 @@
 </div>
 
 <script>
+    var currentPage = 1;
+
     async function loadShops(page = 1) {
+        currentPage = page;
         const search = document.getElementById('f-search').value.trim();
-        if (!search) {
+        const category_id = document.getElementById('f-category').value;
+        if (!search && !category_id) {
             document.getElementById('shops-table-wrap').style.display = 'none';
             document.getElementById('shops-prompt').style.display = 'block';
-            document.getElementById('shops-prompt').textContent = 'ابدأ بالبحث عن متجر بالاسم أو الكود أو رقم الهاتف';
+            document.getElementById('shops-prompt').textContent = 'ابدأ بالبحث عن متجر بالاسم أو الكود، أو تصفية حسب الفئة';
             document.getElementById('pg-wrap').innerHTML = '';
             return;
         }
         document.getElementById('tbl-loading').classList.add('show');
         try {
             const { data } = await axios.get('{{ route("callcenter.shops.index") }}', {
-                params: { search, page }
+                params: { search, category_id, page }
             });
             document.getElementById('shops-prompt').style.display = 'none';
             var body = document.getElementById('shops-body');
@@ -133,7 +190,10 @@
                 <td style="text-align: center;">${s.address ?? '—'}</td>
                 <td style="text-align: center;">${s.category?.name ?? '—'}</td>
                 <td style="text-align: center;">
-                    <button class="btn btn-sm btn-secondary" onclick="viewShopCC(${s.id},'${s.name.replace(/'/g, "\\'")}')">عرض</button>
+                    <div style="display:inline-flex;gap:6px;align-items:center;">
+                        <button class="btn btn-sm btn-info" onclick="viewShopCC(${s.id},'${s.name.replace(/'/g, "\\'")}')">عرض</button>
+                        <button class="btn btn-sm btn-secondary" onclick="openEditShop(${s.id},'${s.name.replace(/'/g, "\\'")}','${(s.phone ?? '').replace(/'/g, "\\'")}','${(s.phone2 ?? '').replace(/'/g, "\\'")}','${(s.phone3 ?? '').replace(/'/g, "\\'")}','${(s.phone4 ?? '').replace(/'/g, "\\'")}','${(s.address ?? '').replace(/'/g, "\\'")}','${s.shop_category_id ?? ''}','${(s.code ?? '').replace(/'/g, "\\'")}')">تعديل</button>
+                    </div>
                 </td>
             </tr>`).join('');
             document.getElementById('pg-wrap').innerHTML = renderPagination(data.last_page, data.current_page, 'loadShops');
@@ -193,8 +253,43 @@
             });
             showSuccess('تم إضافة المتجر بنجاح');
             closeModal('modal-add-shop');
-            loadShops(1);
+            loadShops(currentPage);
         } catch (e) { showError(e.response?.data?.message || 'حدث خطأ'); }
+    }
+
+    function openEditShop(id, name, phone, phone2, phone3, phone4, address, categoryId, code) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-name').value = name;
+        document.getElementById('edit-code').value = code;
+        document.getElementById('edit-phone').value = phone;
+        document.getElementById('edit-phone2').value = phone2;
+        document.getElementById('edit-phone3').value = phone3;
+        document.getElementById('edit-phone4').value = phone4;
+        document.getElementById('edit-address').value = address;
+        document.getElementById('edit-category').value = categoryId;
+        openModal('modal-edit-shop');
+    }
+
+    async function saveEditShop() {
+        var id = document.getElementById('edit-id').value;
+        const name = document.getElementById('edit-name').value;
+        const cat = document.getElementById('edit-category').value;
+        if (!name || !cat) return showError('يرجى إدخال الاسم والفئة');
+        try {
+            const { data } = await axios.put(`/callcenter/shops/${id}`, {
+                name: name,
+                code: document.getElementById('edit-code').value,
+                phone: document.getElementById('edit-phone').value,
+                phone2: document.getElementById('edit-phone2').value,
+                phone3: document.getElementById('edit-phone3').value,
+                phone4: document.getElementById('edit-phone4').value,
+                address: document.getElementById('edit-address').value,
+                shop_category_id: cat
+            });
+            showSuccess(data.message);
+            closeModal('modal-edit-shop');
+            loadShops(currentPage);
+        } catch (e) { showError(e.response?.data?.errors ? Object.values(e.response.data.errors).flat().join(' | ') : 'حدث خطأ'); }
     }
 
     async function saveCategory() {

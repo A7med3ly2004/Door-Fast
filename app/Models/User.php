@@ -32,30 +32,29 @@ class User extends Authenticatable
         static::creating(function ($user) {
             if (empty($user->code)) {
                 if ($user->role === 'admin') {
-                    $user->code = self::generateUniqueRoleCode('A');
+                    $user->code = self::generateNumericCode(100, ['admin']);
                 } elseif ($user->role === 'callcenter') {
-                    $user->code = self::generateUniqueRoleCode('C');
+                    $user->code = self::generateNumericCode(3000, ['callcenter']);
                 } elseif (in_array($user->role, ['delivery', 'reserve_delivery'])) {
-                    $user->code = self::generateUniqueRoleCode('D');
+                    $user->code = self::generateNumericCode(4000, ['delivery', 'reserve_delivery']);
                 }
             }
         });
     }
 
-    public static function generateUniqueRoleCode($prefix)
+    public static function generateNumericCode($baseNumber, $roles)
     {
-        // Find the numeric part from codes like "D-001"
-        $lastUser = self::where('code', 'LIKE', "{$prefix}-%")
-            ->get()
-            ->filter(fn($u) => preg_match('/^' . $prefix . '-(\d+)$/', $u->code))
-            ->map(function ($u) use ($prefix) {
-                preg_match('/^' . $prefix . '-(\d+)$/', $u->code, $matches);
-                return (int) $matches[1];
-            })
+        $lastCode = self::whereIn('role', $roles)
+            ->get(['code'])
+            ->filter(fn($u) => is_numeric($u->code))
+            ->map(fn($u) => (int) $u->code)
             ->max();
 
-        $number = ($lastUser ?? 0) + 1;
-        return $prefix . '-' . str_pad($number, 3, '0', STR_PAD_LEFT);
+        if ($lastCode && $lastCode >= $baseNumber) {
+            return (string)($lastCode + 1);
+        }
+
+        return (string)($baseNumber + 1);
     }
 
     protected $hidden = [

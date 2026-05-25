@@ -90,17 +90,10 @@
         <div class="kpi-title">التحصيل اليومي</div>
         <div class="kpi-value money" id="kpi-total-collected">0 ج</div>
     </div>
-    <div class="kpi-card">
-        <div class="kpi-title">إجمالي خدمة التوصيل</div>
-        <div class="kpi-value money" id="kpi-total-fee">0 ج</div>
-    </div>
+
     <div class="kpi-card">
         <div class="kpi-title">إجمالي الخصومات</div>
         <div class="kpi-value" style="color:var(--secondary)" id="kpi-total-discount">0 ج</div>
-    </div>
-    <div class="kpi-card">
-        <div class="kpi-title">عدد الطلبات الملغية</div>
-        <div class="kpi-value" style="color:var(--secondary)" id="kpi-cancelled-count">0</div>
     </div>
     <div class="kpi-card" style="border-right:4px solid #a855f7;">
         <div class="kpi-title">الشريحة المحققة</div>
@@ -109,6 +102,10 @@
     <div class="kpi-card" style="border-right:4px solid #a855f7;">
         <div class="kpi-title">إجمالي الأرباح</div>
         <div class="kpi-value" id="kpi-total-profits" style="color:#a855f7">0 ج</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-title">عدد الطلبات الملغية</div>
+        <div class="kpi-value" style="color:var(--secondary)" id="kpi-cancelled-count">0</div>
     </div>
 </div>
 

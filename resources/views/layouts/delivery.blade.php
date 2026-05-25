@@ -527,15 +527,7 @@
                     <div class="user-name">{{ auth()->user()->name }}</div>
                 </div>
 
-                <button id="end-shift-btn" class="btn-top-action btn-end-shift" style="display: none;"
-                    onclick="endShift()" title="إنهاء الشفت">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
-                        <line x1="12" y1="2" x2="12" y2="12"></line>
-                    </svg>
-                    <span>إنهاء الشفت</span>
-                </button>
+                {{-- Removed End Shift Button --}}
 
                 <form method="POST" action="{{ route('logout') }}" id="logout-form">
                     @csrf
@@ -674,12 +666,12 @@
                 overlay.style.display = 'none';
                 pill.className = 'shift-status-pill active';
                 statusText.innerText = 'نشط';
-                endBtn.style.display = 'flex';
+                if (endBtn) endBtn.style.display = 'flex';
             } else {
                 overlay.style.display = 'flex';
                 pill.className = 'shift-status-pill inactive';
                 statusText.innerText = 'غير نشط';
-                endBtn.style.display = 'none';
+                if (endBtn) endBtn.style.display = 'none';
             }
         }
 

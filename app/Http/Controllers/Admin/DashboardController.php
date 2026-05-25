@@ -28,17 +28,26 @@ class DashboardController extends Controller
     {
         list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
 
+        $startOfMonthDate = $startOfToday->copy()->startOfMonth();
+        $endOfMonthDate = $startOfToday->copy()->endOfMonth();
+        $startOfBusinessMonth = \App\Models\Setting::businessDayRange($startOfMonthDate)[0];
+        $endOfBusinessMonth = \App\Models\Setting::businessDayRange($endOfMonthDate)[1];
+
         $ordersToday      = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->count();
         $completedToday   = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->count();
         $pendingToday     = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'pending')->count();
         $cancelledToday   = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'cancelled')->count();
         $dailyRevenue     = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->sum('total');
-        $monthlyRevenue   = Order::whereYear('created_at', $startOfToday->year)
-                                 ->whereMonth('created_at', $startOfToday->month)
-                                 ->where('status', 'delivered')->sum('total');
-        $ordersMonth      = Order::whereYear('created_at', $startOfToday->year)
-                                 ->whereMonth('created_at', $startOfToday->month)
-                                 ->count();
+        
+        $dailyDeliveryRevenue = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->sum('delivery_fee');
+
+        $ordersMonth      = Order::whereBetween('created_at', [$startOfBusinessMonth, $endOfBusinessMonth])->count();
+        $monthlyRevenue   = Order::whereBetween('created_at', [$startOfBusinessMonth, $endOfBusinessMonth])->where('status', 'delivered')->sum('total');
+        $monthlyDeliveryRevenue = Order::whereBetween('created_at', [$startOfBusinessMonth, $endOfBusinessMonth])->where('status', 'delivered')->sum('delivery_fee');
+        $completedMonth   = Order::whereBetween('created_at', [$startOfBusinessMonth, $endOfBusinessMonth])->where('status', 'delivered')->count();
+        $monthlyAvgDelivery = $completedMonth > 0 ? ($monthlyDeliveryRevenue / $completedMonth) : 0;
+        $cancelledMonth   = Order::whereBetween('created_at', [$startOfBusinessMonth, $endOfBusinessMonth])->where('status', 'cancelled')->count();
+
         $totalClients     = Client::count();
 
         // Bar chart: last 10 days
@@ -89,6 +98,10 @@ class DashboardController extends Controller
                 'daily_revenue'   => $dailyRevenue,
                 'monthly_revenue' => $monthlyRevenue,
                 'total_clients'   => $totalClients,
+                'daily_delivery_revenue' => $dailyDeliveryRevenue,
+                'monthly_delivery_revenue' => $monthlyDeliveryRevenue,
+                'monthly_avg_delivery' => $monthlyAvgDelivery,
+                'cancelled_month' => $cancelledMonth,
             ],
             'chart'        => $chartData,
             'delivery_perf'=> $deliveryPerf,
@@ -99,6 +112,7 @@ class DashboardController extends Controller
     public function recentOrders()
     {
         $orders = Order::with(['client', 'callcenter', 'admin', 'delivery'])
+            ->withCount('items')
             ->latest()
             ->take(5)
             ->get()
@@ -109,6 +123,9 @@ class DashboardController extends Controller
                 'creator_name'   => $o->callcenter?->name ?? $o->admin?->name ?? '—',
                 'creator_type'   => $o->callcenter ? 'cc' : ($o->admin ? 'admin' : null),
                 'delivery'       => $o->delivery?->name ?? '—',
+                'items_count'    => $o->items_count,
+                'delivery_fee'   => $o->delivery_fee,
+                'discount'       => $o->discount,
                 'total'          => $o->total,
                 'status'         => $o->status,
                 'created_at'     => $o->created_at->toIso8601String(),

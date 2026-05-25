@@ -23,25 +23,27 @@ class ShopController extends Controller
         }
 
         if ($request->ajax() || $request->wantsJson()) {
-            // إذا لم يوجد بحث، أرجع مصفوفة فارغة
-            if (!$request->filled('search')) {
+            if (!$request->filled('search') && !$request->filled('category_id')) {
                 return response()->json(['data' => [], 'last_page' => 1, 'current_page' => 1, 'total' => 0]);
             }
 
-            $search = $request->search;
             $query = Shop::with('category')->where('is_active', true)->latest();
 
-            $query->where(function($q) use ($search) {
-                // الاسم: بحث جزئي
-                $q->where('name', 'like', '%' . $search . '%')
-                // الكود: مطابقة كاملة
-                  ->orWhere('code', $search)
-                // الهواتف الأربعة: مطابقة كاملة
-                  ->orWhere('phone',  $search)
-                  ->orWhere('phone2', $search)
-                  ->orWhere('phone3', $search)
-                  ->orWhere('phone4', $search);
-            });
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('code', $search)
+                      ->orWhere('phone',  $search)
+                      ->orWhere('phone2', $search)
+                      ->orWhere('phone3', $search)
+                      ->orWhere('phone4', $search);
+                });
+            }
+
+            if ($request->filled('category_id')) {
+                $query->where('shop_category_id', $request->category_id);
+            }
 
             return response()->json($query->paginate(15));
         }
@@ -128,5 +130,32 @@ class ShopController extends Controller
                 'top_items'      => $topItems,
             ],
         ]);
+    }
+    public function update(Request $request, $id)
+    {
+        $shop = Shop::findOrFail($id);
+        $data = $request->validate([
+            'name'             => 'required|string|max:255',
+            'code'             => 'required|string|max:50|unique:shops,code,' . $shop->id,
+            'phone'            => 'nullable|string|max:30',
+            'phone2'           => 'nullable|string|max:30',
+            'phone3'           => 'nullable|string|max:30',
+            'phone4'           => 'nullable|string|max:30',
+            'address'          => 'nullable|string|max:500',
+            'shop_category_id' => 'required|exists:shop_categories,id',
+            'notes'            => 'nullable|string',
+        ]);
+
+        $shop->update($data);
+
+        ActivityLog::log(
+            event: 'shop.updated',
+            description: 'تم تعديل متجر بواسطة الكول سنتر — ' . $shop->name,
+            subjectType: 'shop',
+            subjectId: $shop->id,
+            subjectLabel: $shop->name
+        );
+
+        return response()->json(['success' => true, 'message' => 'تم تعديل المتجر بنجاح']);
     }
 }

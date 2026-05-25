@@ -54,6 +54,8 @@ class ReportDeliveryController extends Controller
             ->selectRaw("
                 COUNT(*) as total_orders,
                 SUM(CASE WHEN status='delivered' THEN delivery_fee ELSE 0 END) as total_fees,
+                SUM(CASE WHEN status='delivered' THEN 1 ELSE 0 END) as delivered_orders,
+                SUM(CASE WHEN status='received' THEN 1 ELSE 0 END) as pending_orders,
                 SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) as cancelled,
                 SUM(CASE WHEN status='delivered' THEN total ELSE 0 END) as total_revenue,
                 SUM(CASE WHEN status='delivered' THEN discount ELSE 0 END) as total_discounts
@@ -167,6 +169,8 @@ class ReportDeliveryController extends Controller
         return response()->json([
             'kpis' => [
                 'total_orders'    => (int) ($kpis->total_orders ?? 0),
+                'delivered_orders'=> (int) ($kpis->delivered_orders ?? 0),
+                'pending_orders'  => (int) ($kpis->pending_orders ?? 0),
                 'total_fees'      => number_format((float) ($kpis->total_fees ?? 0), 2),
                 'cancelled'       => (int) ($kpis->cancelled ?? 0),
                 'total_revenue'   => number_format((float) ($kpis->total_revenue ?? 0), 2),

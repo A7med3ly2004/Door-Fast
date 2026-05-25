@@ -81,7 +81,7 @@ class OrderService
             }
 
             // ── 4. Create order ────────────────────────────────────
-            $order = Order::create([
+            $order = new Order([
                 'order_number' => Order::generateNumber(),
                 'callcenter_id' => $callcenterId,      // null = admin order
                 'admin_id' => $adminMode ? auth()->id() : null,
@@ -103,6 +103,11 @@ class OrderService
                 'accepted_at' => $acceptedAt,
                 'sent_to_delivery_at' => $sentToDeliveryAt,
             ]);
+
+            if (!empty($data['opened_at'])) {
+                $order->created_at = Carbon::parse($data['opened_at']);
+            }
+            $order->save();
 
             // ── 5. Handle send-to customer ─────────────────────────
             $this->resolveSendToClient($data, $order);
@@ -247,6 +252,13 @@ class OrderService
                 // Update if the phone2 is different
                 if (!empty($data['send_to_phone2']) && $data['send_to_phone2'] !== $sendToClient->phone2) {
                     $sendToClient->update(['phone2' => $data['send_to_phone2']]);
+                }
+                // Add new address if provided and not already existing
+                if (!empty($data['send_to_address']) && $sendToClient->addresses()->count() < 5) {
+                    $sendToClient->addresses()->firstOrCreate(
+                        ['address' => $data['send_to_address']],
+                        ['is_default' => $sendToClient->addresses()->count() === 0]
+                    );
                 }
                 $order->update(['send_to_client_id' => $sendToClient->id]);
             }

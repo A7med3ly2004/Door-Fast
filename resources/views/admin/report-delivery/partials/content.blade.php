@@ -48,49 +48,54 @@
     <div class="card" style="margin-bottom:20px;padding:24px;">
         <h3 id="report-delivery-name" style="margin-bottom:20px;font-size:18px;color:var(--info);"></h3>
 
-        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);gap:20px;">
+        <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);gap:20px;">
             <div class="kpi-card yellow">
                 <div class="kpi-label">إجمالي الطلبات</div>
                 <div class="kpi-value" id="kpi-total-orders">0</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-label">الطلبات الموصلة</div>
+                <div class="kpi-value" id="kpi-delivered-orders">0</div>
+            </div>
+            <div class="kpi-card yellow">
+                <div class="kpi-label">الطلبات المعلقة</div>
+                <div class="kpi-value" id="kpi-pending-orders">0</div>
+                <div class="kpi-sub">تم استلامها ولم توصل</div>
             </div>
             <div class="kpi-card red">
                 <div class="kpi-label">الطلبات الملغية</div>
                 <div class="kpi-value" id="kpi-cancelled">0</div>
             </div>
-            <div class="kpi-card blue">
+            <div class="kpi-card red">
+                <div class="kpi-label">إجمالي الخصومات</div>
+                <div class="kpi-value" id="kpi-total-discounts">0</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
+            <div class="kpi-card yellow">
+                <div class="kpi-label">رصيد الخزينه في الفترة</div>
+                <div class="kpi-value" id="kpi-period-safe-balance">0</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
+            <div class="kpi-card red">
                 <div class="kpi-label">مدين</div>
                 <div class="kpi-value" id="kpi-debtor">0</div>
-                <div class="kpi-sub">ج.م (سلف / مديونيات)</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-label">دائن</div>
+                <div class="kpi-value" id="kpi-creditor">0</div>
+                <div class="kpi-sub">ج.م</div>
+            </div>
+            <div class="kpi-card cyan">
+                <div class="kpi-label">إجمالي الطلبات الموصله</div>
+                <div class="kpi-value" id="kpi-total-revenue">0</div>
+                <div class="kpi-sub">ج.م</div>
             </div>
             <div class="kpi-card green">
                 <div class="kpi-label">إجمالي رسوم التوصيل</div>
                 <div class="kpi-value" id="kpi-total-fees">0</div>
                 <div class="kpi-sub">ج.م</div>
             </div>
-            <div class="kpi-card cyan">
-                <div class="kpi-label">إجمالي تحصيل الطلبات المكتملة</div>
-                <div class="kpi-value" id="kpi-total-revenue">0</div>
-                <div class="kpi-sub">ج.م</div>
-            </div>
-
-            <div class="kpi-card red">
-                <div class="kpi-label">إجمالي الخصومات</div>
-                <div class="kpi-value" id="kpi-total-discounts">0</div>
-                <div class="kpi-sub">ج.م</div>
-            </div>
-
-            <div class="kpi-card blue">
-                <div class="kpi-label">دائن</div>
-                <div class="kpi-value" id="kpi-creditor">0</div>
-                <div class="kpi-sub">ج.م</div>
-            </div>
-
-            <div class="kpi-card green">
-                <div class="kpi-label">إجمالي الخزنة في الفترة</div>
-                <div class="kpi-value" id="kpi-period-safe-balance">0</div>
-                <div class="kpi-sub">ج.م (الرصيد الفعلي للفترة)</div>
-            </div>
-
             <div class="kpi-card" style="border-right:4px solid #a855f7;">
                 <div class="kpi-label">الشريحة المحققة</div>
                 <div class="kpi-value" id="kpi-tier-number" style="color:#a855f7">—</div>
@@ -137,12 +142,14 @@
                 <tfoot>
                     <tr style="background:#f8fafc; font-weight:800;">
                         <td colspan="4" style="text-align:center; padding:12px; color:#475569;">إجمالي الأرباح</td>
-                        <td style="text-align:center; padding:12px; color:#a855f7; font-size:16px;" id="daily-breakdown-total">0 ج</td>
+                        <td style="text-align:center; padding:12px; color:#a855f7; font-size:16px;"
+                            id="daily-breakdown-total">0 ج</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
-        <div style="padding:16px; border-top:1px solid var(--border); display:none;" id="daily-breakdown-pagination-wrapper">
+        <div style="padding:16px; border-top:1px solid var(--border); display:none;"
+            id="daily-breakdown-pagination-wrapper">
             <div id="daily-breakdown-pagination" class="pagination"></div>
         </div>
     </div>
@@ -231,6 +238,8 @@
         // ── Fill KPI cards ──────────────────────────────────────────────
         function fillKpis(kpis, dailyBreakdown) {
             document.getElementById('kpi-total-orders').textContent = kpis.total_orders;
+            document.getElementById('kpi-delivered-orders').textContent = kpis.delivered_orders || 0;
+            document.getElementById('kpi-pending-orders').textContent = kpis.pending_orders || 0;
             document.getElementById('kpi-total-fees').textContent = kpis.total_fees;
             document.getElementById('kpi-cancelled').textContent = kpis.cancelled;
             document.getElementById('kpi-total-revenue').textContent = kpis.total_revenue;
@@ -361,7 +370,7 @@
 
             // Pagination bar
             var wrap = document.getElementById('daily-breakdown-pagination-wrapper');
-            var pag  = document.getElementById('daily-breakdown-pagination');
+            var pag = document.getElementById('daily-breakdown-pagination');
 
             if (totalPages <= 1) {
                 wrap.style.display = 'none';
@@ -447,7 +456,7 @@
                         };
                         axios.get(DATA_URL, { params: params })
                             .then(function (res) {
-                                fillKpis(res.data.kpis);
+                                fillKpis(res.data.kpis, res.data.daily_breakdown);
                                 renderTable(res.data.orders);
                             })
                             .catch(function (e) { console.warn('Polling error', e); });

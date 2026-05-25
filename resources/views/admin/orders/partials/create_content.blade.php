@@ -566,7 +566,7 @@
             var tr = document.createElement('tr'); tr.id = rowId;
             tr.innerHTML = `
             <td><input type="text" class="form-control" placeholder="اسم الصنف" oninput="admCalcTotals('${cardId}')"></td>
-            <td><input type="number" class="form-control" value="1" min="0.01" step="1" style="width:52px" oninput="admCalcRow(this);admCalcTotals('${cardId}')"></td>
+            <td><input type="number" class="form-control" value="1" min="0.01" step="any" style="width:52px" oninput="admCalcRow(this);admCalcTotals('${cardId}')"></td>
             <td><input type="number" class="form-control" value="0" min="0" step="0.5" style="width:68px" oninput="admCalcRow(this);admCalcTotals('${cardId}')"></td>
             <td class="item-total">0.00</td>
             <td><select class="form-select" id="${rowId}-shop"><option value="">— اختر متجر *</option>${shopOpts}</select></td>

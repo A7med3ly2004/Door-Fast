@@ -367,7 +367,7 @@ class OrderController extends Controller
             'items' => $order->items->map(fn($item) => [
                 'id' => $item->id,
                 'item_name' => $item->item_name,
-                'quantity' => $item->quantity,
+                'quantity' => (float) $item->quantity,
                 'unit_price' => (float) $item->unit_price,
                 'total' => (float) $item->total,
                 'shop' => $item->shop ? [

@@ -510,7 +510,8 @@ class AdminLedgerController extends Controller
         }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper('a5', 'portrait');
-        return $pdf->download('ledger-tx-' . $tx->id . '.pdf');
+        $logId = $tx->activityLog?->id ?? $tx->id;
+        return $pdf->download('ledger-tx-' . $logId . '.pdf');
     }
 
     // ──────────────────────────────────────────────────────────────

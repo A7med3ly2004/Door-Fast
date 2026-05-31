@@ -1079,7 +1079,7 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
                 <div>
                     <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">رقم المعاملة</div>
-                    <code style="background:rgba(245,158,11,.12);color:var(--yellow);padding:4px 10px;border-radius:6px;font-size:15px;font-weight:700;letter-spacing:1px">${tx.id}</code>
+                    <code style="background:rgba(245,158,11,.12);color:var(--yellow);padding:4px 10px;border-radius:6px;font-size:15px;font-weight:700;letter-spacing:1px">${tx.log_id}</code>
                 </div>
                 <div style="text-align:center;">
                     <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">القيمة</div>

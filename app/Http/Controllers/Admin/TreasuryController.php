@@ -363,7 +363,8 @@ class TreasuryController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.treasury-transaction', compact('transaction'))
             ->setPaper('a5', 'portrait');
 
-        return $pdf->download('transaction-' . $transaction->id . '.pdf');
+        $logId = $transaction->activityLog?->id ?? $transaction->id;
+        return $pdf->download('transaction-' . $logId . '.pdf');
     }
 
     // ──────────────────────────────────────────────────────────────

@@ -71,8 +71,8 @@
                 <div class="kpi-value" id="kpi-total-discounts">0</div>
                 <div class="kpi-sub">ج.م</div>
             </div>
-            <div class="kpi-card yellow">
-                <div class="kpi-label">رصيد الخزينه في الفترة</div>
+            <div class="kpi-card yellow" id="kpi-period-safe-card">
+                <div class="kpi-label">الرصيد الفعلي (العهدة)</div>
                 <div class="kpi-value" id="kpi-period-safe-balance">0</div>
                 <div class="kpi-sub">ج.م</div>
             </div>
@@ -286,14 +286,12 @@
 
                 // Remove old classes and colors
                 safeBalanceCard.style.borderRightColor = 'var(--border)';
-                safeBalanceVal.style.color = 'inherit';
+                safeBalanceVal.style.color = '#fff';
 
                 if (kpis.raw_period_safe_balance > 0) {
                     safeBalanceCard.style.borderRightColor = 'var(--success)';
-                    safeBalanceVal.style.color = 'var(--success)';
                 } else if (kpis.raw_period_safe_balance < 0) {
                     safeBalanceCard.style.borderRightColor = 'var(--red)';
-                    safeBalanceVal.style.color = 'var(--red)';
                 }
             }
         }

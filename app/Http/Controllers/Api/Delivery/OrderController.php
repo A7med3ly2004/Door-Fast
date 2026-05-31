@@ -26,7 +26,7 @@ class OrderController extends Controller
     {
         $delivery = $request->user();
 
-        $orders = Order::with(['items.shop', 'client'])
+        $orders = Order::with(['items.shop', 'client', 'recipientClient'])
             ->where('status', 'pending')
             ->where('sent_to_delivery_at', '<=', Carbon::now())
             ->where(function ($q) use ($delivery) {
@@ -48,7 +48,7 @@ class OrderController extends Controller
     {
         $delivery = $request->user();
 
-        $orders = Order::with(['items.shop', 'client'])
+        $orders = Order::with(['items.shop', 'client', 'recipientClient'])
             ->where('delivery_id', $delivery->id)
             ->where('status', 'received')
             ->orderBy('accepted_at', 'asc')
@@ -67,7 +67,7 @@ class OrderController extends Controller
         $delivery = $request->user();
         [$start, $end] = Setting::businessDayRange();
 
-        $orders = Order::with(['items.shop', 'client'])
+        $orders = Order::with(['items.shop', 'client', 'recipientClient'])
             ->where('delivery_id', $delivery->id)
             ->where('status', 'delivered')
             ->whereBetween('delivered_at', [$start, $end])
@@ -86,7 +86,7 @@ class OrderController extends Controller
     {
         $delivery = $request->user();
 
-        $order = Order::with(['items.shop', 'client'])
+        $order = Order::with(['items.shop', 'client', 'recipientClient'])
             ->where('id', $id)
             ->where(function ($q) use ($delivery) {
                 $q->where('delivery_id', $delivery->id)
@@ -358,7 +358,7 @@ class OrderController extends Controller
                 'delivery_link' => $order->client_delivery_link,
             ] : null,
             'send_to' => $order->send_to_phone ? [
-                'name' => $order->send_to_name ?? null,
+                'name' => $order->recipientClient?->name ?? null,
                 'phone' => $order->send_to_phone,
                 'phone2' => $order->send_to_phone2 ?? null,
                 'address' => $order->send_to_address,

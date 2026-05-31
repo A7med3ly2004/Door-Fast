@@ -557,7 +557,8 @@
             return;
         }
         let formattedPhone = phone.replace(/\s+/g, '').replace(/^0/, '20');
-        const message = `اهلا وسهلا , مع حضرتك {{ auth()->user()->name }} مندوب توصيل دوور فاست.`;
+        var myName = @json(auth()->user()->name);
+        const message = `اهلا وسهلا , مع حضرتك ${myName} مندوب توصيل دوور فاست.`;
         const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
     }

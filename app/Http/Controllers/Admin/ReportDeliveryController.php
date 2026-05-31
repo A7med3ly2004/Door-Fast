@@ -66,6 +66,7 @@ class ReportDeliveryController extends Controller
         $wallet = \App\Models\Wallet::where('user_id', $deliveryId)->first();
         $totalDebit = 0;
         $totalCredit = 0;
+        $periodSafeBalance = 0;
 
         if ($wallet) {
             $walletTx = \App\Models\WalletTransaction::where('wallet_id', $wallet->id);
@@ -83,11 +84,20 @@ class ReportDeliveryController extends Controller
             
             $totalDebit = $totals->total_debit;
             $totalCredit = $totals->total_credit;
+
+            // حساب رصيد الخزينة الفعلي (العهدة) المتراكم حتى نهاية الفترة المحددة
+            $cumulativeTotals = \App\Models\WalletTransaction::where('wallet_id', $wallet->id)
+                ->where('transaction_date', '<=', $to->toDateString())
+                ->selectRaw("
+                    COALESCE(SUM(CASE WHEN direction = 'debit' THEN amount ELSE 0 END), 0) as cumulative_debit,
+                    COALESCE(SUM(CASE WHEN direction = 'credit' THEN amount ELSE 0 END), 0) as cumulative_credit
+                ")->first();
+                
+            $periodSafeBalance = $cumulativeTotals->cumulative_debit - $cumulativeTotals->cumulative_credit;
         }
 
         $debtor   = $totalDebit;
         $creditor = $totalCredit;
-        $periodSafeBalance = $totalDebit - $totalCredit;
 
         // ── 3. Work Hours & Days
         $shifts = \App\Models\Shift::where('delivery_id', $deliveryId)

@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>{{ $tx->id }}</title>
+    <title>{{ $tx->activityLog?->id ?? '-' }}</title>
     <style>
         body {
             font-family: 'XBRiyaz', 'DejaVu Sans', sans-serif;
@@ -154,7 +154,7 @@
     <div class="info-section">
         <table class="info-table">
             <tr>
-                <td style="font-weight: bold; color: #a10303ff; font-size: 16px;">{{ $tx->id }}</td>
+                <td style="font-weight: bold; color: #a10303ff; font-size: 16px;">{{ $tx->activityLog?->id ?? '-' }}</td>
                 <td class="info-label">رقم العملية:</td>
             </tr>
             <tr>

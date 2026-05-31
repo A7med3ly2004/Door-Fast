@@ -28,7 +28,7 @@ class OrderController extends DeliveryOrderController
         $reserveDelay = (int) Setting::get('reserve_delay_minutes', 5);
         $visibleFrom  = now()->subMinutes($reserveDelay);
 
-        $orders = Order::with(['items.shop', 'client'])
+        $orders = Order::with(['items.shop', 'client', 'recipientClient'])
             ->where('status', 'pending')
             ->whereNull('delivery_id')
             ->where('sent_to_delivery_at', '<=', $visibleFrom)
@@ -46,6 +46,36 @@ class OrderController extends DeliveryOrderController
     //  - يقبل فقط الطلبات التي delivery_id IS NULL
     //  - لا يسمح بقبول طلب محدد لمندوب بعينه
     // ─────────────────────────────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // GET /api/reserve/orders/received
+    //
+    // يعيد الطلبات التي قَبِلها المندوب الاحتياطي وحالتها received
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public function received(Request $request)
+    {
+        $delivery = $request->user(); // sanctum guard
+
+        $orders = Order::with(['items.shop', 'client', 'recipientClient'])
+            ->where('delivery_id', $delivery->id)
+            ->where('status', 'received')
+            ->orderBy('accepted_at', 'asc')
+            ->get()
+            ->map(fn($o) => $this->formatOrder($o));
+
+        return response()->json(['success' => true, 'orders' => $orders]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // (Alias) receivedData — same as received(), kept for symmetry with
+    //         any web-controller calls that may hit this separately.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public function receivedData(Request $request)
+    {
+        return $this->received($request);
+    }
 
     public function accept(Request $request, $id)
     {

@@ -642,8 +642,8 @@
 
 <script>
     // Version: 1.0.2 - WhatsApp Buttons Update
-    var myName = "{{ auth()->user()->name }}";
-    var myPhone = "{{ auth()->user()->phone }}";
+    var myName = @json(auth()->user()->name);
+    var myPhone = @json(auth()->user()->phone ?? '');
     var cachedOrders = [];
 
     function openWhatsApp(phone, clientName, orderNumber) {
@@ -654,7 +654,7 @@
         // تنسيق الرقم: إزالة مسافات وإضافة كود الدولة
         let formattedPhone = phone.replace(/\s+/g, '').replace(/^0/, '20');
 
-        const message = `اهلا وسهلا , مع حضرتك {{ auth()->user()->name }} مندوب توصيل دوور فاست.`;
+        const message = `اهلا وسهلا , مع حضرتك ${myName} مندوب توصيل دوور فاست.`;
 
         const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');

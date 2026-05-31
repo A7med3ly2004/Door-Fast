@@ -63,7 +63,7 @@ Route::middleware(['auth:sanctum', 'role:reserve_delivery'])
         Route::post('/orders/{id}/accept',  [ReserveOrderController::class, 'accept']);
 
         // باقي العمليات مشتركة مع الأساسي (deliver, cancel, show, invoice)
-        Route::get('/orders/received',      [OrderController::class, 'received']);
+        Route::get('/orders/received',      [ReserveOrderController::class, 'received']);
         Route::post('/orders/{id}/deliver', [OrderController::class, 'deliver']);
         Route::post('/orders/{id}/cancel',  [OrderController::class, 'cancel']);
         Route::get('/orders/delivered',     [OrderController::class, 'delivered']);

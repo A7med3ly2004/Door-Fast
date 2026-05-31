@@ -9,21 +9,22 @@ class CheckRole
 {
     public function handle(Request $request, Closure $next, string ...$roles): mixed
     {
-        if (!auth()->check()) {
+        // ✅ استخدم $request->user() بدلاً من auth()->user()
+        // يعمل مع أي guard (sanctum, web, etc.)
+        $user = $request->user();
+        if (!$user) {
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
             }
             return redirect()->route('login');
         }
-
-        if (!in_array(auth()->user()->role, $roles)) {
+        if (!in_array($user->role, $roles)) {
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
             }
             abort(403, 'غير مصرح لك بالدخول');
         }
-
-        if (!auth()->user()->is_active) {
+        if (!$user->is_active) {
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'هذا الحساب موقوف'], 403);
             }
@@ -31,7 +32,6 @@ class CheckRole
             return redirect()->route('login')
                 ->withErrors(['username' => 'هذا الحساب موقوف']);
         }
-
         return $next($request);
     }
 }

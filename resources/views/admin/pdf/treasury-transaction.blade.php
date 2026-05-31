@@ -12,7 +12,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>#{{ $transaction->id }}</title>
+    <title>#{{ $transaction->activityLog?->id ?? '-' }}</title>
     <style>
         body {
             font-family: 'XBRiyaz', 'DejaVu Sans', sans-serif;

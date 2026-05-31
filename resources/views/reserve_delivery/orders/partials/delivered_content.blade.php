@@ -880,7 +880,8 @@
         if (phoneNum.length > 0 && !phoneNum.startsWith('20')) {
             if (phoneNum.length == 11) phoneNum = '20' + phoneNum;
         }
-        var msg = `اهلا وسهلا , مع حضرتك {{ auth()->user()->name }} مندوب توصيل دوور فاست.`;
+        var myName = @json(auth()->user()->name);
+        var msg = `اهلا وسهلا , مع حضرتك ${myName} مندوب توصيل دوور فاست.`;
         var encodedMsg = encodeURIComponent(msg);
         window.open("https://wa.me/" + phoneNum + "?text=" + encodedMsg, '_blank');
     }

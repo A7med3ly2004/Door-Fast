@@ -32,15 +32,31 @@ abstract class BaseDeliveryOrderController extends Controller
      */
     protected function afterAccept(Order $order, mixed $delivery): void
     {
-        // default: no-op
+        \App\Models\ActivityLog::log(
+            event: 'order.accepted',
+            description: 'تم قبول طلب — ' . $order->order_number,
+            subjectType: 'order',
+            subjectId: $order->id,
+            subjectLabel: $order->order_number,
+            properties: ['order_number' => $order->order_number],
+            causerId: $delivery->id
+        );
     }
 
     /**
      * Hook called after a successful deliver — override to add extra logging/events
      */
-    protected function afterDeliver(Order $order, mixed $delivery): void
+    protected function afterDeliver(Order $order, mixed $delivery): ?\App\Models\ActivityLog
     {
-        // default: no-op
+        return \App\Models\ActivityLog::log(
+            event: 'order.delivered',
+            description: 'تم توصيل طلب — ' . $order->order_number,
+            subjectType: 'order',
+            subjectId: $order->id,
+            subjectLabel: $order->order_number,
+            properties: ['order_number' => $order->order_number, 'total' => $order->total],
+            causerId: $delivery->id
+        );
     }
 
     /**
@@ -48,7 +64,15 @@ abstract class BaseDeliveryOrderController extends Controller
      */
     protected function afterCancel(Order $order, Request $request, mixed $delivery): void
     {
-        // default: no-op
+        \App\Models\ActivityLog::log(
+            event: 'order.cancelled_delivery',
+            description: 'تم إلغاء طلب من المندوب — ' . $order->order_number,
+            subjectType: 'order',
+            subjectId: $order->id,
+            subjectLabel: $order->order_number,
+            properties: ['reason' => $request->reason ?? null],
+            causerId: $delivery->id
+        );
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -177,10 +201,11 @@ abstract class BaseDeliveryOrderController extends Controller
                     'delivered_at' => Carbon::now(),
                 ]);
 
+                $walletTx = null;
                 // تسجيل رسوم التوصيل في خزينة المندوب
                 if ($order->delivery_fee > 0) {
                     $wallet = $delivery->getOrCreateWallet();
-                    app(\App\Services\WalletService::class)->credit(
+                    $walletTx = app(\App\Services\WalletService::class)->credit(
                         wallet:      $wallet,
                         amount:      (float) $order->delivery_fee,
                         type:        'delivery_fee_received',
@@ -202,7 +227,12 @@ abstract class BaseDeliveryOrderController extends Controller
                 app(\App\Services\DeliveryProfitService::class)
                     ->recalculateDayProfits($delivery, $order);
 
-                $this->afterDeliver($order, $delivery);
+                $log = $this->afterDeliver($order, $delivery);
+                
+                if (isset($walletTx) && $log) {
+                    $walletTx->update(['log_id' => $log->id]);
+                }
+
                 event(new OrderStatusUpdated($order));
             });
 

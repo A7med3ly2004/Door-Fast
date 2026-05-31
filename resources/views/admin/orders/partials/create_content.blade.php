@@ -403,6 +403,7 @@
                 </div>
             </div>
             <input type="hidden" id="${id}-disc-type" value="amount">
+            <div class="pricing-row"><span>عدد الأصناف</span><span id="${id}-items-count">0</span></div>
             <div class="pricing-row"><span>إجمالي الأصناف</span><span id="${id}-items-total">0.00 ج</span></div>
             <div class="pricing-row"><span>رسوم التوصيل</span><span id="${id}-fee-display">0.00 ج</span></div>
             <div class="pricing-row"><span>الخصم</span><span id="${id}-disc-display" style="color:var(--red)">0.00 ج</span></div>
@@ -598,16 +599,22 @@
         // ─── Totals ───────────────────────────────────────────────
         window.admCalcTotals = function (cardId) {
             var itemsTotal = 0;
+            var itemsCount = 0;
             document.getElementById(cardId + '-items').querySelectorAll('tr').forEach(function (tr) {
                 var qty = parseFloat(tr.cells[1].querySelector('input')?.value || 0) || 0;
                 var prc = parseFloat(tr.cells[2].querySelector('input')?.value || 0) || 0;
+                var itemName = tr.cells[0].querySelector('input')?.value.trim();
                 var t = qty * prc; tr.cells[3].textContent = t.toFixed(2); itemsTotal += t;
+                if (itemName) itemsCount++;
             });
             var fee = parseFloat(document.getElementById(cardId + '-fee').value) || 0;
             var baseTotal = itemsTotal + fee;
             var disc = parseFloat(document.getElementById(cardId + '-disc').value) || 0;
             var discType = document.getElementById(cardId + '-disc-type').value;
             var discAmt = discType === 'percent' ? (baseTotal * disc / 100) : disc;
+            if (document.getElementById(cardId + '-items-count')) {
+                document.getElementById(cardId + '-items-count').textContent = itemsCount;
+            }
             document.getElementById(cardId + '-items-total').textContent = itemsTotal.toFixed(2) + ' ج';
             document.getElementById(cardId + '-fee-display').textContent = fee.toFixed(2) + ' ج';
             document.getElementById(cardId + '-disc-display').textContent = discAmt.toFixed(2) + ' ج';

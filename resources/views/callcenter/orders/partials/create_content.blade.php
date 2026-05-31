@@ -326,6 +326,7 @@
     </div>
     <div class="order-card-footer">
         <div class="form-row" style="margin-bottom:10px"><div class="form-group"><label class="form-label">رسوم التوصيل *</label><input type="number" class="form-control" id="${id}-fee" placeholder="0" min="0" step="0.5" oninput="calcTotals('${id}')"></div><div class="form-group"><label class="form-label">الخصم</label><div style="display:flex;gap:5px"><input type="number" class="form-control" id="${id}-disc" value="0" min="0" step="0.5" oninput="calcTotals('${id}')"><div class="disc-type-wrap"><button class="disc-btn active" id="${id}-disc-jm" onclick="setDiscType('${id}','amount')">ج</button><button class="disc-btn" id="${id}-disc-pct" onclick="setDiscType('${id}','percent')">%</button></div></div></div></div><input type="hidden" id="${id}-disc-type" value="amount">
+        <div class="pricing-row"><span>عدد الأصناف</span><span id="${id}-items-count">0</span></div>
         <div class="pricing-row"><span>إجمالي الأصناف</span><span id="${id}-items-total">0.00 ج</span></div><div class="pricing-row"><span>رسوم التوصيل</span><span id="${id}-fee-display">0.00 ج</span></div><div class="pricing-row"><span>الخصم</span><span id="${id}-disc-display" style="color:var(--red)">0.00 ج</span></div><div class="pricing-row total"><span>الإجمالي النهائي</span><span id="${id}-grand-total">0.00 ج</span></div>
         <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-secondary" style="flex:1" onclick="clearCard('${id}')">مسح</button><button class="btn btn-primary" style="flex:2" onclick="saveCard('${id}')">${isEdit ? 'تعديل الطلب ✔' : 'حفظ الطلب ✔'}</button></div>
     </div>`;
@@ -427,12 +428,13 @@
     function calcRowTotal(input) { const row = input.closest('tr'); const qty = parseFloat(row.cells[1].querySelector('input').value) || 0; const prc = parseFloat(row.cells[2].querySelector('input').value) || 0; row.cells[3].textContent = (qty * prc).toFixed(2); }
     function delRow(rowId, cardId) { document.getElementById(rowId)?.remove(); calcTotals(cardId); saveDrafts(); }
     function calcTotals(cardId) {
-        var itemsTotal = 0; document.getElementById(cardId + '-items').querySelectorAll('tr').forEach(tr => { const qty = parseFloat(tr.cells[1].querySelector('input')?.value || 0) || 0; const prc = parseFloat(tr.cells[2].querySelector('input')?.value || 0) || 0; const t = qty * prc; tr.cells[3].textContent = t.toFixed(2); itemsTotal += t; });
+        var itemsTotal = 0; var itemsCount = 0; document.getElementById(cardId + '-items').querySelectorAll('tr').forEach(tr => { const qty = parseFloat(tr.cells[1].querySelector('input')?.value || 0) || 0; const prc = parseFloat(tr.cells[2].querySelector('input')?.value || 0) || 0; const itemName = tr.cells[0].querySelector('input')?.value.trim(); const t = qty * prc; tr.cells[3].textContent = t.toFixed(2); itemsTotal += t; if(itemName) itemsCount++; });
         var fee = parseFloat(document.getElementById(cardId + '-fee').value) || 0;
         const baseTotal = itemsTotal + fee;
         const disc = parseFloat(document.getElementById(cardId + '-disc').value) || 0;
         const discType = document.getElementById(cardId + '-disc-type').value;
         const discAmt = discType === 'percent' ? (baseTotal * disc / 100) : disc;
+        if (document.getElementById(cardId + '-items-count')) { document.getElementById(cardId + '-items-count').textContent = itemsCount; }
         document.getElementById(cardId + '-items-total').textContent = itemsTotal.toFixed(2) + ' ج'; document.getElementById(cardId + '-fee-display').textContent = fee.toFixed(2) + ' ج'; document.getElementById(cardId + '-disc-display').textContent = discAmt.toFixed(2) + ' ج'; document.getElementById(cardId + '-grand-total').textContent = (baseTotal - discAmt).toFixed(2) + ' ج';
     }
     function setDiscType(cardId, type) { document.getElementById(cardId + '-disc-type').value = type; document.getElementById(cardId + '-disc-jm').classList.toggle('active', type === 'amount'); document.getElementById(cardId + '-disc-pct').classList.toggle('active', type === 'percent'); calcTotals(cardId); saveDrafts(); }

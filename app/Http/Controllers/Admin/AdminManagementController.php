@@ -41,7 +41,7 @@ class AdminManagementController extends Controller
             'name' => 'required|string|max:255',
             'username' => 'required|string|unique:users,username|max:50',
             'password' => 'required|string|min:6',
-            'phone' => 'nullable|string|max:30',
+            'phone' => 'nullable|digits:11',
         ]);
 
         $user = User::create([
@@ -74,7 +74,7 @@ class AdminManagementController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:30',
+            'phone' => 'nullable|digits:11',
             'is_active' => 'boolean',
             'password' => 'nullable|string|min:6',
         ]);

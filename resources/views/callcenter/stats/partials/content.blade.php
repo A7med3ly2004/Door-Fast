@@ -89,7 +89,7 @@
             }
             document.getElementById('k-profit').textContent =
                 parseFloat(kpis.cc_total_profit || 0).toFixed(2);
-            document.getElementById('last-updated').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG');
+            document.getElementById('last-updated').textContent = 'آخر تحديث: ' + new Date().toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
             var labels = chartData.map(d => d.label); const counts = chartData.map(d => d.count);
             const ctx = document.getElementById('chartBar');
             if (ccStatsChart && ccStatsChart.canvas === ctx) {

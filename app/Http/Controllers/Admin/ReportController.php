@@ -13,11 +13,11 @@ class ReportController extends Controller
 {
     public function index()
     {
-        $deliveries  = User::whereIn('role', ['delivery', 'reserve_delivery'])
+        $deliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
-            
+
         $callcenters = User::where('role', 'callcenter')
             ->where('is_active', true)
             ->orderBy('name')
@@ -30,8 +30,8 @@ class ReportController extends Controller
 
         if (request()->header('X-SPA-Navigation')) {
             return response()->json([
-                'html'       => view('admin.reports.partials.content', compact('deliveries', 'callcenters', 'admins'))->render(),
-                'title'      => 'التقارير',
+                'html' => view('admin.reports.partials.content', compact('deliveries', 'callcenters', 'admins'))->render(),
+                'title' => 'التقارير',
                 'csrf_token' => csrf_token(),
             ]);
         }
@@ -41,53 +41,60 @@ class ReportController extends Controller
 
     public function data(Request $request)
     {
-        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
-        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
+        [$currentBizStart, $currentBizEnd] = \App\Models\Setting::businessDayRange();
+        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange($currentBizStart->copy()->subDays(30))[0];
+        $to = $request->filled('to') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1] : $currentBizEnd;
 
         $query = Order::with(['client', 'callcenter', 'admin', 'delivery'])
             ->whereBetween('created_at', [$from, $to]);
 
-        if ($request->filled('delivery_id'))   $query->where('delivery_id', $request->delivery_id);
-        if ($request->filled('callcenter_id')) $query->where('callcenter_id', $request->callcenter_id);
-        if ($request->filled('admin_id'))      $query->where('admin_id', $request->admin_id);
+        if ($request->filled('delivery_id'))
+            $query->where('delivery_id', $request->delivery_id);
+        if ($request->filled('callcenter_id'))
+            $query->where('callcenter_id', $request->callcenter_id);
+        if ($request->filled('admin_id'))
+            $query->where('admin_id', $request->admin_id);
 
         $orders = $query->latest()->get();
 
         // KPIs
         $kpis = [
-            'total'         => $orders->count(),
-            'delivered'     => $orders->where('status', 'delivered')->count(),
-            'cancelled'     => $orders->where('status', 'cancelled')->count(),
-            'pending'       => $orders->where('status', 'pending')->count(),
-            'revenue'       => $orders->where('status', 'delivered')->sum('total'),
+            'total' => $orders->count(),
+            'delivered' => $orders->where('status', 'delivered')->count(),
+            'cancelled' => $orders->where('status', 'cancelled')->count(),
+            'pending' => $orders->where('status', 'pending')->count(),
+            'revenue' => $orders->where('status', 'delivered')->sum('total'),
             'delivery_fees' => $orders->where('status', 'delivered')->sum('delivery_fee'),
         ];
 
-        // Daily chart
-        $days   = (int) $from->diffInDays($to) + 1;
-        $chart  = [];
+        // Daily chart (sliding business day)
+        $days = (int) $from->diffInDays($to) + 1;
+        $chart = [];
+        $chartBaseDay = $request->filled('from')
+            ? Carbon::parse($request->from)
+            : $currentBizStart->copy()->subDays(30);
         for ($i = 0; $i < min($days, 60); $i++) {
-            $calDay = Carbon::parse($request->filled('from') ? $request->from : today()->subDays(30))->addDays($i);
-            list($dStart, $dEnd) = \App\Models\Setting::businessDayRange($calDay);
+            $calDay = $chartBaseDay->copy()->addDays($i);
+            [$dStart, $dEnd] = \App\Models\Setting::businessDayRange($calDay);
             $dayOrders = $orders->filter(fn($o) => $o->created_at->between($dStart, $dEnd));
             $chart[] = [
-                'label'         => $calDay->format('m/d'),
-                'count'         => $dayOrders->count(),
+                'label' => $calDay->format('m/d'),
+                'count' => $dayOrders->count(),
                 'delivery_fees' => $dayOrders->where('status', 'delivered')->sum('delivery_fee'),
             ];
         }
 
         // Delivery breakdown
         $deliveryBreakdown = $orders->groupBy('delivery_id')->map(function ($group, $deliveryId) {
-            $first     = $group->first();
-            $total     = $group->count();
+            $first = $group->first();
+            $total = $group->count();
             $completed = $group->where('status', 'delivered')->count();
             return [
-                'name'        => $first->delivery?->name ?? 'غير معين',
-                'total'       => $total,
-                'completed'   => $completed,
-                'cancelled'   => $group->where('status', 'cancelled')->count(),
-                'revenue'     => $group->where('status', 'delivered')->sum('delivery_fee'),
+                'name' => $first->delivery?->name ?? 'غير معين',
+                'total' => $total,
+                'completed' => $completed,
+                'cancelled' => $group->where('status', 'cancelled')->count(),
+                'revenue' => $group->where('status', 'delivered')->sum('delivery_fee'),
             ];
         })->values();
 
@@ -95,77 +102,80 @@ class ReportController extends Controller
         $ccBreakdown = $orders->groupBy('callcenter_id')->map(function ($group) {
             $first = $group->first();
             return [
-                'name'      => $first->callcenter?->name ?? 'غير معين',
-                'total'     => $group->count(),
+                'name' => $first->callcenter?->name ?? 'غير معين',
+                'total' => $group->count(),
                 'cancelled' => $group->where('status', 'cancelled')->count(),
-                'revenue'   => $group->where('status', 'delivered')->sum('total'),
+                'revenue' => $group->where('status', 'delivered')->sum('total'),
             ];
         })->values();
 
         // Paginated orders table (per_page=9999 → export all, default 20 for UI)
-        $page    = $request->get('page', 1);
+        $page = $request->get('page', 1);
         $perPage = min((int) $request->get('per_page', 20), 5000);
-        $sliced  = $orders->forPage($page, $perPage)->values();
-        $mapped  = $sliced->map(fn($o) => [
-            'id'           => $o->id,
+        $sliced = $orders->forPage($page, $perPage)->values();
+        $mapped = $sliced->map(fn($o) => [
+            'id' => $o->id,
             'order_number' => $o->order_number,
-            'created_at'   => $o->created_at->toIso8601String(),
-            'client'       => $o->client?->name ?? '—',
+            'created_at' => $o->created_at->toIso8601String(),
+            'client' => $o->client?->name ?? '—',
             'creator_name' => $o->callcenter?->name ?? $o->admin?->name ?? '—',
             'creator_type' => $o->callcenter ? 'cc' : ($o->admin ? 'admin' : null),
-            'delivery'     => $o->delivery?->name ?? '—',
+            'delivery' => $o->delivery?->name ?? '—',
             'delivery_fee' => $o->delivery_fee,
-            'discount'     => $o->discount,
-            'total'        => $o->total,
-            'status'       => $o->status,
+            'discount' => $o->discount,
+            'total' => $o->total,
+            'status' => $o->status,
         ]);
 
         // Totals row
         $totals = [
             'delivery_fee' => $orders->sum('delivery_fee'),
-            'discount'     => $orders->sum('discount'),
-            'total'        => $orders->sum('total'),
-            'count'        => $orders->count(),
-            'pages'        => ceil($orders->count() / $perPage),
-            'page'         => (int) $page,
+            'discount' => $orders->sum('discount'),
+            'total' => $orders->sum('total'),
+            'count' => $orders->count(),
+            'pages' => ceil($orders->count() / $perPage),
+            'page' => (int) $page,
         ];
 
         return response()->json([
-            'kpis'               => $kpis,
-            'chart'              => $chart,
+            'kpis' => $kpis,
+            'chart' => $chart,
             'delivery_breakdown' => $deliveryBreakdown,
-            'cc_breakdown'       => $ccBreakdown,
-            'orders'             => $mapped,
-            'totals'             => $totals,
+            'cc_breakdown' => $ccBreakdown,
+            'orders' => $mapped,
+            'totals' => $totals,
         ]);
     }
 
     public function exportPdf(Request $request)
     {
         $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
-        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]     : \App\Models\Setting::businessDayRange(today())[1];
+        $to = $request->filled('to') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1] : \App\Models\Setting::businessDayRange(today())[1];
 
         $query = Order::with(['client', 'callcenter', 'admin', 'delivery'])
             ->whereBetween('created_at', [$from, $to]);
 
-        if ($request->filled('delivery_id'))   $query->where('delivery_id', $request->delivery_id);
-        if ($request->filled('callcenter_id')) $query->where('callcenter_id', $request->callcenter_id);
-        if ($request->filled('admin_id'))      $query->where('admin_id', $request->admin_id);
+        if ($request->filled('delivery_id'))
+            $query->where('delivery_id', $request->delivery_id);
+        if ($request->filled('callcenter_id'))
+            $query->where('callcenter_id', $request->callcenter_id);
+        if ($request->filled('admin_id'))
+            $query->where('admin_id', $request->admin_id);
 
-        $orders  = $query->latest()->get();
+        $orders = $query->latest()->get();
         $filters = ['from' => $from->format('Y-m-d'), 'to' => $to->format('Y-m-d')];
-        $totals  = [
-            'revenue'      => $orders->where('status', 'delivered')->sum('total'),
+        $totals = [
+            'revenue' => $orders->where('status', 'delivered')->sum('total'),
             'delivery_fee' => $orders->sum('delivery_fee'),
-            'discount'     => $orders->sum('discount'),
+            'discount' => $orders->sum('discount'),
         ];
 
         $html = view('admin.pdf.report', compact('orders', 'filters', 'totals'))->render();
         $Arabic = new \ArPHP\I18N\Arabic();
         $p = $Arabic->arIdentify($html);
-        for ($i = count($p)-1; $i >= 0; $i-=2) {
-            $utf8ar = $Arabic->utf8Glyphs(substr($html, $p[$i-1], $p[$i] - $p[$i-1]));
-            $html = substr_replace($html, $utf8ar, $p[$i-1], $p[$i] - $p[$i-1]);
+        for ($i = count($p) - 1; $i >= 0; $i -= 2) {
+            $utf8ar = $Arabic->utf8Glyphs(substr($html, $p[$i - 1], $p[$i] - $p[$i - 1]));
+            $html = substr_replace($html, $utf8ar, $p[$i - 1], $p[$i] - $p[$i - 1]);
         }
         $pdf = Pdf::loadHTML($html)->setPaper('a4', 'landscape');
 

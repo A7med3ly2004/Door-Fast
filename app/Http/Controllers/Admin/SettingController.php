@@ -53,7 +53,7 @@ class SettingController extends Controller
     {
         $data = $request->validate([
             'company_name'              => 'nullable|string|max:255',
-            'company_phone'             => 'nullable|string|max:30',
+            'company_phone'             => 'nullable|digits:11',
             'order_hold_minutes'        => 'nullable|integer|min:1|max:1440',
             'sms_enabled'               => 'nullable|boolean',
             'reserve_delay_minutes'     => 'nullable|integer|min:1|max:60',

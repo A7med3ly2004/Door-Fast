@@ -42,13 +42,14 @@ class StatsController extends Controller
         $ccTierNumber  = (int) ($todayProfit?->tier_number ?? 0);
         $ccTotalProfit = (float) ($todayProfit?->total_profit ?? 0);
 
-        // Bar chart: last 10 days
+        // Bar chart: last 10 business days (sliding business day)
         $chart = [];
+        [$currentBizStart] = \App\Models\Setting::businessDayRange();
         for ($i = 9; $i >= 0; $i--) {
-            $day = Carbon::today()->subDays($i);
-            $dayRange = \App\Models\Setting::businessDayRange($day);
+            $bizDayRef = $currentBizStart->copy()->subDays($i);
+            $dayRange  = \App\Models\Setting::businessDayRange($bizDayRef);
             $chart[] = [
-                'label' => $day->format('d/m'),
+                'label' => $bizDayRef->format('d/m'),
                 'count' => Order::where('callcenter_id', $me)->whereBetween('created_at', $dayRange)->count(),
             ];
         }

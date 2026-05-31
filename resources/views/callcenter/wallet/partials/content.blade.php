@@ -414,8 +414,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
         }
         function formatDate(ymd) {
             if (!ymd) return '—';
-            const [y, m, d] = ymd.split('-');
-            return `${d}/${m}/${y}`;
+            return new Date(ymd).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
         }
 
         // ── Boot ─────────────────────────────────────────────────

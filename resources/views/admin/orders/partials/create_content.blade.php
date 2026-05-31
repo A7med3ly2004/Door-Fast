@@ -305,7 +305,7 @@
             cardCount++;
             var id = draft ? draft.id : ('adm-card-' + Date.now());
             var openedAt = draft && draft.openedAt ? draft.openedAt : localDateTime();
-            var displayTime = draft && draft.displayTime ? draft.displayTime : new Date().toLocaleString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            var displayTime = draft && draft.displayTime ? draft.displayTime : new Date().toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
             var shopOpts = SHOPS.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             var delivOpts = DELIVERIES.length
                 ? DELIVERIES.map(d => `<option value="${d.id}">${d.name}</option>`).join('')

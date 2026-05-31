@@ -177,7 +177,8 @@ class OrderController extends Controller
                     'type'         => 'cancelled',
                     'order_id'     => $order->id,
                     'order_number' => $order->order_number,
-                    'message'      => "تم إلغاء الطلب #{$order->order_number}",
+                    'message'      => "تم إلغاء الطلب #{$order->order_number} بواسطة أدمن : " . auth()->user()->name,
+                    'audience'     => 'admin', // يظهر فقط للأدمن
                 ]);
                 event(new \App\Events\AdminNotificationCreated($notif));
                 event(new \App\Events\OrderStatusUpdated($order));

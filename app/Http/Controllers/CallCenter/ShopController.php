@@ -62,7 +62,7 @@ class ShopController extends Controller
         $data = $request->validate([
             'name'             => 'required|string|max:255',
             'code'             => 'nullable|string|max:50|unique:shops,code',
-            'phone'            => 'nullable|string|max:30',
+            'phone'            => 'nullable|digits:11',
             'address'          => 'nullable|string|max:500',
             'shop_category_id' => 'required|exists:shop_categories,id',
             'notes'            => 'nullable|string',
@@ -137,10 +137,10 @@ class ShopController extends Controller
         $data = $request->validate([
             'name'             => 'required|string|max:255',
             'code'             => 'required|string|max:50|unique:shops,code,' . $shop->id,
-            'phone'            => 'nullable|string|max:30',
-            'phone2'           => 'nullable|string|max:30',
-            'phone3'           => 'nullable|string|max:30',
-            'phone4'           => 'nullable|string|max:30',
+            'phone'            => 'nullable|digits:11',
+            'phone2'           => 'nullable|digits:11',
+            'phone3'           => 'nullable|digits:11',
+            'phone4'           => 'nullable|digits:11',
             'address'          => 'nullable|string|max:500',
             'shop_category_id' => 'required|exists:shop_categories,id',
             'notes'            => 'nullable|string',

@@ -1309,14 +1309,14 @@
 
         // Format money
         function formatMoney(val) {
-            return parseFloat(val || 0).toLocaleString('ar-EG', { minimumFractionDigits: 2 }) + ' ج';
+            return parseFloat(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' ج';
         }
 
         // Format date English
         function formatDate(str) {
             if (!str) return '—';
             const d = new Date(str);
-            return d.toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+            return d.toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
         }
 
         // Status badge
@@ -1533,6 +1533,8 @@
         // Real-time: listen on admin-notifications channel
         if (typeof window.Echo !== 'undefined') {
             window.Echo.channel('admin-notifications').listen('AdminNotificationCreated', function (e) {
+                // فقط الإشعارات المخصصة للأدمن أو للجميع
+                if (e.audience && e.audience === 'callcenter') return;
                 _notifCount++;
                 updateNotifBadge();
                 if (_notifOpen) loadNotifications();

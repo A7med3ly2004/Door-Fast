@@ -265,7 +265,8 @@ abstract class BaseDeliveryOrderController extends Controller
                     'type'         => 'cancelled',
                     'order_id'     => $order->id,
                     'order_number' => $order->order_number,
-                    'message'      => "تم إلغاء الطلب #{$order->order_number}",
+                    'message'      => "تم إلغاء الطلب #{$order->order_number} بواسطة مندوب : {$delivery->name}",
+                    'audience'     => 'all', // يظهر للأدمن والكول سنتر
                 ]);
                 event(new \App\Events\AdminNotificationCreated($notif));
 

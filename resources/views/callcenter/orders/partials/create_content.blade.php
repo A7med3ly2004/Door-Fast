@@ -254,7 +254,7 @@
     }
 
     function genOrderNum() { return 'ORD-' + String(Date.now()).slice(-5).padStart(5, '0') + Math.floor(Math.random() * 10); }
-    function nowStr() { return new Date().toLocaleString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+    function nowStr() { return new Date().toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }); }
     function localDateTime() { var d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 19).replace('T', ' '); }
 
     function addCard(draft = null) {

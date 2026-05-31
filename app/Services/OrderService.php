@@ -191,7 +191,9 @@ class OrderService
         $addressWarning = null;
         $source = $adminMode ? 'أدمن' : 'كول سنتر';
 
-        $client = Client::where('phone', $data['phone'])->first();
+        $client = Client::where('phone', $data['phone'])
+            ->orWhere('phone2', $data['phone'])
+            ->first();
 
         if ($client) {
             $update = [];
@@ -265,14 +267,18 @@ class OrderService
             return;
         }
 
-        $sendToClient = Client::firstOrCreate(
-            ['phone' => $data['send_to_phone']],
-            [
+        $sendToClient = Client::where('phone', $data['send_to_phone'])
+            ->orWhere('phone2', $data['send_to_phone'])
+            ->first();
+
+        if (!$sendToClient) {
+            $sendToClient = Client::create([
+                'phone' => $data['send_to_phone'],
                 'name' => $data['send_to_name'] ?? 'Unnamed',
                 'code' => $data['send_to_code'] ?? Client::generateCode(),
                 'phone2' => $data['send_to_phone2'] ?? null,
-            ]
-        );
+            ]);
+        }
 
         if (!$sendToClient->wasRecentlyCreated) {
             if (!empty($data['send_to_phone2']) && $sendToClient->phone2 !== $data['send_to_phone2']) {

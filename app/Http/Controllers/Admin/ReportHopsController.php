@@ -29,8 +29,9 @@ class ReportHopsController extends Controller
 
     public function data(Request $request)
     {
-        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(today()->subDays(30))[0];
-        $to = $request->filled('to') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1] : \App\Models\Setting::businessDayRange(today())[1];
+        [$currentBizStart, $currentBizEnd] = \App\Models\Setting::businessDayRange();
+        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange($currentBizStart->copy()->subDays(30))[0];
+        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]   : $currentBizEnd;
         $shopId = $request->shop_id;
 
         // Global KPIs
@@ -87,12 +88,15 @@ class ReportHopsController extends Controller
                 'avg_order' => $deliveredOrders->count() > 0 ? round($deliveredOrders->flatMap->items->sum('total') / $deliveredOrders->count(), 2) : 0,
             ];
 
-            // Daily chart
+            // Daily chart (sliding business day)
             $days = (int) $from->diffInDays($to) + 1;
             $chart = [];
+            $chartBaseDay = $request->filled('from')
+                ? Carbon::parse($request->from)
+                : $currentBizStart->copy()->subDays(30);
             for ($i = 0; $i < min($days, 60); $i++) {
-                $calDay = Carbon::parse($request->filled('from') ? $request->from : today()->subDays(30))->addDays($i);
-                list($dStart, $dEnd) = \App\Models\Setting::businessDayRange($calDay);
+                $calDay = $chartBaseDay->copy()->addDays($i);
+                [$dStart, $dEnd] = \App\Models\Setting::businessDayRange($calDay);
                 $dayCount = $shopOrders->filter(fn($o) => $o->created_at->between($dStart, $dEnd))->count();
                 $chart[] = ['label' => $calDay->format('m/d'), 'count' => $dayCount];
             }

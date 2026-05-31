@@ -50,14 +50,15 @@ class DashboardController extends Controller
 
         $totalClients     = Client::count();
 
-        // Bar chart: last 10 days
+        // Bar chart: last 10 business days (sliding business day)
         $chartData = [];
+        [$currentBizStart] = \App\Models\Setting::businessDayRange();
         for ($i = 9; $i >= 0; $i--) {
-            $day = Carbon::today()->subDays($i);
-            $dayRange = \App\Models\Setting::businessDayRange($day);
+            $bizDayRef = $currentBizStart->copy()->subDays($i);
+            $dayRange  = \App\Models\Setting::businessDayRange($bizDayRef);
             $chartData[] = [
-                'date'  => $day->format('m/d'),
-                'label' => $day->locale('ar')->isoFormat('ddd D/M'),
+                'date'  => $bizDayRef->format('m/d'),
+                'label' => $bizDayRef->locale('ar')->isoFormat('ddd D/M'),
                 'count' => Order::whereBetween('created_at', $dayRange)->count(),
             ];
         }

@@ -294,7 +294,7 @@ On direct page load it is @included from activity-log/index.blade.php.
                 if (badge) badge.textContent = d.total;
 
                 const lu = document.getElementById('al-last-updated');
-                if (lu) lu.textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG');
+                if (lu) lu.textContent = 'آخر تحديث: ' + new Date().toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
             } catch (e) {
                 console.error('ActivityLog fetch error:', e);
             } finally {

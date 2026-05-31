@@ -1044,7 +1044,7 @@
         function formatDate(str) {
             if (!str) return '—';
             const d = new Date(str);
-            return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return d.toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
         }
 
         function statusBadge(status) {
@@ -1319,6 +1319,17 @@
                 });
 
                 window._adminNotifChannel = pusher.subscribe('admin-notifications');
+
+                // الاستماع للإشعارات اللحظية — يُعرض فقط ما هو مخصص للكول سنتر أو للجميع
+                window._adminNotifChannel.bind('App\\Events\\AdminNotificationCreated', function (data) {
+                    var e = data;
+                    if (e.audience && e.audience === 'admin') return; // تجاهل إشعارات الأدمن فقط
+                    _ccNotifCount++;
+                    updateCCNotifBadge();
+                    if (_ccNotifOpen) loadCCNotifications();
+                    var ToastInstance = window.Swal ? Swal.mixin({ toast: true, position: 'top-start', showConfirmButton: false, timer: 5000 }) : null;
+                    if (ToastInstance) ToastInstance.fire({ icon: 'warning', title: e.message });
+                });
 
                 // الاشتراك في القناة اللحظية الخاصة بالكول سنتر
                 const myChannel = pusher.subscribe('callcenter.{{ auth()->id() }}');

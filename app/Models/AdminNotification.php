@@ -13,6 +13,15 @@ class AdminNotification extends Model
         'order_number',
         'message',
         'is_read',
+        'audience',            // 'admin' | 'callcenter' | 'all'
+        'is_read_by_admin',
+        'is_read_by_callcenter',
+    ];
+
+    protected $casts = [
+        'is_read'               => 'boolean',
+        'is_read_by_admin'      => 'boolean',
+        'is_read_by_callcenter' => 'boolean',
     ];
 
     public function order(): BelongsTo

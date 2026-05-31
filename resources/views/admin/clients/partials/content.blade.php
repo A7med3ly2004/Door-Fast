@@ -363,7 +363,7 @@
 
             const rows = data.data.map(c => ({
                 ...c,
-                created_at: c.created_at ? new Date(c.created_at).toLocaleDateString('ar-EG') : '—',
+                created_at: c.created_at ? new Date(c.created_at).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '—',
                 orders_sum_total: parseFloat(c.orders_sum_total || 0).toFixed(2),
                 orders_sum_delivery_fee: parseFloat(c.orders_sum_delivery_fee || 0).toFixed(2),
             }));

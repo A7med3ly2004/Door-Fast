@@ -446,7 +446,7 @@
                 const statusMap = { pending: 'قيد الانتظار', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
                 const rows = data.data.map(o => ({
                     ...o,
-                    created_at: o.created_at ? new Date(o.created_at).toLocaleDateString('ar-EG') : '—',
+                    created_at: o.created_at ? new Date(o.created_at).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '—',
                     status: statusMap[o.status] || o.status,
                     creator_name: o.callcenter?.name ?? o.admin?.name ?? '—',
                     delivery_chosen_label: o.is_delivery_chosen ? 'نعم' : '—',

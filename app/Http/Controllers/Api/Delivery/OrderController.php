@@ -283,7 +283,8 @@ class OrderController extends Controller
                     'type' => 'cancelled',
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                    'message' => "تم إلغاء الطلب #{$order->order_number} — {$request->reason}",
+                    'message' => "تم إلغاء الطلب #{$order->order_number} بواسطة مندوب : {$delivery->name} — {$request->reason}",
+                    'audience' => 'all', // يظهر للأدمن والكول سنتر
                 ]);
                 event(new AdminNotificationCreated($notif));
 

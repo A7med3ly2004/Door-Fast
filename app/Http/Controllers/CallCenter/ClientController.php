@@ -36,7 +36,7 @@ class ClientController extends Controller
                 ->latest();
 
             $s = $request->search;
-            $query->where(fn($q) => $q->where('name', 'like', "%$s%")->orWhere('phone', $s)->orWhere('code', $s));
+            $query->where(fn($q) => $q->where('name', 'like', "%$s%")->orWhere('phone', $s)->orWhere('phone2', $s)->orWhere('code', $s));
 
             return response()->json($query->paginate(15)->through(fn($c) => [
                 'id'              => $c->id,
@@ -60,14 +60,14 @@ class ClientController extends Controller
     {
         $data = $request->validate([
             'name'          => 'required|string|max:255',
-            'phone'         => ['required', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/', 'unique:clients,phone'],
-            'phone2'        => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
+            'phone'         => ['required', 'digits:11', 'unique:clients,phone'],
+            'phone2'        => ['nullable', 'digits:11'],
             'first_address' => 'required|string|max:500',
         ], [
             'name.required'          => 'الاسم مطلوب',
             'phone.required'         => 'رقم الهاتف مطلوب',
-            'phone.regex'            => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
-            'phone2.regex'           => 'رقم الهاتف الثاني غير صحيح',
+            'phone.digits'           => 'رقم الهاتف يجب أن يتكون من 11 رقم',
+            'phone2.digits'          => 'رقم الهاتف الثاني يجب أن يتكون من 11 رقم',
             'phone.unique'           => 'رقم الهاتف مسجل مسبقاً',
             'first_address.required' => 'العنوان مطلوب',
         ]);
@@ -102,13 +102,13 @@ class ClientController extends Controller
 
         $data = $request->validate([
             'name'   => 'required|string|max:255',
-            'phone'  => ['required', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/', \Illuminate\Validation\Rule::unique('clients', 'phone')->ignore($client->id)],
-            'phone2' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
+            'phone'  => ['required', 'digits:11', \Illuminate\Validation\Rule::unique('clients', 'phone')->ignore($client->id)],
+            'phone2' => ['nullable', 'digits:11'],
         ], [
             'name.required'  => 'الاسم مطلوب',
             'phone.required' => 'رقم الهاتف مطلوب',
-            'phone.regex'    => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
-            'phone2.regex'   => 'رقم الهاتف الثاني غير صحيح',
+            'phone.digits'   => 'رقم الهاتف يجب أن يتكون من 11 رقم',
+            'phone2.digits'  => 'رقم الهاتف الثاني يجب أن يتكون من 11 رقم',
             'phone.unique'   => 'رقم الهاتف مسجل مسبقاً لعميل آخر.',
         ]);
 
@@ -215,7 +215,7 @@ class ClientController extends Controller
 
         $query = Client::with('addresses');
         if ($phone) {
-            $query->where('phone', $phone);
+            $query->where(fn($q) => $q->where('phone', $phone)->orWhere('phone2', $phone));
         } else {
             $query->where('code', $code);
         }

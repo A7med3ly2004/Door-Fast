@@ -28,6 +28,7 @@ class ClientController extends Controller
             $s = $request->search;
             $query->where(fn($q) => $q->where('name', 'like', "%$s%")
                 ->orWhere('phone', 'like', "%$s%")
+                ->orWhere('phone2', 'like', "%$s%")
                 ->orWhere('code', 'like', "%$s%"));
         }
         if ($request->filled('from')) {
@@ -76,13 +77,13 @@ class ClientController extends Controller
     {
         $data = $request->validate([
             'name'            => 'required|string|max:255',
-            'phone'           => ['required', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/', 'unique:clients,phone'],
-            'phone2'          => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
+            'phone'           => ['required', 'digits:11', 'unique:clients,phone'],
+            'phone2'          => ['nullable', 'digits:11'],
             'code'            => 'nullable|string|max:20|unique:clients,code',
             'first_address'   => 'required|string|max:500',
         ], [
-            'phone.regex'  => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
-            'phone2.regex' => 'رقم الهاتف الثاني غير صحيح',
+            'phone.digits'  => 'رقم الهاتف يجب أن يتكون من 11 رقم',
+            'phone2.digits' => 'رقم الهاتف الثاني يجب أن يتكون من 11 رقم',
             'phone.unique' => 'رقم الهاتف مسجل مسبقاً لعميل آخر.',
         ]);
 
@@ -173,11 +174,11 @@ class ClientController extends Controller
 
         $data = $request->validate([
             'name'   => 'required|string|max:255',
-            'phone'  => ['required', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/', \Illuminate\Validation\Rule::unique('clients', 'phone')->ignore($client->id)],
-            'phone2' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
+            'phone'  => ['required', 'digits:11', \Illuminate\Validation\Rule::unique('clients', 'phone')->ignore($client->id)],
+            'phone2' => ['nullable', 'digits:11'],
         ], [
-            'phone.regex'  => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
-            'phone2.regex' => 'رقم الهاتف الثاني غير صحيح',
+            'phone.digits'  => 'رقم الهاتف يجب أن يتكون من 11 رقم',
+            'phone2.digits' => 'رقم الهاتف الثاني يجب أن يتكون من 11 رقم',
             'phone.unique' => 'رقم الهاتف مسجل مسبقاً لعميل آخر.',
         ]);
 

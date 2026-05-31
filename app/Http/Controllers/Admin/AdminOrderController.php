@@ -81,7 +81,8 @@ class AdminOrderController extends Controller
     {
         // ── Validation (Controller responsibility) ──────────────────
         $validated = $request->validate([
-            'phone'              => ['required', 'string', 'regex:/^\+?[0-9]{7,15}$/'],
+            'phone'              => ['required', 'digits:11'],
+            'phone2'             => ['nullable', 'digits:11'],
             'code'               => 'required|string',
             'name'               => 'required|string',
             'client_address'     => 'required|string',
@@ -96,13 +97,16 @@ class AdminOrderController extends Controller
             'items.*.quantity'   => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.shop_id'    => 'required|exists:shops,id',
-            'send_to_phone2'     => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9]{7,15}$/'],
+            'send_to_phone'      => ['nullable', 'digits:11'],
+            'send_to_phone2'     => ['nullable', 'digits:11'],
             'client_delivery_link'  => 'nullable|url|max:500',
             'send_to_delivery_link' => 'nullable|url|max:500',
         ], [
             'phone.required'          => 'رقم الهاتف مطلوب',
-            'phone.regex'             => 'رقم الهاتف غير صحيح (يقبل 7–15 رقم)',
-            'send_to_phone2.regex'    => 'رقم الهاتف الثاني غير صحيح',
+            'phone.digits'            => 'رقم الهاتف يجب أن يتكون من 11 رقم',
+            'phone2.digits'           => 'رقم الهاتف الثاني يجب أن يتكون من 11 رقم',
+            'send_to_phone.digits'    => 'رقم هاتف المستلم يجب أن يتكون من 11 رقم',
+            'send_to_phone2.digits'   => 'رقم الهاتف الثاني للمستلم يجب أن يتكون من 11 رقم',
             'code.required'           => 'الكود مطلوب',
             'name.required'           => 'اسم العميل مطلوب',
             'client_address.required' => 'العنوان مطلوب',
@@ -180,7 +184,7 @@ class AdminOrderController extends Controller
         if (!$phone && !$code) return response()->json(['found' => false]);
 
         $query = Client::with('addresses');
-        if ($phone) $query->where('phone', $phone);
+        if ($phone) $query->where(fn($q) => $q->where('phone', $phone)->orWhere('phone2', $phone));
         else        $query->where('code', $code);
 
         $client = $query->first();

@@ -27,11 +27,12 @@ class AdminNotificationCreated implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'id' => $this->notification->id,
-            'type' => $this->notification->type,
+            'id'           => $this->notification->id,
+            'type'         => $this->notification->type,
             'order_number' => $this->notification->order_number,
-            'message' => $this->notification->message,
-            'created_at' => $this->notification->created_at->toIso8601String(),
+            'message'      => $this->notification->message,
+            'audience'     => $this->notification->audience,  // 'admin' | 'callcenter' | 'all'
+            'created_at'   => $this->notification->created_at->toIso8601String(),
         ];
     }
 }

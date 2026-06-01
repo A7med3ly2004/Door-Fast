@@ -1,4 +1,4 @@
-﻿@php
+@php
     $arabic = new \ArPHP\I18N\Arabic();
     $ar = function ($str) use ($arabic) {
         if (preg_match('/[أ-ي]/ui', $str)) {

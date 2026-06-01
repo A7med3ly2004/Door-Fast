@@ -1,4 +1,4 @@
-﻿{{-- Reserve Delivery Delivered Orders SPA partial --}}
+{{-- Reserve Delivery Delivered Orders SPA partial --}}
 
 <style>
     /* Base Modal Styles */

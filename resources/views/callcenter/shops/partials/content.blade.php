@@ -1,4 +1,4 @@
-﻿{{-- Callcenter Shops SPA partial --}}
+{{-- Callcenter Shops SPA partial --}}
 <div class="section-header">
     <h2>المتاجر النشطة</h2>
 </div>

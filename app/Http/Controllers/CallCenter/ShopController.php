@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers\CallCenter;
 
@@ -16,8 +16,8 @@ class ShopController extends Controller
         if ($request->header('X-SPA-Navigation')) {
             $categories = \App\Models\ShopCategory::orderBy('name')->get(['id', 'name']);
             return response()->json([
-                'html'       => view('callcenter.shops.partials.content', compact('categories'))->render(),
-                'title'      => 'المتاجر',
+                'html' => view('callcenter.shops.partials.content', compact('categories'))->render(),
+                'title' => 'المتاجر',
                 'csrf_token' => csrf_token(),
             ]);
         }
@@ -31,13 +31,13 @@ class ShopController extends Controller
 
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', '%' . $search . '%')
-                      ->orWhere('code', $search)
-                      ->orWhere('phone',  $search)
-                      ->orWhere('phone2', $search)
-                      ->orWhere('phone3', $search)
-                      ->orWhere('phone4', $search);
+                        ->orWhere('code', $search)
+                        ->orWhere('phone', $search)
+                        ->orWhere('phone2', $search)
+                        ->orWhere('phone3', $search)
+                        ->orWhere('phone4', $search);
                 });
             }
 
@@ -47,7 +47,7 @@ class ShopController extends Controller
 
             return response()->json($query->paginate(15));
         }
-        $categories = \App\Models\ShopCategory::orderBy('name')->get(['id','name']);
+        $categories = \App\Models\ShopCategory::orderBy('name')->get(['id', 'name']);
         return view('callcenter.shops.index', compact('categories'));
     }
 
@@ -60,12 +60,12 @@ class ShopController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'             => 'required|string|max:255',
-            'code'             => 'nullable|string|max:50|unique:shops,code',
-            'phone'            => 'nullable|digits:11',
-            'address'          => 'nullable|string|max:500',
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:50|unique:shops,code',
+            'phone' => 'nullable|digits:11',
+            'address' => 'nullable|string|max:500',
             'shop_category_id' => 'required|exists:shop_categories,id',
-            'notes'            => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         // Auto-generate code if not provided
@@ -98,12 +98,12 @@ class ShopController extends Controller
         $shop = Shop::findOrFail($id);
 
         $from = \App\Models\Setting::businessDayRange(Carbon::now()->subDays(30))[0];
-        $to   = \App\Models\Setting::businessDayRange(Carbon::now())[1];
+        $to = \App\Models\Setting::businessDayRange(Carbon::now())[1];
 
         $itemsQuery = OrderItem::where('shop_id', $id)
             ->whereHas('order', fn($q) => $q->whereBetween('created_at', [$from, $to]));
 
-        $ordersCount    = $itemsQuery->clone()->distinct('order_id')->count('order_id');
+        $ordersCount = $itemsQuery->clone()->distinct('order_id')->count('order_id');
         $totalPurchases = $itemsQuery->clone()->sum('total');
 
         $topItems = OrderItem::where('shop_id', $id)
@@ -116,18 +116,18 @@ class ShopController extends Controller
 
         return response()->json([
             'shop' => [
-                'id'             => $shop->id,
-                'name'           => $shop->name,
-                'phone'          => $shop->phone,
-                'phone2'         => $shop->phone2,
-                'phone3'         => $shop->phone3,
-                'phone4'         => $shop->phone4,
-                'address'        => $shop->address,
-                'notes'          => $shop->notes,
-                'is_active'      => $shop->is_active,
-                'orders_count'   => $ordersCount,
-                'total_purchases'=> $totalPurchases,
-                'top_items'      => $topItems,
+                'id' => $shop->id,
+                'name' => $shop->name,
+                'phone' => $shop->phone,
+                'phone2' => $shop->phone2,
+                'phone3' => $shop->phone3,
+                'phone4' => $shop->phone4,
+                'address' => $shop->address,
+                'notes' => $shop->notes,
+                'is_active' => $shop->is_active,
+                'orders_count' => $ordersCount,
+                'total_purchases' => $totalPurchases,
+                'top_items' => $topItems,
             ],
         ]);
     }
@@ -135,15 +135,15 @@ class ShopController extends Controller
     {
         $shop = Shop::findOrFail($id);
         $data = $request->validate([
-            'name'             => 'required|string|max:255',
-            'code'             => 'required|string|max:50|unique:shops,code,' . $shop->id,
-            'phone'            => 'nullable|digits:11',
-            'phone2'           => 'nullable|digits:11',
-            'phone3'           => 'nullable|digits:11',
-            'phone4'           => 'nullable|digits:11',
-            'address'          => 'nullable|string|max:500',
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:shops,code,' . $shop->id,
+            'phone' => 'nullable|digits:11',
+            'phone2' => 'nullable|digits:11',
+            'phone3' => 'nullable|digits:11',
+            'phone4' => 'nullable|digits:11',
+            'address' => 'nullable|string|max:500',
             'shop_category_id' => 'required|exists:shop_categories,id',
-            'notes'            => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         $shop->update($data);

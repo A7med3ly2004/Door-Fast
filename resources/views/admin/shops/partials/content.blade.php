@@ -1,4 +1,4 @@
-﻿{{-- Admin Shops page as SPA-injectable partial --}}
+{{-- Admin Shops page as SPA-injectable partial --}}
 <div class="section-header">
     <h2>إدارة المتاجر</h2>
     <div style="display:flex;gap:10px">

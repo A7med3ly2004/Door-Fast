@@ -476,7 +476,7 @@
             };
             const res = await axios.get('{{ route("admin.report-delivery.data") }}', { params });
             const orders = res.data.orders.data || [];
-            const dailyBreakdown = res.data.kpis.daily_breakdown || [];
+            const dailyBreakdown = res.data.daily_breakdown || [];
 
             const statusMap = { pending: 'قيد الانتظار', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
 

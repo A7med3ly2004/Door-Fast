@@ -156,6 +156,40 @@
 
 <script>
     var currentPage = 1;
+    var addCategoryTs, editCategoryTs, filterCategoryTs;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('f-category')) {
+            filterCategoryTs = new TomSelect('#f-category', {
+                create: false,
+                render: {
+                    no_results: function(data, escape) {
+                        return '<div class="no-results" style="padding: 10px;">لا توجد نتائج</div>';
+                    }
+                }
+            });
+        }
+        if (document.getElementById('s-category')) {
+            addCategoryTs = new TomSelect('#s-category', {
+                create: false,
+                render: {
+                    no_results: function(data, escape) {
+                        return '<div class="no-results" style="padding: 10px;">لا توجد نتائج</div>';
+                    }
+                }
+            });
+        }
+        if (document.getElementById('edit-category')) {
+            editCategoryTs = new TomSelect('#edit-category', {
+                create: false,
+                render: {
+                    no_results: function(data, escape) {
+                        return '<div class="no-results" style="padding: 10px;">لا توجد نتائج</div>';
+                    }
+                }
+            });
+        }
+    });
 
     async function loadShops(page = 1) {
         currentPage = page;
@@ -266,7 +300,13 @@
         document.getElementById('edit-phone3').value = phone3;
         document.getElementById('edit-phone4').value = phone4;
         document.getElementById('edit-address').value = address;
-        document.getElementById('edit-category').value = categoryId;
+        
+        if (typeof editCategoryTs !== 'undefined' && editCategoryTs) {
+            editCategoryTs.setValue(categoryId);
+        } else {
+            document.getElementById('edit-category').value = categoryId;
+        }
+        
         openModal('modal-edit-shop');
     }
 
@@ -300,12 +340,27 @@
             showSuccess(data.message);
             closeModal('modal-add-category');
             // Refresh categories dropdowns
-            const opt = `<option value="${data.category.id}">${data.category.name}</option>`;
-            document.getElementById('s-category').innerHTML += opt;
+            if (typeof addCategoryTs !== 'undefined' && addCategoryTs) {
+                addCategoryTs.addOption({value: data.category.id, text: data.category.name});
+            } else {
+                const opt = `<option value="${data.category.id}">${data.category.name}</option>`;
+                document.getElementById('s-category').innerHTML += opt;
+            }
+            
+            if (typeof editCategoryTs !== 'undefined' && editCategoryTs) {
+                editCategoryTs.addOption({value: data.category.id, text: data.category.name});
+            } else {
+                const opt = `<option value="${data.category.id}">${data.category.name}</option>`;
+                const editCat = document.getElementById('edit-category');
+                if (editCat) editCat.innerHTML += opt;
+            }
 
-            // ✅ إزالة السطر القديم واستبداله بـ null check
-            const fCategory = document.getElementById('f-category');
-            if (fCategory) fCategory.innerHTML += opt;
+            if (typeof filterCategoryTs !== 'undefined' && filterCategoryTs) {
+                filterCategoryTs.addOption({value: data.category.id, text: data.category.name});
+            } else {
+                const fCategory = document.getElementById('f-category');
+                if (fCategory) fCategory.insertAdjacentHTML('beforeend', `<option value="${data.category.id}">${data.category.name}</option>`);
+            }
 
 
         } catch (e) { showError(e.response?.data?.message || 'حدث خطأ'); }

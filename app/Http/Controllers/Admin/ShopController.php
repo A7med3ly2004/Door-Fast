@@ -44,7 +44,8 @@ class ShopController extends Controller
         }
 
         if ($request->wantsJson()) {
-            return response()->json($query->paginate(15));
+            $perPage = $request->get('per_page', 15);
+            return response()->json($query->paginate($perPage));
         }
 
         $shops = $query->paginate(15);

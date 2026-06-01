@@ -47,7 +47,8 @@ class ClientController extends Controller
         }
 
         if ($request->wantsJson()) {
-            return response()->json($query->paginate(15)->through(fn($c) => [
+            $perPage = $request->get('per_page', 15);
+            return response()->json($query->paginate($perPage)->through(fn($c) => [
                 'id'              => $c->id,
                 'name'            => $c->name,
                 'phone'           => $c->phone,

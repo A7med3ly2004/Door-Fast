@@ -175,8 +175,8 @@ class OrderController extends Controller
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(function ($q) use ($s) {
-                $q->where('order_number', 'like', "%$s%")
-                    ->orWhereHas('client', fn($c) => $c->where('name', 'like', "%$s%")->orWhere('phone', $s)->orWhere('phone2', $s));
+                $q->where('order_number', '=', $s)
+                    ->orWhereHas('client', fn($c) => $c->where('name', 'like', "%$s%")->orWhere('phone', '=', $s)->orWhere('phone2', '=', $s)->orWhere('code', '=', $s));
             });
         }
 
@@ -216,11 +216,11 @@ class OrderController extends Controller
 
             $query = Order::with(['client', 'recipientClient', 'delivery', 'callcenter', 'admin', 'items'])->latest();
             $query->where(function ($q) use ($s) {
-                $q->where('order_number', 'like', "%$s%")
+                $q->where('order_number', '=', $s)
                     ->orWhereHas(
                         'client',
                         fn($c) =>
-                        $c->where('phone', $s)->orWhere('phone2', $s)->orWhere('code', $s)
+                        $c->where('phone', '=', $s)->orWhere('phone2', '=', $s)->orWhere('code', '=', $s)
                     );
             });
 

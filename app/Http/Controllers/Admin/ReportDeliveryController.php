@@ -169,7 +169,7 @@ class ReportDeliveryController extends Controller
         ])->values()->toArray();
 
         // ── 5. Datatable (per_page=9999 → export all, default 15 for UI)
-        $perPage = min((int) $request->get('per_page', 15), 5000);
+        $perPage = min((int) $request->get('per_page', 15), 10000);
         $orders = Order::with(['client:id,name', 'callcenter:id,name', 'admin:id,name'])
             ->where('delivery_id', $deliveryId)
             ->whereBetween('created_at', [$from, $to])

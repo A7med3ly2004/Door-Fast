@@ -53,25 +53,25 @@ class OrderController extends Controller
                 $role   = $request->get('role');
 
                 $query->where(function ($q) use ($search, $role) {
-                    $q->where('order_number', 'like', "%$search%");
+                    $q->where('order_number', '=', $search);
                     
                     if (!$role || $role === 'primary') {
-                        $q->orWhereHas('client', fn($c) => $c->where('phone', 'like', "%$search%")
-                            ->orWhere('phone2', 'like', "%$search%")
-                            ->orWhere('code', 'like', "%$search%"));
+                        $q->orWhereHas('client', fn($c) => $c->where('phone', '=', $search)
+                            ->orWhere('phone2', '=', $search)
+                            ->orWhere('code', '=', $search));
                     }
                     
                     if (!$role || $role === 'recipient') {
-                        $q->orWhere('send_to_phone', 'like', "%$search%")
-                          ->orWhere('send_to_phone2', 'like', "%$search%")
-                          ->orWhereHas('recipientClient', fn($c) => $c->where('phone', 'like', "%$search%")
-                            ->orWhere('phone2', 'like', "%$search%")
-                            ->orWhere('code', 'like', "%$search%"));
+                        $q->orWhere('send_to_phone', '=', $search)
+                          ->orWhere('send_to_phone2', '=', $search)
+                          ->orWhereHas('recipientClient', fn($c) => $c->where('phone', '=', $search)
+                            ->orWhere('phone2', '=', $search)
+                            ->orWhere('code', '=', $search));
                     }
                 });
             }
 
-            $perPage = min((int) $request->get('per_page', 15), 5000);
+            $perPage = min((int) $request->get('per_page', 15), 10000);
             $orders = $query->paginate($perPage);
             return response()->json($orders);
         }
@@ -214,20 +214,20 @@ class OrderController extends Controller
             $role   = $request->get('role');
 
             $query->where(function ($q) use ($search, $role) {
-                $q->where('order_number', 'like', "%$search%");
+                $q->where('order_number', '=', $search);
                 
                 if (!$role || $role === 'primary') {
-                    $q->orWhereHas('client', fn($c) => $c->where('phone', 'like', "%$search%")
-                        ->orWhere('phone2', 'like', "%$search%")
-                        ->orWhere('code', 'like', "%$search%"));
+                    $q->orWhereHas('client', fn($c) => $c->where('phone', '=', $search)
+                        ->orWhere('phone2', '=', $search)
+                        ->orWhere('code', '=', $search));
                 }
                 
                 if (!$role || $role === 'recipient') {
-                    $q->orWhere('send_to_phone', 'like', "%$search%")
-                      ->orWhere('send_to_phone2', 'like', "%$search%")
-                      ->orWhereHas('recipientClient', fn($c) => $c->where('phone', 'like', "%$search%")
-                        ->orWhere('phone2', 'like', "%$search%")
-                        ->orWhere('code', 'like', "%$search%"));
+                    $q->orWhere('send_to_phone', '=', $search)
+                      ->orWhere('send_to_phone2', '=', $search)
+                      ->orWhereHas('recipientClient', fn($c) => $c->where('phone', '=', $search)
+                        ->orWhere('phone2', '=', $search)
+                        ->orWhere('code', '=', $search));
                 }
             });
         }

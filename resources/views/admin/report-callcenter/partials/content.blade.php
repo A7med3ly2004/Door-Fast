@@ -422,29 +422,73 @@
                 per_page: 9999,
             };
             const res = await axios.get('{{ route("admin.report-callcenter.data") }}', { params });
-            const columns = [
-                { header: 'رقم الطلب', key: 'order_number', width: 18 },
-                { header: 'التاريخ', key: 'created_at', width: 20 },
-                { header: 'العميل', key: 'client.name', width: 22 },
-                { header: 'المندوب', key: 'delivery_name', width: 20 },
-                { header: 'اختيار المندوب', key: 'delivery_chosen_label', width: 16 },
-                { header: 'رسوم التوصيل', key: 'delivery_fee', width: 16 },
-                { header: 'الخصم', key: 'discount', width: 12 },
-                { header: 'الإجمالي', key: 'total', width: 14 },
-                { header: 'الحالة', key: 'status', width: 14 },
-            ];
+            const orders = res.data.orders.data || [];
+            const dailyBreakdown = res.data.daily_breakdown || [];
+
             const statusMap = { pending: 'قيد الانتظار', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
-            const rows = res.data.orders.data.map(o => ({
-                ...o,
-                created_at: o.created_at ? new Date(o.created_at).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '—',
-                status: statusMap[o.status] || o.status,
-                delivery_name: o.delivery ? o.delivery.name : '—',
-                delivery_chosen_label: o.is_delivery_chosen ? 'نعم' : '—',
-            }));
-            exportToExcel(rows, columns, 'cc-report-' + res.data.agent_name + '-' + new Date().toISOString().slice(0, 10), 'تقرير كول سنتر');
-            if (typeof showSuccess === 'function') showSuccess('تم التصدير');
+
+            const wsData = [];
+
+            // Row 1: Titles
+            const titleRow = Array(15).fill("");
+            titleRow[0] = "تفاصيل الطلبات";
+            titleRow[10] = "تفصيل الشرائح اليومية";
+            wsData.push(titleRow);
+
+            // Row 2: Headers
+            const headerRow = [
+                'رقم الطلب', 'التاريخ', 'العميل', 'المندوب', 'اختيار المندوب', 'رسوم التوصيل', 'الخصم', 'الإجمالي', 'الحالة',
+                '', // Space Column J
+                'التاريخ', 'عدد الطلبات', 'رقم الشريحة', 'مبلغ الطلب', 'ربح اليوم'
+            ];
+            wsData.push(headerRow);
+
+            // Data Rows
+            const maxRows = Math.max(orders.length, dailyBreakdown.length);
+            for (let i = 0; i < maxRows; i++) {
+                const row = Array(15).fill("");
+                const o = orders[i];
+                const d = dailyBreakdown[i];
+
+                if (o) {
+                    row[0] = o.order_number || ('#' + o.id);
+                    row[1] = o.created_at ? new Date(o.created_at).toLocaleString('en-GB') : '—';
+                    row[2] = o.client ? o.client.name : '—';
+                    row[3] = o.delivery ? o.delivery.name : '—';
+                    row[4] = o.is_delivery_chosen ? 'نعم' : '—';
+                    row[5] = o.delivery_fee;
+                    row[6] = o.discount;
+                    row[7] = o.total;
+                    row[8] = statusMap[o.status] || o.status;
+                }
+
+                if (d) {
+                    row[10] = d.date;
+                    row[11] = d.count + ' طلب';
+                    row[12] = d.tier_number > 0 ? ('شريحة ' + d.tier_number) : '— لا شريحة';
+                    row[13] = d.amount.toFixed(2);
+                    row[14] = d.profit.toFixed(2);
+                }
+                wsData.push(row);
+            }
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }, // Merge A1:I1
+                { s: { r: 0, c: 10 }, e: { r: 0, c: 14 } } // Merge K1:O1
+            ];
+
+            const colWidths = [18, 15, 20, 20, 16, 12, 10, 12, 15, 5, 15, 12, 15, 12, 12];
+            ws['!cols'] = colWidths.map(w => ({ wch: w }));
+
+            XLSX.utils.book_append_sheet(wb, ws, 'تقرير الكول سنتر');
+            XLSX.writeFile(wb, 'cc-report-' + res.data.agent_name + '-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+
+            if (typeof showSuccess === 'function') showSuccess('تم التصدير بنجاح ✓');
         } catch (e) {
-            if (typeof showError === 'function') showError('حدث خطأ');
+            if (typeof showError === 'function') showError('حدث خطأ أثناء التصدير');
             console.error(e);
         }
     };

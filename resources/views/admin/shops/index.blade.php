@@ -20,19 +20,12 @@
         </div>
         <div>
             <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الفئة</label>
-            <div class="relative group" style="min-width:180px; z-index: 50;">
-                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                    <span id="label-filter-category">كل الفئات</span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
-                <input type="hidden" id="filter-category" value="">
-                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-category', '', 'كل الفئات')">كل الفئات</div>
-                    @foreach($categories as $cat)
-                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-category', '{{ $cat->id }}', '{{ $cat->name }}')">{{ $cat->name }}</div>
-                    @endforeach
-                </div>
-            </div>
+            <select id="filter-category" class="form-select" style="min-width:180px;">
+                <option value="">كل الفئات</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                @endforeach
+            </select>
         </div>
         <div style="display: flex; gap: 5px; margin-bottom: 2px;">
             <button class="btn btn-primary" onclick="loadShops(1)">بحث</button>
@@ -166,13 +159,49 @@
 @push('scripts')
 <script>
 var currentPage = 1;
+var addCategoryTs, editCategoryTs, filterCategoryTs;
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('add-category')) {
+        addCategoryTs = new TomSelect('#add-category', {
+            create: false,
+            render: {
+                no_results: function(data, escape) {
+                    return '<div class="no-results" style="padding: 10px;">لا توجد نتائج</div>';
+                }
+            }
+        });
+    }
+    if (document.getElementById('edit-category')) {
+        editCategoryTs = new TomSelect('#edit-category', {
+            create: false,
+            render: {
+                no_results: function(data, escape) {
+                    return '<div class="no-results" style="padding: 10px;">لا توجد نتائج</div>';
+                }
+            }
+        });
+    }
+    if (document.getElementById('filter-category')) {
+        filterCategoryTs = new TomSelect('#filter-category', {
+            create: false,
+            render: {
+                no_results: function(data, escape) {
+                    return '<div class="no-results" style="padding: 10px;">لا توجد نتائج</div>';
+                }
+            }
+        });
+    }
+});
 
 function resetFilters() { 
     document.getElementById('filter-search').value = ''; 
-    document.getElementById('filter-category').value = ''; 
     
-    const catLabel = document.getElementById('label-filter-category');
-    if (catLabel) catLabel.innerText = 'كل الفئات';
+    if (typeof filterCategoryTs !== 'undefined' && filterCategoryTs) {
+        filterCategoryTs.setValue('');
+    } else {
+        document.getElementById('filter-category').value = ''; 
+    }
     
     loadShops(1); 
 }
@@ -254,9 +283,27 @@ async function addCategory() {
         showSuccess('تم إضافة الفئة بنجاح');
         
         // Update dropdowns
-        const option = `<option value="${data.category.id}">${data.category.name}</option>`;
-        document.getElementById('add-category').insertAdjacentHTML('beforeend', option);
-        document.getElementById('edit-category').insertAdjacentHTML('beforeend', option);
+        if (typeof addCategoryTs !== 'undefined' && addCategoryTs) {
+            addCategoryTs.addOption({value: data.category.id, text: data.category.name});
+        } else {
+            const option = `<option value="${data.category.id}">${data.category.name}</option>`;
+            document.getElementById('add-category').insertAdjacentHTML('beforeend', option);
+        }
+        
+        if (typeof editCategoryTs !== 'undefined' && editCategoryTs) {
+            editCategoryTs.addOption({value: data.category.id, text: data.category.name});
+        } else {
+            const option = `<option value="${data.category.id}">${data.category.name}</option>`;
+            document.getElementById('edit-category').insertAdjacentHTML('beforeend', option);
+        }
+        
+        if (typeof filterCategoryTs !== 'undefined' && filterCategoryTs) {
+            filterCategoryTs.addOption({value: data.category.id, text: data.category.name});
+        } else {
+            const option = `<option value="${data.category.id}">${data.category.name}</option>`;
+            const filterCat = document.getElementById('filter-category');
+            if (filterCat) filterCat.insertAdjacentHTML('beforeend', option);
+        }
         
         document.getElementById('cat-name').value = '';
         closeModal('modal-add-category');
@@ -272,7 +319,13 @@ function openEdit(id, name, phone, phone2, phone3, phone4, address, categoryId, 
     document.getElementById('edit-phone3').value = phone3;
     document.getElementById('edit-phone4').value = phone4;
     document.getElementById('edit-address').value = address;
-    document.getElementById('edit-category').value = categoryId;
+    
+    if (typeof editCategoryTs !== 'undefined' && editCategoryTs) {
+        editCategoryTs.setValue(categoryId);
+    } else {
+        document.getElementById('edit-category').value = categoryId;
+    }
+    
     openModal('modal-edit-shop');
 }
 

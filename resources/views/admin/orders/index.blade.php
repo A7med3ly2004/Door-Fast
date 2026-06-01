@@ -21,7 +21,7 @@
         <div class="filter-bar" style="display: flex; flex-wrap: nowrap; align-items: flex-end; gap: 8px; width: 100%;">
             <div style="width: 15%;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث</label>
-                <input type="text" id="filter-search" class="form-control" placeholder="بحث بالكود / الهاتف / كود العميل"
+                <input type="text" id="filter-search" class="form-control" placeholder="رقم الطلب / العميل / الهاتف"
                     style="width: 100%; min-width: unset;">
             </div>
             <div style="width: 10%;">
@@ -29,7 +29,8 @@
                 <div class="relative group" style="width: 100%; z-index: 55;">
                     <div class="form-control"
                         style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
-                        <span id="label-filter-role" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
+                        <span id="label-filter-role"
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -51,7 +52,8 @@
                 <div class="relative group" style="width: 100%; z-index: 50;">
                     <div class="form-control"
                         style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
-                        <span id="label-filter-status" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
+                        <span id="label-filter-status"
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -77,7 +79,8 @@
                 <div class="relative group" style="width: 100%; z-index: 40;">
                     <div class="form-control"
                         style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
-                        <span id="label-filter-callcenter" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
+                        <span id="label-filter-callcenter"
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -101,7 +104,8 @@
                 <div class="relative group" style="width: 100%; z-index: 35;">
                     <div class="form-control"
                         style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
-                        <span id="label-filter-admin" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
+                        <span id="label-filter-admin"
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -125,7 +129,8 @@
                 <div class="relative group" style="width: 100%; z-index: 30;">
                     <div class="form-control"
                         style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; width: 100%; min-width: unset;">
-                        <span id="label-filter-delivery" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
+                        <span id="label-filter-delivery"
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">الكل</span>
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -145,15 +150,21 @@
             </div>
             <div style="width: 10%;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ من</label>
-                <input type="date" id="filter-from" class="form-control" placeholder="من" style="width: 100%; min-width: unset;">
+                <input type="date" id="filter-from" class="form-control" placeholder="من"
+                    style="width: 100%; min-width: unset;">
             </div>
             <div style="width: 10%;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ إلى</label>
-                <input type="date" id="filter-to" class="form-control" placeholder="إلى" style="width: 100%; min-width: unset;">
+                <input type="date" id="filter-to" class="form-control" placeholder="إلى"
+                    style="width: 100%; min-width: unset;">
             </div>
             <div style="display: flex; gap: 5px; margin-bottom: 2px; width: 15%;">
-                <button class="btn btn-primary" style="flex: 1; padding: 8px 10px; min-width: unset; justify-content: center;" onclick="loadOrders(1)">بحث</button>
-                <button class="btn btn-secondary" style="flex: 1; padding: 8px 10px; min-width: unset; justify-content: center;" onclick="resetFilters()">إعادة</button>
+                <button class="btn btn-primary"
+                    style="flex: 1; padding: 8px 10px; min-width: unset; justify-content: center;"
+                    onclick="loadOrders(1)">بحث</button>
+                <button class="btn btn-secondary"
+                    style="flex: 1; padding: 8px 10px; min-width: unset; justify-content: center;"
+                    onclick="resetFilters()">إعادة</button>
             </div>
         </div>
     </div>
@@ -294,28 +305,28 @@
                 body.innerHTML = data.data.map(o => {
                     const itemsSummary = o.items ? o.items.map(i => `${i.item_name}×${i.quantity}`).join('، ').substring(0, 60) + '...' : '—';
                     return `<tr>
-                            <td><strong style="color:var(--yellow) text-align: center;">${o.order_number}</strong></td>
-                            <td style="font-size:12px;color:var(--text-muted) text-align: center;">${formatDate(o.created_at)}</td>
-                            <td style="text-align: center;">${o.client?.name ?? '—'}</td>
-                            <td style="text-align: center;">${o.callcenter?.name ?? o.admin?.name ?? '—'}
-                                ${!o.callcenter && o.admin ? '<div class="kpi-sub" style="font-size:11px;margin-top:3px;color:var(--info);">\u0623\u062f\u0645\u0646</div>' : ''}
-                            </td>
-                            <td style="text-align: center;">
-                                ${o.delivery?.name ?? '—'}
-                                ${o.is_delivery_chosen ? '<div class="kpi-sub" style="font-size:11px; margin-top:4px; color:var(--red-dark); text-shadow: 0px 0px 0px #ff8d8d;">تم اختيار المندوب</div>' : ''}
-                            </td>
-                            <td style="text-align: center;">${o.items_count}</td>
-                            <td style="text-align: center;">${parseFloat(o.delivery_fee || 0).toFixed(2)} ج</td>
-                            <td style="text-align: center;">${parseFloat(o.discount || 0).toFixed(2)} ج</td>
-                            <td style="text-align: center;"><strong>${parseFloat(o.total || 0).toFixed(2)} ج</strong></td>
-                            <td style="text-align: center;">${statusBadge(o.status)}</td>
-                            <td style="text-align: center;">
-                                <div style="display:flex;gap:6px;justify-content: center;">
-                                    <button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">عـرض</button>
-                                    ${o.status !== 'cancelled' && o.status !== 'delivered' ? `<button class="btn btn-sm btn-danger" onclick="cancelOrder(${o.id})">إلغاء</button>` : ''}
-                                </div>
-                            </td>
-                        </tr>`;
+                                <td><strong style="color:var(--yellow) text-align: center;">${o.order_number}</strong></td>
+                                <td style="font-size:12px;color:var(--text-muted) text-align: center;">${formatDate(o.created_at)}</td>
+                                <td style="text-align: center;">${o.client?.name ?? '—'}</td>
+                                <td style="text-align: center;">${o.callcenter?.name ?? o.admin?.name ?? '—'}
+                                    ${!o.callcenter && o.admin ? '<div class="kpi-sub" style="font-size:11px;margin-top:3px;color:var(--info);">\u0623\u062f\u0645\u0646</div>' : ''}
+                                </td>
+                                <td style="text-align: center;">
+                                    ${o.delivery?.name ?? '—'}
+                                    ${o.is_delivery_chosen ? '<div class="kpi-sub" style="font-size:11px; margin-top:4px; color:var(--red-dark); text-shadow: 0px 0px 0px #ff8d8d;">تم اختيار المندوب</div>' : ''}
+                                </td>
+                                <td style="text-align: center;">${o.items_count}</td>
+                                <td style="text-align: center;">${parseFloat(o.delivery_fee || 0).toFixed(2)} ج</td>
+                                <td style="text-align: center;">${parseFloat(o.discount || 0).toFixed(2)} ج</td>
+                                <td style="text-align: center;"><strong>${parseFloat(o.total || 0).toFixed(2)} ج</strong></td>
+                                <td style="text-align: center;">${statusBadge(o.status)}</td>
+                                <td style="text-align: center;">
+                                    <div style="display:flex;gap:6px;justify-content: center;">
+                                        <button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">عـرض</button>
+                                        ${o.status !== 'cancelled' && o.status !== 'delivered' ? `<button class="btn btn-sm btn-danger" onclick="cancelOrder(${o.id})">إلغاء</button>` : ''}
+                                    </div>
+                                </td>
+                            </tr>`;
                 }).join('');
 
                 renderPagination(data.last_page, data.current_page);

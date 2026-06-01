@@ -158,7 +158,7 @@
     var currentPage = 1;
     var addCategoryTs, editCategoryTs, filterCategoryTs;
 
-    document.addEventListener('DOMContentLoaded', function() {
+    (function() {
         if (document.getElementById('f-category')) {
             filterCategoryTs = new TomSelect('#f-category', {
                 create: false,
@@ -189,7 +189,7 @@
                 }
             });
         }
-    });
+    })();
 
     async function loadShops(page = 1) {
         currentPage = page;

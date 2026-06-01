@@ -600,7 +600,9 @@
             bar.style.display = 'block'; bar.style.width = '30%';
             try {
                 clearAllPolling();
-                const res = await axios.get(url, {
+                const urlObj = new URL(url, location.origin);
+                urlObj.searchParams.set('_t', Date.now());
+                const res = await axios.get(urlObj.toString(), {
                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-SPA-Navigation': '1' }
                 });
                 bar.style.width = '80%';

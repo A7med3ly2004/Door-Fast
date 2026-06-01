@@ -121,6 +121,7 @@ class DeliveryManagementController extends Controller
             'phone' => 'nullable|digits:11',
             'personal_phone' => 'nullable|digits:11',
             'is_active' => 'boolean',
+            'role' => 'nullable|in:delivery,reserve_delivery',
             'password' => 'nullable|string|min:6',
             'code' => 'nullable|string|max:50',
             'incentive_slices' => 'nullable|array',
@@ -132,6 +133,7 @@ class DeliveryManagementController extends Controller
             'personal_phone' => array_key_exists('personal_phone', $data) ? $data['personal_phone'] : $user->personal_phone,
             'code' => $data['code'] ?? $user->code,
             'is_active' => $data['is_active'] ?? $user->is_active,
+            'role' => $data['role'] ?? $user->role,
             'incentive_slices' => $data['incentive_slices'] ?? $user->incentive_slices,
         ];
 

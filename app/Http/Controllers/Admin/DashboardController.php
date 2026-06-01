@@ -35,7 +35,7 @@ class DashboardController extends Controller
 
         $ordersToday      = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->count();
         $completedToday   = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->count();
-        $pendingToday     = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'pending')->count();
+        $pendingTotal     = Order::whereIn('status', ['pending', 'received'])->count();
         $cancelledToday   = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'cancelled')->count();
         $dailyRevenue     = Order::whereBetween('created_at', [$startOfToday, $endOfToday])->where('status', 'delivered')->sum('total');
         
@@ -94,7 +94,7 @@ class DashboardController extends Controller
                 'orders_today'    => $ordersToday,
                 'orders_month'    => $ordersMonth,
                 'completed_today' => $completedToday,
-                'pending_today'   => $pendingToday,
+                'pending_total'   => $pendingTotal,
                 'cancelled_today' => $cancelledToday,
                 'daily_revenue'   => $dailyRevenue,
                 'monthly_revenue' => $monthlyRevenue,
@@ -103,6 +103,7 @@ class DashboardController extends Controller
                 'monthly_delivery_revenue' => $monthlyDeliveryRevenue,
                 'monthly_avg_delivery' => $monthlyAvgDelivery,
                 'cancelled_month' => $cancelledMonth,
+                'completed_month' => $completedMonth,
             ],
             'chart'        => $chartData,
             'delivery_perf'=> $deliveryPerf,
@@ -112,8 +113,7 @@ class DashboardController extends Controller
 
     public function recentOrders()
     {
-        $orders = Order::with(['client', 'callcenter', 'admin', 'delivery'])
-            ->withCount('items')
+        $orders = Order::with(['client', 'callcenter', 'admin', 'delivery', 'items'])
             ->latest()
             ->take(5)
             ->get()
@@ -124,7 +124,7 @@ class DashboardController extends Controller
                 'creator_name'   => $o->callcenter?->name ?? $o->admin?->name ?? '—',
                 'creator_type'   => $o->callcenter ? 'cc' : ($o->admin ? 'admin' : null),
                 'delivery'       => $o->delivery?->name ?? '—',
-                'items_count'    => $o->items_count,
+                'shops_count'    => $o->items->pluck('shop_id')->filter()->unique()->count(),
                 'delivery_fee'   => $o->delivery_fee,
                 'discount'       => $o->discount,
                 'total'          => $o->total,

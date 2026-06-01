@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\CallCenter;
 
@@ -90,7 +90,7 @@ class ShopController extends Controller
     {
         $request->validate(['name' => 'required|string|max:100|unique:shop_categories,name']);
         $category = \App\Models\ShopCategory::create(['name' => $request->name]);
-        return response()->json(['success' => true, 'message' => 'تم إضافة الفئة بنجاح', 'category' => $category]);
+        return response()->json(['success' => true, 'message' => 'تم إضافة القسم بنجاح', 'category' => $category]);
     }
 
     public function show(Request $request, $id)

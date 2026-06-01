@@ -1,4 +1,4 @@
-@php
+﻿@php
     $arabic = new \ArPHP\I18N\Arabic();
     $ar = function ($str) use ($arabic) {
         if (preg_match('/[أ-ي]/ui', $str)) {
@@ -145,7 +145,7 @@
                 @endif
             </td>
             <td style="width: 40%; text-align: center;">
-                <h1 style="color: #a10303ff; margin: 0; font-size: 22px;">DoorFast</h1>
+                <h1 style="color: #a10303ff; margin: 0; font-size: 22px;">Door Fast</h1>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 14px;">
                     {{ $ar('معاملة مالية — كشف حسابي') }}
                 </p>

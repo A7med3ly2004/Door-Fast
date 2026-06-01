@@ -1,4 +1,4 @@
-{{-- Delivery Delivered Orders SPA partial --}}
+﻿{{-- Delivery Delivered Orders SPA partial --}}
 
 <style>
     /* Base Modal Styles */
@@ -890,7 +890,7 @@
             const fileName = orderNumber + '.pdf';
             const file = new File([blob], fileName, { type: 'application/pdf' });
 
-            var msg = "مرحباً،\n\nإليك فاتورة طلبك رقم #" + orderNumber + " من DoorFast .\n\nشكراً لثقتك بنا!";
+            var msg = "مرحباً،\n\nإليك فاتورة طلبك رقم #" + orderNumber + " من Door Fast .\n\nشكراً لثقتك بنا!";
 
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({

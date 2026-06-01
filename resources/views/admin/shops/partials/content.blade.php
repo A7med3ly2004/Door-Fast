@@ -1,8 +1,8 @@
-{{-- Admin Shops page as SPA-injectable partial --}}
+﻿{{-- Admin Shops page as SPA-injectable partial --}}
 <div class="section-header">
     <h2>إدارة المتاجر</h2>
     <div style="display:flex;gap:10px">
-        <button class="btn btn-secondary" onclick="openModal('modal-add-category')">📁 إضافة فئة</button>
+        <button class="btn btn-secondary" onclick="openModal('modal-add-category')">📁 إضافة قسم</button>
         <button class="btn btn-primary" onclick="openModal('modal-add-shop')">➕ إضافة متجر</button>
     </div>
 </div>
@@ -15,15 +15,15 @@
                 style="min-width:220px">
         </div>
         <div>
-            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الفئة</label>
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">القسم</label>
             <div class="relative group" style="min-width:180px; z-index: 50;">
                 <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                    <span id="label-filter-category">كل الفئات</span>
+                    <span id="label-filter-category">كل الاقسام</span>
                     <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
                 <input type="hidden" id="filter-category" value="">
                 <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-category', '', 'كل الفئات')">كل الفئات</div>
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-category', '', 'كل الاقسام')">كل الاقسام</div>
                     @foreach($categories as $cat)
                         <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-category', '{{ $cat->id }}', '{{ $cat->name }}')">{{ $cat->name }}</div>
                     @endforeach
@@ -47,7 +47,7 @@
                 <tr>
                     <th style="text-align: center;">الكود</th>
                     <th style="text-align: center;">الاسم</th>
-                    <th style="text-align: center;">الفئة</th>
+                    <th style="text-align: center;">القسم</th>
                     <th style="text-align: center;">الهاتف</th>
                     <th style="text-align: right;">العنوان</th>
                     <th style="text-align: center;">عدد الطلبات</th>
@@ -80,9 +80,9 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">الفئة *</label>
+                    <label class="form-label">القسم *</label>
                     <select id="add-category" class="form-control">
-                        <option value="">اختر الفئة...</option>
+                        <option value="">اختر القسم...</option>
                         @foreach($categories as $cat)
                             <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                         @endforeach
@@ -116,9 +116,9 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">الفئة *</label>
+                    <label class="form-label">القسم *</label>
                     <select id="edit-category" class="form-control">
-                        <option value="">اختر الفئة...</option>
+                        <option value="">اختر القسم...</option>
                         @foreach($categories as $cat)
                             <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                         @endforeach
@@ -141,15 +141,15 @@
 <div class="modal-overlay" id="modal-add-category">
     <div class="modal">
         <div class="modal-header">
-            <h3>📁 إضافة فئة جديدة</h3><button class="btn-close" onclick="closeModal('modal-add-category')">✕</button>
+            <h3>📁 إضافة قسم جديدة</h3><button class="btn-close" onclick="closeModal('modal-add-category')">✕</button>
         </div>
         <div class="modal-body">
-            <div class="form-group"><label class="form-label">اسم الفئة *</label><input id="cat-name" type="text"
+            <div class="form-group"><label class="form-label">اسم القسم *</label><input id="cat-name" type="text"
                     class="form-control" placeholder="مثال: لحوم، خضروات..."></div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('modal-add-category')">إلغاء</button>
-            <button class="btn btn-primary" onclick="addCategory()">حفظ الفئة</button>
+            <button class="btn btn-primary" onclick="addCategory()">حفظ القسم</button>
         </div>
     </div>
 </div>
@@ -183,7 +183,7 @@
         document.getElementById('filter-category').value = '';
         
         const catLabel = document.getElementById('label-filter-category');
-        if (catLabel) catLabel.innerText = 'كل الفئات';
+        if (catLabel) catLabel.innerText = 'كل الاقسام';
         
         loadShops(1);
     }
@@ -258,10 +258,10 @@
 
     async function addCategory() {
         const name = document.getElementById('cat-name').value;
-        if (!name) return showError('يرجى إدخال اسم الفئة');
+        if (!name) return showError('يرجى إدخال اسم القسم');
         try {
             const { data } = await axios.post('{{ route("admin.shop-categories.store") }}', { name });
-            showSuccess('تم إضافة الفئة بنجاح');
+            showSuccess('تم إضافة القسم بنجاح');
 
             // Update dropdowns
             const option = `<option value="${data.category.id}">${data.category.name}</option>`;
@@ -270,7 +270,7 @@
 
             document.getElementById('cat-name').value = '';
             closeModal('modal-add-category');
-        } catch (e) { showError('حدث خطأ أو الفئة موجودة بالفعل'); }
+        } catch (e) { showError('حدث خطأ أو القسم موجودة بالفعل'); }
     }
 
     function openEdit(id, name, phone, address, categoryId, code) {

@@ -27,16 +27,12 @@
     <td>
         <div class="al-desc">{{ $log->description }}</div>
     </td>
-    <td>
+    <td style="text-align: center;">
         @if($log->subject_label)
             <div class="al-sub">{{ $log->subject_label }}</div>
         @else
             —
         @endif
-    </td>
-    <td>
-        <div style="font-size:13px; text-align: center;">
-            {{ $subjectLabels[$log->subject_type] ?? ($log->subject_type ?? '—') }}</div>
     </td>
     <td style="font-size:13px;font-weight:600; text-align: center;">{{ $log->causer?->name ?? '—' }}</td>
     <td style="text-align: center;"><span

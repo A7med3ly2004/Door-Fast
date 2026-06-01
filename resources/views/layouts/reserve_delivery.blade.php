@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
 <head>
@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/png" href="{{ asset('DF_logo_2026.PNG') }}">
-    <title>لوحة المندوب الاحتياطي - DoorFast</title>
+    <title>لوحة المندوب الاحتياطي - Door Fast</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -439,7 +439,7 @@
     <!-- Desktop Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2 style="color: var(--primary);">DoorFast <span style="color: var(--secondary);">احتياطي</span></h2>
+            <h2 style="color: var(--primary);">Door Fast <span style="color: var(--secondary);">احتياطي</span></h2>
         </div>
         <div class="sidebar-menu">
             <a href="{{ route('reserve.dashboard') }}" class="menu-item" data-spa="true">
@@ -614,7 +614,7 @@
                 executeScripts(content);
                 if (title) {
                     document.getElementById('spa-page-title').textContent = title;
-                    document.title = title + ' - DoorFast';
+                    document.title = title + ' - Door Fast';
                 }
                 if (pushState) history.pushState({ url }, title || '', url);
                 updateActiveLink(url);

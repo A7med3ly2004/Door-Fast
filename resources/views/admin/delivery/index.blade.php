@@ -3,10 +3,17 @@
 @section('page-title', 'إدارة المناديب')
 
 @section('content')
-    <div class="section-header" style="justify-content: flex-end; gap: 8px; margin-bottom: 0;">
-        <button class="btn btn-success" onclick="exportDeliveryExcel()" style="background:#217346;color:#fff;">تصدير
-            Excel</button>
-        <button class="btn btn-primary" onclick="openModal('modal-add-delivery')">إضافة مندوب</button>
+    <div class="section-header"
+        style="display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+        <div class="search-container" style="flex: 1; max-width: 350px;">
+            <input type="text" id="delivery-search" class="form-control" placeholder="بحث برقم الهاتف / الكود"
+                onkeyup="filterDeliveries()" style="border-radius: 8px; padding: 8px 12px;">
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn btn-success" onclick="exportDeliveryExcel()" style="background:#217346;color:#fff;">تصدير
+                Excel</button>
+            <button class="btn btn-primary" onclick="openModal('modal-add-delivery')">إضافة مندوب</button>
+        </div>
     </div>
 
     <div class="section-header">
@@ -32,7 +39,8 @@
                 </thead>
                 <tbody>
                     @forelse($deliveries as $d)
-                        <tr id="delivery-row-{{ $d['id'] }}">
+                        <tr id="delivery-row-{{ $d['id'] }}" class="delivery-row" data-phone="{{ $d['phone'] ?? '' }}"
+                            data-personal-phone="{{ $d['personal_phone'] ?? '' }}" data-code="{{ $d['code'] ?? '' }}">
                             <td style="text-align: right;"><strong>{{ $d['name'] }}</strong></td>
                             <td style="text-align: center;"><span class="badge badge-gray">{{ $d['code'] ?? '—' }}</span></td>
                             <td style="text-align: center;"><code style="color:var(--yellow)">{{ $d['username'] }}</code></td>
@@ -43,7 +51,7 @@
                                 <button id="status-btn-{{ $d['id'] }}"
                                     onclick="toggleActive({{ $d['id'] }}, this, {{ json_encode($d) }})"
                                     style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
-                                                    {{ $d['is_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                                            {{ $d['is_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
                                     data-active="{{ $d['is_active'] ? '1' : '0' }}">
                                     {{ $d['is_active'] ? '✓ نشط' : '✗ غير نشط' }}
                                 </button>
@@ -51,7 +59,7 @@
                             <td style="text-align: center;">
                                 <button id="shift-btn-{{ $d['id'] }}" onclick="toggleShiftDelivery({{ $d['id'] }}, this)"
                                     style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
-                                                    {{ $d['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                                            {{ $d['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
                                     data-active="{{ $d['shift_active'] ? '1' : '0' }}">
                                     {{ $d['shift_active'] ? '⏱ تعمل الآن' : '⏸ متوقفة' }}
                                 </button>
@@ -100,7 +108,8 @@
                 </thead>
                 <tbody>
                     @forelse($reserveDeliveries as $d)
-                        <tr id="delivery-row-{{ $d['id'] }}">
+                        <tr id="delivery-row-{{ $d['id'] }}" class="delivery-row" data-phone="{{ $d['phone'] ?? '' }}"
+                            data-personal-phone="{{ $d['personal_phone'] ?? '' }}" data-code="{{ $d['code'] ?? '' }}">
                             <td style="text-align: right;"><strong>{{ $d['name'] }}</strong></td>
                             <td style="text-align: center;"><span class="badge badge-gray">{{ $d['code'] ?? '—' }}</span></td>
                             <td style="text-align: center;"><code style="color:var(--yellow)">{{ $d['username'] }}</code></td>
@@ -111,7 +120,7 @@
                                 <button id="status-btn-{{ $d['id'] }}"
                                     onclick="toggleActive({{ $d['id'] }}, this, {{ json_encode($d) }})"
                                     style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
-                                                    {{ $d['is_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                                            {{ $d['is_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
                                     data-active="{{ $d['is_active'] ? '1' : '0' }}">
                                     {{ $d['is_active'] ? '✓ نشط' : '✗ غير نشط' }}
                                 </button>
@@ -119,7 +128,7 @@
                             <td style="text-align: center;">
                                 <button id="shift-btn-{{ $d['id'] }}" onclick="toggleShiftDelivery({{ $d['id'] }}, this)"
                                     style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;transition:all .2s ease;
-                                                    {{ $d['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
+                                                            {{ $d['shift_active'] ? 'background:rgba(34,197,94,.15);color:var(--success);' : 'background:rgba(220,38,38,.12);color:var(--red);' }}"
                                     data-active="{{ $d['shift_active'] ? '1' : '0' }}">
                                     {{ $d['shift_active'] ? '⏱ تعمل الآن' : '⏸ متوقفة' }}
                                 </button>
@@ -197,7 +206,7 @@
                     <div class="form-group"><label class="form-label">الاسم *</label><input id="edit-name" type="text"
                             class="form-control"></div>
                     <div class="form-group"><label class="form-label">كود المندوب</label><input id="edit-code" type="text"
-                            class="form-control"></div>
+                            class="form-control" readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
                     <div class="form-group"><label class="form-label">الهاتف</label><input id="edit-phone" type="text"
                             class="form-control"></div>
                     <div class="form-group"><label class="form-label">هاتف شخصي</label><input id="edit-personal-phone"
@@ -207,10 +216,10 @@
                     <div class="form-group"><label class="form-label">كلمة مرور جديدة (اختياري)</label><input
                             id="edit-password" type="password" class="form-control"></div>
                     <div class="form-group">
-                        <label class="form-label">الحالة</label>
-                        <select id="edit-active" class="form-select">
-                            <option value="1">نشط</option>
-                            <option value="0">غير نشط</option>
+                        <label class="form-label">النوع</label>
+                        <select id="edit-role" class="form-select">
+                            <option value="delivery">مندوب أساسي</option>
+                            <option value="reserve_delivery">مندوب احتياطي</option>
                         </select>
                     </div>
                 </div>
@@ -322,7 +331,7 @@
             document.getElementById('edit-phone').value = d.phone ?? '';
             document.getElementById('edit-personal-phone').value = d.personal_phone ?? '';
             document.getElementById('edit-password').value = '';
-            document.getElementById('edit-active').value = d.is_active ? '1' : '0';
+            document.getElementById('edit-role').value = d.role;
             _tempSlices = d.incentive_slices || [];
             document.getElementById('inc-delivery-name').textContent = d.name;
             openModal('modal-edit-delivery');
@@ -367,16 +376,16 @@
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                            <td>الشريحة ${i}</td>
-                            <td><input type="number" class="form-control" value="${fromVal}" readonly disabled></td>
-                            <td>
-                                ${i < 5
+                                <td>الشريحة ${i}</td>
+                                <td><input type="number" class="form-control" value="${fromVal}" readonly disabled></td>
+                                <td>
+                                    ${i < 5
                         ? `<input type="number" class="form-control slice-to" data-idx="${i - 1}" value="${s.to}" oninput="updateSlicesRanges()">`
                         : `<input type="text" class="form-control" value="∞ (إلى ما لا نهاية)" disabled>`
                     }
-                            </td>
-                            <td><input type="number" class="form-control slice-amount" data-idx="${i - 1}" value="${s.amount}" step="0.1"></td>
-                        `;
+                                </td>
+                                <td><input type="number" class="form-control slice-amount" data-idx="${i - 1}" value="${s.amount}" step="0.1"></td>
+                            `;
                 body.appendChild(tr);
             }
         }
@@ -426,7 +435,7 @@
                     personal_phone: document.getElementById('edit-personal-phone').value,
                     code: document.getElementById('edit-code').value,
                     password: document.getElementById('edit-password').value,
-                    is_active: document.getElementById('edit-active').value,
+                    role: document.getElementById('edit-role').value,
                     incentive_slices: _tempSlices,
                 });
                 showSuccess(data.message); window.location.reload();
@@ -487,6 +496,23 @@
                 btn.style.color = 'var(--red)';
                 btn.textContent = '⏸ متوقفة';
             }
+        }
+
+        function filterDeliveries() {
+            const query = document.getElementById('delivery-search').value.toLowerCase().trim();
+            const rows = document.querySelectorAll('.delivery-row');
+
+            rows.forEach(row => {
+                const phone = (row.dataset.phone || '').toLowerCase();
+                const personalPhone = (row.dataset.personalPhone || '').toLowerCase();
+                const code = (row.dataset.code || '').toLowerCase();
+
+                if (query === '' || phone.includes(query) || personalPhone.includes(query) || code.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         }
 
         function exportDeliveryExcel() {

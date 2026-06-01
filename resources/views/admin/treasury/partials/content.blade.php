@@ -25,13 +25,13 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
         }
 
         .badge-cyan {
-            background: #cffafe;
-            color: #0e7490;
+            background: #0891b2;
+            color: #ffffffff;
         }
 
         .badge-teal {
-            background: #ccfbf1;
-            color: #0f766e;
+            background: #06aa76ff;
+            color: #ffffffff;
         }
 
         .pagination a {
@@ -186,7 +186,9 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
             <tbody id="ledger-tbody">
                 @forelse($initialTransactions as $tx)
                     <tr>
-                        <td style="color:var(--text-muted);font-size:12px; text-align:center;">{{ $tx->activityLog?->id ?? '-' }}</td>
+                        <td style="color:var(--text-muted);font-size:12px; text-align:center;">
+                            {{ $tx->activityLog?->id ?? '-' }}
+                        </td>
                         <td style="text-align:center;">{{ $tx->transaction_date->format('d/m/Y') }}</td>
                         <td style="text-align:center;">
                             @if($tx->type === 'expense')

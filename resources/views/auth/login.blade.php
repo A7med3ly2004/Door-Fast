@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
 <head>
@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="icon" type="image/png" href="{{ asset('DF_logo_2026.PNG') }}">
-  <title>DoorFast — تسجيل الدخول</title>
+  <title>Door Fast — تسجيل الدخول</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     * {
@@ -202,7 +202,7 @@
   <div class="card">
     <div class="logo">
       <div class="logo-icon">
-        <img src="{{ asset('DF_logo_2026.PNG') }}" alt="DoorFast Logo" class="logo-img">
+        <img src="{{ asset('DF_logo_2026.PNG') }}" alt="Door Fast Logo" class="logo-img">
       </div>
       <div class="logo-sub">نظام إدارة التوصيل</div>
     </div>

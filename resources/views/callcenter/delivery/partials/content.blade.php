@@ -1,6 +1,10 @@
 {{-- Callcenter Delivery SPA partial --}}
-<div class="section-header">
-    <h2>إدارة المناديب</h2>
+<div class="section-header"
+    style="display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+    <div class="search-container" style="flex: 1; max-width: 350px;">
+        <input type="text" id="delivery-search-cc" class="form-control" placeholder="بحث برقم الهاتف / الكود"
+            onkeyup="filterCallcenterDeliveries()" style="border-radius: 8px; padding: 8px 12px;">
+    </div>
 </div>
 <div class="card" style="padding:0;position:relative">
     <div class="loading-overlay" id="tbl-loading">
@@ -11,6 +15,7 @@
             <thead>
                 <tr>
                     <th style="text-align: center;">المندوب</th>
+                    <th style="text-align: center;">الكود</th>
                     <th style="text-align: center;">الهاتف</th>
                     <th style="text-align: center;">حالة الوردية</th>
                     <th style="text-align: center;">الرصيد الحالي</th>
@@ -65,8 +70,9 @@
                     : '';
 
                 return `
-                <tr>
+                <tr class="cc-delivery-row" data-phone="${escAttr(d.phone ?? '')}" data-personal-phone="${escAttr(d.personal_phone ?? '')}" data-code="${escAttr(d.code ?? '')}">
                     <td style="text-align: center;"><strong>${escHtml(d.name)}</strong> ${badge}</td>
+                    <td style="text-align: center;"><span class="badge" style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:20px;font-size:12px;">${escHtml(d.code ?? '—')}</span></td>
                     <td style="text-align: center;">${d.phone ?? '—'}</td>
                     <td style="text-align: center;">
                         <button
@@ -210,7 +216,28 @@
                 console.warn('reloadDeliveries failed', e);
             } finally {
                 if (overlay) overlay.classList.remove('show');
+                // Re-apply filter after reloading
+                if (typeof filterCallcenterDeliveries === 'function') {
+                    filterCallcenterDeliveries();
+                }
             }
+        };
+
+        window.filterCallcenterDeliveries = function () {
+            const query = document.getElementById('delivery-search-cc').value.toLowerCase().trim();
+            const rows = document.querySelectorAll('.cc-delivery-row');
+
+            rows.forEach(row => {
+                const phone = (row.dataset.phone || '').toLowerCase();
+                const personalPhone = (row.dataset.personalPhone || '').toLowerCase();
+                const code = (row.dataset.code || '').toLowerCase();
+
+                if (query === '' || phone.includes(query) || personalPhone.includes(query) || code.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         };
 
 

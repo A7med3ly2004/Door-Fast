@@ -62,9 +62,12 @@ class ReportController extends Controller
             'total' => $orders->count(),
             'delivered' => $orders->where('status', 'delivered')->count(),
             'cancelled' => $orders->where('status', 'cancelled')->count(),
-            'pending' => $orders->where('status', 'pending')->count(),
+            'pending' => $orders->whereIn('status', ['pending', 'received_by_delivery'])->count(),
             'revenue' => $orders->where('status', 'delivered')->sum('total'),
             'delivery_fees' => $orders->where('status', 'delivered')->sum('delivery_fee'),
+            'avg_delivery' => $orders->where('status', 'delivered')->count() > 0
+                ? $orders->where('status', 'delivered')->sum('delivery_fee') / $orders->where('status', 'delivered')->count()
+                : 0,
         ];
 
         // Daily chart (sliding business day)

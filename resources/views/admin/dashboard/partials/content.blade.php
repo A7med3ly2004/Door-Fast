@@ -18,10 +18,14 @@
 </style>
 
 {{-- KPI Cards --}}
-<div class="kpi-grid" id="kpi-grid">
+<div class="kpi-grid" id="kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
     <div class="kpi-card blue" id="kpi-orders">
         <div class="kpi-label">إجمالي الطلبات اليوم</div>
         <div class="kpi-value" id="v-orders">—</div>
+    </div>
+    <div class="kpi-card green" id="kpi-completed">
+        <div class="kpi-label">تم التوصيلة اليوم</div>
+        <div class="kpi-value" id="v-completed">—</div>
     </div>
     <div class="kpi-card green">
         <div class="kpi-label">إيرادات اليوم</div>
@@ -42,6 +46,10 @@
         <div class="kpi-value" id="v-orders-month">—</div>
     </div>
     <div class="kpi-card green">
+        <div class="kpi-label">تم توصيل الشهر</div>
+        <div class="kpi-value" id="v-completed-month">—</div>
+    </div>
+    <div class="kpi-card green">
         <div class="kpi-label">إيرادات الشهر</div>
         <div class="kpi-value" id="v-monthly">—</div>
         <div class="kpi-sub">ج.م</div>
@@ -52,16 +60,13 @@
         <div class="kpi-sub">ج.م</div>
     </div>
     <div class="kpi-card red">
-        <div class="kpi-label">طلبات ملغاة (الشهر)</div>
+        <div class="kpi-label">طلبات ملغاةالشهر</div>
         <div class="kpi-value" id="v-cancelled-month">—</div>
     </div>
-    <div class="kpi-card green" id="kpi-completed">
-        <div class="kpi-label">تم التوصيلة اليوم</div>
-        <div class="kpi-value" id="v-completed">—</div>
-    </div>
     <div class="kpi-card yellow">
-        <div class="kpi-label">معلقة اليوم</div>
+        <div class="kpi-label">معلق</div>
         <div class="kpi-value" id="v-pending">—</div>
+        <div class="kpi-sub">معلق + مستلم للمناديب</div>
     </div>
     <div class="kpi-card yellow">
         <div class="kpi-label">متوسط التوصيل الشهري</div>
@@ -103,7 +108,7 @@
                     <th style="text-align:center">العميل</th>
                     <th style="text-align:center">تم انشاؤه</th>
                     <th style="text-align:center">المندوب</th>
-                    <th style="text-align:center">عدد الأصناف</th>
+                    <th style="text-align:center">عدد المتاجر</th>
                     <th style="text-align:center">خدمة التوصيل</th>
                     <th style="text-align:center">خصم</th>
                     <th style="text-align:center">الإجمالي</th>
@@ -174,7 +179,7 @@
             document.getElementById('v-orders').textContent = k.orders_today;
             document.getElementById('v-orders-month').textContent = k.orders_month;
             document.getElementById('v-completed').textContent = k.completed_today;
-            document.getElementById('v-pending').textContent = k.pending_today;
+            document.getElementById('v-pending').textContent = k.pending_total;
             document.getElementById('v-cancelled').textContent = k.cancelled_today;
             document.getElementById('v-daily').textContent = parseFloat(k.daily_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
             document.getElementById('v-monthly').textContent = parseFloat(k.monthly_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
@@ -183,6 +188,7 @@
             document.getElementById('v-monthly-delivery').textContent = parseFloat(k.monthly_delivery_revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
             document.getElementById('v-monthly-avg-delivery').textContent = parseFloat(k.monthly_avg_delivery).toLocaleString('en-US', { minimumFractionDigits: 2 });
             document.getElementById('v-cancelled-month').textContent = k.cancelled_month;
+            document.getElementById('v-completed-month').textContent = k.completed_month;
 
             var labels = data.chart.map(d => d.label);
             var counts = data.chart.map(d => d.count);
@@ -230,7 +236,7 @@
                     ${o.creator_type === 'admin' ? '<div class="kpi-sub" style="font-size:11px;margin-top:2px;color:var(--info)">أدمن</div>' : ''}
                 </td>
                 <td style="text-align:center">${o.delivery}</td>
-                <td style="text-align:center">${o.items_count}</td>
+                <td style="text-align:center">${o.shops_count}</td>
                 <td style="text-align:center">${parseFloat(o.delivery_fee).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td>
                 <td style="text-align:center">${parseFloat(o.discount).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td>
                 <td style="text-align:center">${parseFloat(o.total).toLocaleString('en-US', { minimumFractionDigits: 2 })} ج</td>

@@ -152,7 +152,6 @@ On direct page load it is @included from activity-log/index.blade.php.
                     <th style="text-align: center; width:90px;">رقم العملية</th>
                     <th>النشاط</th>
                     <th style="text-align: center;">البيان</th>
-                    <th style="text-align: center;">الموضوع</th>
                     <th style="text-align: center;">المستخدم</th>
                     <th style="text-align: center;">الدور</th>
                     <th style="text-align: center;">التاريخ والوقت</th>
@@ -331,11 +330,8 @@ On direct page load it is @included from activity-log/index.blade.php.
                 <td style="font-size:14px;">
                     <div class="al-desc">${r.description}</div>
                 </td>
-                <td style="font-size:14px;">
+                <td style="font-size:14px; text-align: center;">
                     ${r.subject_label ? `<div class="al-sub" style="font-size:14px;">${r.subject_label}</div>` : '—'}
-                </td>
-                <td style="font-size:14px;">
-                    <div style="font-size:14px; text-align: center;">${r.subject_type ? subjectTypeLabel(r.subject_type) : '—'}</div>
                 </td>
                 <td style="font-size:14px;font-weight:600; text-align: center;">${r.causer_name}</td>
                 <td style="text-align: center;"><span class="badge ${r.causer_role_badge}">${r.causer_role_label}</span></td>

@@ -72,7 +72,7 @@
         </div>
     </div>
 </div>
-<div class="kpi-grid" style="margin-bottom:20px; grid-template-columns: repeat(3, 1fr);">
+<div class="kpi-grid" style="margin-bottom:20px; grid-template-columns: repeat(4, 1fr);">
     <div class="kpi-card cyan">
         <div class="kpi-label">إجمالي الطلبات</div>
         <div class="kpi-value" id="r-total">—</div>
@@ -97,6 +97,11 @@
     <div class="kpi-card blue">
         <div class="kpi-label">إجمالي التوصيل</div>
         <div class="kpi-value" id="r-delivery-fees">—</div>
+        <div class="kpi-sub">ج.م</div>
+    </div>
+    <div class="kpi-card yellow">
+        <div class="kpi-label">متوسط التوصيل</div>
+        <div class="kpi-value" id="r-avg-delivery">—</div>
         <div class="kpi-sub">ج.م</div>
     </div>
 </div>
@@ -193,6 +198,7 @@
             document.getElementById('r-pending').textContent = data.kpis.pending;
             document.getElementById('r-revenue').textContent = parseFloat(data.kpis.revenue).toLocaleString('en-US', { minimumFractionDigits: 2 });
             document.getElementById('r-delivery-fees').textContent = parseFloat(data.kpis.delivery_fees).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            document.getElementById('r-avg-delivery').textContent = parseFloat(data.kpis.avg_delivery).toLocaleString('en-US', { minimumFractionDigits: 2 });
             var ctx = document.getElementById('reportChart').getContext('2d');
             if (reportChart) reportChart.destroy();
             reportChart = new Chart(ctx, {

@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('page-title', 'المتاجر')
 
@@ -6,7 +6,7 @@
 <div class="section-header">
     <h2>إدارة المتاجر</h2>
     <div style="display:flex;gap:10px">
-        <button class="btn btn-secondary" onclick="openModal('modal-add-category')">إضافة فئة</button>
+        <button class="btn btn-secondary" onclick="openModal('modal-add-category')">إضافة قسم</button>
         <button class="btn btn-primary" onclick="openModal('modal-add-shop')">إضافة متجر</button>
         <button class="btn btn-success" onclick="exportShopsExcel()" style="background:#217346;color:#fff;">تصدير Excel</button>
     </div>
@@ -19,9 +19,9 @@
             <input type="text" id="filter-search" class="form-control" placeholder="بحث بالاسم أو الكود أو رقم الهاتف" style="min-width:280px" onkeydown="if(event.key==='Enter') loadShops(1)">
         </div>
         <div>
-            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الفئة</label>
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">القسم</label>
             <select id="filter-category" class="form-select" style="min-width:180px;">
-                <option value="">كل الفئات</option>
+                <option value="">كل الاقسام</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                 @endforeach
@@ -42,7 +42,7 @@
                 <tr>
                     <th style="text-align: center;">الكود</th>
                     <th style="text-align: center;">الاسم</th>
-                    <th style="text-align: center;">الفئة</th>
+                    <th style="text-align: center;">القسم</th>
                     <th style="text-align: center;">الهاتف</th>
                     <th style="text-align: right;">العنوان</th>
                     <th style="text-align: center;">عدد الطلبات</th>
@@ -70,9 +70,9 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">الفئة *</label>
+                    <label class="form-label">القسم *</label>
                     <select id="add-category" class="form-control">
-                        <option value="">اختر الفئة...</option>
+                        <option value="">اختر القسم...</option>
                         @foreach($categories as $cat)
                             <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                         @endforeach
@@ -100,9 +100,9 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">الفئة *</label>
+                    <label class="form-label">القسم *</label>
                     <select id="edit-category" class="form-control">
-                        <option value="">اختر الفئة...</option>
+                        <option value="">اختر القسم...</option>
                         @foreach($categories as $cat)
                             <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                         @endforeach
@@ -144,13 +144,13 @@
 {{-- Add Category Modal --}}
 <div class="modal-overlay" id="modal-add-category">
     <div class="modal">
-        <div class="modal-header"><h3>إضافة فئة جديدة</h3><button class="btn-close" onclick="closeModal('modal-add-category')">✕</button></div>
+        <div class="modal-header"><h3>إضافة قسم جديدة</h3><button class="btn-close" onclick="closeModal('modal-add-category')">✕</button></div>
         <div class="modal-body">
-            <div class="form-group"><label class="form-label">اسم الفئة *</label><input id="cat-name" type="text" class="form-control" placeholder="مثال: لحوم، خضروات..."></div>
+            <div class="form-group"><label class="form-label">اسم القسم *</label><input id="cat-name" type="text" class="form-control" placeholder="مثال: لحوم، خضروات..."></div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('modal-add-category')">إلغاء</button>
-            <button class="btn btn-primary" onclick="addCategory()">حفظ الفئة</button>
+            <button class="btn btn-primary" onclick="addCategory()">حفظ القسم</button>
         </div>
     </div>
 </div>
@@ -277,10 +277,10 @@ async function addShop() {
 
 async function addCategory() {
     const name = document.getElementById('cat-name').value;
-    if(!name) return showError('يرجى إدخال اسم الفئة');
+    if(!name) return showError('يرجى إدخال اسم القسم');
     try {
         const { data } = await axios.post('{{ route("admin.shop-categories.store") }}', { name });
-        showSuccess('تم إضافة الفئة بنجاح');
+        showSuccess('تم إضافة القسم بنجاح');
         
         // Update dropdowns
         if (typeof addCategoryTs !== 'undefined' && addCategoryTs) {
@@ -307,7 +307,7 @@ async function addCategory() {
         
         document.getElementById('cat-name').value = '';
         closeModal('modal-add-category');
-    } catch(e) { showError('حدث خطأ أو الفئة موجودة بالفعل'); }
+    } catch(e) { showError('حدث خطأ أو القسم موجودة بالفعل'); }
 }
 
 function openEdit(id, name, phone, phone2, phone3, phone4, address, categoryId, code) {
@@ -427,7 +427,7 @@ async function exportShopsExcel() {
         const columns = [
             { header: 'الاسم',             key: 'name',                    width: 22 },
             { header: 'الكود',             key: 'code',                    width: 12 },
-            { header: 'الفئة',             key: 'category.name',           width: 18 },
+            { header: 'القسم',             key: 'category.name',           width: 18 },
             { header: 'الهاتف',            key: 'phone',                   width: 16 },
             { header: 'هاتف 2',            key: 'phone2',                  width: 16 },
             { header: 'هاتف 3',            key: 'phone3',                  width: 16 },

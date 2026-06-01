@@ -1,4 +1,4 @@
-{{-- Callcenter Shops SPA partial --}}
+﻿{{-- Callcenter Shops SPA partial --}}
 <div class="section-header">
     <h2>المتاجر النشطة</h2>
 </div>
@@ -10,9 +10,9 @@
                 style="min-width:220px" onkeydown="if(event.key==='Enter') loadShops(1)">
         </div>
         <div>
-            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الفئة</label>
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">القسم</label>
             <select id="f-category" class="form-select" style="min-width:180px;">
-                <option value="">كل الفئات</option>
+                <option value="">كل الاقسام</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                 @endforeach
@@ -23,7 +23,7 @@
         </div>
         <div style="margin-right:auto; display: flex; gap: 10px; align-items: flex-end; margin-bottom: 2px;">
             <button class="btn btn-success" onclick="openModal('modal-add-shop')">إضافة متجر</button>
-            <button class="btn btn-secondary" onclick="openModal('modal-add-category')">إضافة فئة</button>
+            <button class="btn btn-secondary" onclick="openModal('modal-add-category')">إضافة قسم</button>
         </div>
     </div>
 </div>
@@ -39,7 +39,7 @@
                     <th style="text-align: center;">الاسم</th>
                     <th style="text-align: center;">الهاتف</th>
                     <th style="text-align: center;">العنوان</th>
-                    <th style="text-align: center;">فئة المتجر</th>
+                    <th style="text-align: center;">قسم المتجر</th>
                     <th style="text-align: center;">إجراءات</th>
                 </tr>
             </thead>
@@ -47,7 +47,7 @@
         </table>
     </div>
     <div id="shops-prompt" style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px">
-        ابدأ بالبحث عن متجر بالاسم أو الكود، أو تصفية حسب الفئة
+        ابدأ بالبحث عن متجر بالاسم أو الكود، أو تصفية حسب القسم
     </div>
     <div id="pg-wrap" style="padding:14px"></div>
 </div>
@@ -83,9 +83,9 @@
             <div class="form-row">
                 <div class="form-group"><label class="form-label">الهاتف</label><input type="text" id="s-phone"
                         class="form-control"></div>
-                <div class="form-group"><label class="form-label">الفئة *</label>
+                <div class="form-group"><label class="form-label">القسم *</label>
                     <select id="s-category" class="form-select">
-                        <option value="">اختر الفئة...</option>
+                        <option value="">اختر القسم...</option>
                         @foreach($categories as $cat) <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                         @endforeach
                     </select>
@@ -114,9 +114,9 @@
                 <div class="form-group"><label class="form-label">الكود</label><input type="text" id="edit-code" class="form-control" readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label class="form-label">الفئة *</label>
+                <div class="form-group"><label class="form-label">القسم *</label>
                     <select id="edit-category" class="form-select">
-                        <option value="">اختر الفئة...</option>
+                        <option value="">اختر القسم...</option>
                         @foreach($categories as $cat) <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                         @endforeach
                     </select>
@@ -143,13 +143,13 @@
 <div class="modal-overlay" id="modal-add-category">
     <div class="modal" style="max-width:400px">
         <div class="modal-header">
-            <h3>إضافة فئة جديدة</h3><button class="btn-close" onclick="closeModal('modal-add-category')">✕</button>
+            <h3>إضافة قسم جديدة</h3><button class="btn-close" onclick="closeModal('modal-add-category')">✕</button>
         </div>
         <div class="modal-body">
-            <div class="form-group"><label class="form-label">اسم الفئة *</label><input type="text" id="cat-name"
+            <div class="form-group"><label class="form-label">اسم القسم *</label><input type="text" id="cat-name"
                     class="form-control" placeholder="مثلاً: مطاعم"></div>
             <div style="display:flex;justify-content:flex-end;margin-top:15px"><button class="btn btn-primary"
-                    onclick="saveCategory()">✅ حفظ الفئة</button></div>
+                    onclick="saveCategory()">✅ حفظ القسم</button></div>
         </div>
     </div>
 </div>
@@ -198,7 +198,7 @@
         if (!search && !category_id) {
             document.getElementById('shops-table-wrap').style.display = 'none';
             document.getElementById('shops-prompt').style.display = 'block';
-            document.getElementById('shops-prompt').textContent = 'ابدأ بالبحث عن متجر بالاسم أو الكود، أو تصفية حسب الفئة';
+            document.getElementById('shops-prompt').textContent = 'ابدأ بالبحث عن متجر بالاسم أو الكود، أو تصفية حسب القسم';
             document.getElementById('pg-wrap').innerHTML = '';
             return;
         }
@@ -275,7 +275,7 @@
     async function saveShop() {
         const name = document.getElementById('s-name').value;
         const cat = document.getElementById('s-category').value;
-        if (!name || !cat) return showError('يرجى إدخال الاسم والفئة');
+        if (!name || !cat) return showError('يرجى إدخال الاسم والقسم');
         try {
             await axios.post('{{ route("callcenter.shops.store") }}', {
                 name,
@@ -314,7 +314,7 @@
         var id = document.getElementById('edit-id').value;
         const name = document.getElementById('edit-name').value;
         const cat = document.getElementById('edit-category').value;
-        if (!name || !cat) return showError('يرجى إدخال الاسم والفئة');
+        if (!name || !cat) return showError('يرجى إدخال الاسم والقسم');
         try {
             const { data } = await axios.put(`/callcenter/shops/${id}`, {
                 name: name,
@@ -334,7 +334,7 @@
 
     async function saveCategory() {
         const name = document.getElementById('cat-name').value;
-        if (!name) return showError('يرجى إدخال اسم الفئة');
+        if (!name) return showError('يرجى إدخال اسم القسم');
         try {
             const { data } = await axios.post('{{ route("callcenter.shop-categories.store") }}', { name });
             showSuccess(data.message);

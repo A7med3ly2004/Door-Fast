@@ -17,12 +17,14 @@ class DeliveryManagementController extends Controller
     public function index()
     {
         if (request()->header('X-SPA-Navigation')) {
-            list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
             $allDeliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
-                ->with([
-                    'activeShift',
-                    'deliveryOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday]),
-                ])
+                ->with(['activeShift'])
+                ->withCount(['deliveryOrders as completed' => function ($query) {
+                    $query->where('status', 'delivered');
+                }])
+                ->withSum(['deliveryOrders as revenue' => function ($query) {
+                    $query->where('status', 'delivered');
+                }], 'delivery_fee')
                 ->orderBy('name')
                 ->get()
                 ->map(fn($d) => [
@@ -32,8 +34,8 @@ class DeliveryManagementController extends Controller
                     'role' => $d->role,
                     'phone' => $d->phone,
                     'is_active' => $d->is_active,
-                    'completed' => $d->deliveryOrders->where('status', 'delivered')->count(),
-                    'revenue' => $d->deliveryOrders->where('status', 'delivered')->sum('delivery_fee'),
+                    'completed' => $d->completed ?? 0,
+                    'revenue' => $d->revenue ?? 0,
                     'code' => $d->code,
                     'shift_active' => $d->activeShift !== null,
                     'incentive_slices' => $d->incentive_slices,
@@ -50,12 +52,14 @@ class DeliveryManagementController extends Controller
             ]);
         }
 
-        list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
         $allDeliveries = User::whereIn('role', ['delivery', 'reserve_delivery'])
-            ->with([
-                'activeShift',
-                'deliveryOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday]),
-            ])
+            ->with(['activeShift'])
+            ->withCount(['deliveryOrders as completed' => function ($query) {
+                $query->where('status', 'delivered');
+            }])
+            ->withSum(['deliveryOrders as revenue' => function ($query) {
+                $query->where('status', 'delivered');
+            }], 'delivery_fee')
             ->orderBy('name')
             ->get()
             ->map(fn($d) => [
@@ -65,8 +69,8 @@ class DeliveryManagementController extends Controller
                 'role' => $d->role,
                 'phone' => $d->phone,
                 'is_active' => $d->is_active,
-                'completed' => $d->deliveryOrders->where('status', 'delivered')->count(),
-                'revenue' => $d->deliveryOrders->where('status', 'delivered')->sum('delivery_fee'),
+                'completed' => $d->completed ?? 0,
+                'revenue' => $d->revenue ?? 0,
                 'code' => $d->code,
                 'shift_active' => $d->activeShift !== null,
                 'incentive_slices' => $d->incentive_slices,

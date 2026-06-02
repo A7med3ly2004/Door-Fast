@@ -2,7 +2,7 @@
 <div class="section-header"
     style="display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
     <div class="search-container" style="flex: 1; max-width: 350px;">
-        <input type="text" id="delivery-search-cc" class="form-control" placeholder="بحث برقم الهاتف / الكود"
+        <input type="text" id="delivery-search-cc" class="form-control" placeholder="بحث بالاسم / الهاتف / الكود"
             onkeyup="filterCallcenterDeliveries()" style="border-radius: 8px; padding: 8px 12px;">
     </div>
 </div>
@@ -70,7 +70,7 @@
                     : '';
 
                 return `
-                <tr class="cc-delivery-row" data-phone="${escAttr(d.phone ?? '')}" data-personal-phone="${escAttr(d.personal_phone ?? '')}" data-code="${escAttr(d.code ?? '')}">
+                <tr class="cc-delivery-row" data-phone="${escAttr(d.phone ?? '')}" data-personal-phone="${escAttr(d.personal_phone ?? '')}" data-code="${escAttr(d.code ?? '')}" data-name="${escAttr(d.name ?? '')}">
                     <td style="text-align: center;"><strong>${escHtml(d.name)}</strong> ${badge}</td>
                     <td style="text-align: center;"><span class="badge" style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:20px;font-size:12px;">${escHtml(d.code ?? '—')}</span></td>
                     <td style="text-align: center;">${d.phone ?? '—'}</td>
@@ -228,11 +228,12 @@
             const rows = document.querySelectorAll('.cc-delivery-row');
 
             rows.forEach(row => {
+                const name = (row.dataset.name || '').toLowerCase();
                 const phone = (row.dataset.phone || '').toLowerCase();
                 const personalPhone = (row.dataset.personalPhone || '').toLowerCase();
                 const code = (row.dataset.code || '').toLowerCase();
 
-                if (query === '' || phone.includes(query) || personalPhone.includes(query) || code.includes(query)) {
+                if (query === '' || name.includes(query) || phone.includes(query) || personalPhone.includes(query) || code.includes(query)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';

@@ -3,6 +3,10 @@
     <h2>إحصائياتي اليوم</h2><span id="last-updated" style="font-size:12px;color:var(--text-muted)"></span>
 </div>
 <div class="kpi-grid" id="kpi-grid" style="margin-bottom:24px">
+    <div class="kpi-card" style="border-right:4px solid #ffffffff;">
+        <div class="kpi-label">مدة العمل</div>
+        <div class="kpi-value" id="k-duration" style="color:var(--primary)">00:00:00</div>
+    </div>
     <div class="kpi-card yellow">
         <div class="kpi-label">طلباتي اليوم</div>
         <div class="kpi-value" id="k-orders">—</div>
@@ -67,11 +71,40 @@
 </div>
 <script>
     var ccStatsChart;
+    var shiftStartedTimestamp = null;
+    var durationInterval = null;
+
+    function startDurationTimer() {
+        if (durationInterval) clearInterval(durationInterval);
+        var el = document.getElementById('k-duration');
+        if (!el) return;
+
+        if (!shiftStartedTimestamp) {
+            el.textContent = '00:00:00';
+            return;
+        }
+
+        durationInterval = setInterval(() => {
+            var diff = Math.floor(Date.now() / 1000) - shiftStartedTimestamp;
+            if (diff >= 0) {
+                var h = Math.floor(diff / 3600).toString().padStart(2, '0');
+                var m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+                var s = (diff % 60).toString().padStart(2, '0');
+                el.textContent = `${h}:${m}:${s}`;
+            }
+        }, 1000);
+        if (typeof addPolling === 'function') addPolling(durationInterval);
+    }
+
     async function loadStats() {
         if (!document.getElementById('kpi-grid')) return;
         try {
             const { data } = await axios.get('{{ route("callcenter.stats.data") }}');
-            const { kpis, chart: chartData, deliveries } = data;
+            const { kpis, chart: chartData, deliveries, shift } = data;
+
+            shiftStartedTimestamp = shift ? shift.started_timestamp : null;
+            startDurationTimer();
+
             document.getElementById('k-orders').textContent = kpis.ordersToday;
             document.getElementById('k-delivered').textContent = kpis.deliveredToday;
             document.getElementById('k-cancelled').textContent = kpis.cancelledToday;

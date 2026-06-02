@@ -550,6 +550,7 @@ class OrderController extends Controller
                     'name' => $order->recipientClient->name,
                     'phone' => $order->recipientClient->phone,
                     'phone2' => $order->recipientClient->phone2,
+                    'code' => $order->recipientClient->code,
                     'addresses' => $order->recipientClient->addresses->map(fn($a) => ['id' => $a->id, 'address' => $a->address])
                 ]
                 : null,

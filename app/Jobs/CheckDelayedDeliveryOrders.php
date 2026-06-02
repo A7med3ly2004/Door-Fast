@@ -34,20 +34,22 @@ class CheckDelayedDeliveryOrders implements ShouldQueue, ShouldBeUnique
         $xMins = (int) Setting::get('notif_delay_delivery_mins', 20);
         $cutoff = now()->subMinutes($xMins);
         
-        $orders = Order::where('status', 'received')
+        $orders = Order::with('delivery')->where('status', 'received')
             ->where('accepted_at', '<=', $cutoff)
             ->whereDoesntHave('adminNotifications', function($q) {
                 $q->where('type', 'delayed_delivery');
             })
-            ->select('id', 'order_number', 'accepted_at')
+            ->select('id', 'order_number', 'accepted_at', 'delivery_id')
             ->get();
             
         foreach($orders as $order) {
+            $deliveryName = $order->delivery ? $order->delivery->name : 'غير محدد';
+            
             $notif = AdminNotification::create([
                 'type' => 'delayed_delivery',
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
-                'message' => "طلب #{$order->order_number} تأخر عن التوصيل"
+                'message' => "طلب #{$order->order_number} تأخر عن التوصيل - المندوب: {$deliveryName}"
             ]);
             event(new AdminNotificationCreated($notif));
         }

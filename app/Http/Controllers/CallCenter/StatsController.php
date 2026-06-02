@@ -69,6 +69,11 @@ class StatsController extends Controller
             ->filter(fn($d) => $d['total'] > 0)
             ->values();
 
+        // Active shift
+        $activeShift = \App\Models\CallcenterShift::where('callcenter_id', $me)
+            ->where('is_active', true)
+            ->first();
+
         return response()->json([
             'kpis' => array_merge(
                 compact('ordersToday', 'deliveredToday', 'cancelledToday', 'revenueToday', 'feesToday', 'discountToday'),
@@ -77,6 +82,11 @@ class StatsController extends Controller
                     'cc_total_profit' => number_format($ccTotalProfit, 2),
                 ]
             ),
+            'shift' => [
+                'is_active' => (bool) $activeShift,
+                'started_at' => $activeShift?->started_at?->format('H:i'),
+                'started_timestamp' => $activeShift?->started_at?->timestamp,
+            ],
             'chart'      => $chart,
             'deliveries' => $deliveries,
         ]);

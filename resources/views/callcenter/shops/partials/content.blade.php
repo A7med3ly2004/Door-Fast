@@ -93,8 +93,7 @@
             </div>
             <div class="form-group"><label class="form-label">العنوان</label><input type="text" id="s-address"
                     class="form-control"></div>
-            <div class="form-group"><label class="form-label">ملاحظات</label><textarea id="s-notes" class="form-control"
-                    rows="2"></textarea></div>
+
             <div style="display:flex;justify-content:flex-end;margin-top:15px"><button class="btn btn-primary"
                     onclick="saveShop()">✅ حفظ المتجر</button></div>
         </div>
@@ -282,8 +281,7 @@
                 code: document.getElementById('s-code').value,
                 phone: document.getElementById('s-phone').value,
                 address: document.getElementById('s-address').value,
-                shop_category_id: cat,
-                notes: document.getElementById('s-notes').value
+                shop_category_id: cat
             });
             showSuccess('تم إضافة المتجر بنجاح');
             closeModal('modal-add-shop');

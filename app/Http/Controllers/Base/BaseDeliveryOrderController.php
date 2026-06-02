@@ -216,6 +216,21 @@ abstract class BaseDeliveryOrderController extends Controller
                     );
                 }
 
+                $discountTx = null;
+                // خصم الخصم الممنوح للعميل من محفظة المندوب
+                if ($order->discount > 0) {
+                    $wallet = $delivery->getOrCreateWallet();
+                    $discountTx = app(\App\Services\WalletService::class)->debit(
+                        wallet:      $wallet,
+                        amount:      (float) $order->discount,
+                        type:        'discount',
+                        description: 'خصم من الرصيد مقابل خصم للعميل — طلب ' . $order->order_number,
+                        createdBy:   $delivery->id,
+                        orderId:     $order->id,
+                        date:        now()->toDateString()
+                    );
+                }
+
                 OrderLog::create([
                     'order_id' => $order->id,
                     'user_id'  => $delivery->id,
@@ -229,8 +244,13 @@ abstract class BaseDeliveryOrderController extends Controller
 
                 $log = $this->afterDeliver($order, $delivery);
                 
-                if (isset($walletTx) && $log) {
-                    $walletTx->update(['log_id' => $log->id]);
+                if ($log) {
+                    if (isset($walletTx)) {
+                        $walletTx->update(['log_id' => $log->id]);
+                    }
+                    if (isset($discountTx)) {
+                        $discountTx->update(['log_id' => $log->id]);
+                    }
                 }
 
                 event(new OrderStatusUpdated($order));

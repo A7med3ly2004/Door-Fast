@@ -219,6 +219,20 @@ class OrderController extends Controller
                     );
                 }
 
+                $discountTx = null;
+                if ($order->discount > 0) {
+                    $wallet = $delivery->getOrCreateWallet();
+                    $discountTx = app(WalletService::class)->debit(
+                        wallet: $wallet,
+                        amount: (float) $order->discount,
+                        type: 'discount',
+                        description: 'خصم من الرصيد مقابل خصم للعميل — طلب ' . $order->order_number,
+                        createdBy: $delivery->id,
+                        orderId: $order->id,
+                        date: now()->toDateString()
+                    );
+                }
+
                 OrderLog::create([
                     'order_id' => $order->id,
                     'user_id' => $delivery->id,
@@ -235,8 +249,13 @@ class OrderController extends Controller
                     causerId: $delivery->id
                 );
 
-                if ($walletTx && $log) {
-                    $walletTx->update(['log_id' => $log->id]);
+                if ($log) {
+                    if ($walletTx) {
+                        $walletTx->update(['log_id' => $log->id]);
+                    }
+                    if ($discountTx) {
+                        $discountTx->update(['log_id' => $log->id]);
+                    }
                 }
 
                 event(new OrderStatusUpdated($order));

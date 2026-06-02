@@ -178,7 +178,10 @@
     function resetFilters() { document.getElementById('f-search').value = ''; document.getElementById('f-status').value = ''; loadList(1); }
 
     async function loadList(page = 1) {
-        currentPage = page; document.getElementById('tbl-loading').classList.add('show');
+        // إذا غادر المستخدم الصفحة وعناصر DOM لم تعد موجودة، نوقف التنفيذ
+        var loadingEl = document.getElementById('tbl-loading');
+        if (!loadingEl) return;
+        currentPage = page; loadingEl.classList.add('show');
         try {
             const filters = getFilters();
             const globalSearchNav = document.getElementById('nav-global-search');
@@ -189,7 +192,8 @@
 
             const { data } = await axios.get('{{ route("callcenter.orders.list-data") }}', { params: { ...filters, page } });
             var body = document.getElementById('orders-body');
-            if (!data.data.length) { body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">لا طلبات</td></tr>'; document.getElementById('pg-wrap').innerHTML = ''; return; }
+            if (!body) return;
+            if (!data.data.length) { body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">لا طلبات</td></tr>'; var pgWrap = document.getElementById('pg-wrap'); if (pgWrap) pgWrap.innerHTML = ''; return; }
             var now = Date.now();
             body.innerHTML = data.data.map(o => {
                 var sendAt = o.sent_to_delivery_at ? new Date(o.sent_to_delivery_at) : null;
@@ -201,8 +205,8 @@
                 var cancelBtn = o.status === 'pending' ? `<button class="btn btn-sm btn-danger" onclick="openCancel(${o.id})">✕ إلغاء</button>` : '';
                 return `<tr><td style=" text-align: center;"><strong style="color:var(--yellow)">${o.order_number}</strong></td><td style="font-size:11px;color:var(--text-muted); text-align: center;">${formatDate(o.created_at)}</td><td style=" text-align: center;">${o.client_name}</td><td style=" text-align: center;">${o.client_phone}</td><td style=" text-align: center;">${o.delivery_name}</td><td style=" text-align: center;">${o.shops_count}</td><td style=" text-align: center;">${parseFloat(o.delivery_fee).toFixed(2)} ج</td><td style=" text-align: center;">${parseFloat(o.total).toFixed(2)} ج</td><td style=" text-align: center;">${statusBadge(o.status)}</td><td style=" text-align: center;"><div style="display:flex;gap:4px;flex-wrap:wrap; justify-content: center;"><button class="btn btn-sm btn-info" onclick="viewOrder(${o.id})">عرض</button>${editBtn}${sendBtn}${cancelBtn}</div></td></tr>`;
             }).join('');
-            document.getElementById('pg-wrap').innerHTML = renderPagination(data.last_page, data.current_page, 'loadList');
-        } catch (e) { console.error(e); } finally { document.getElementById('tbl-loading').classList.remove('show'); }
+            var pgWrap2 = document.getElementById('pg-wrap'); if (pgWrap2) pgWrap2.innerHTML = renderPagination(data.last_page, data.current_page, 'loadList');
+        } catch (e) { console.error(e); } finally { var el = document.getElementById('tbl-loading'); if (el) el.classList.remove('show'); }
     }
 
     async function viewOrder(id) {
@@ -268,13 +272,33 @@
             if (o.send_to_phone || o.notes) {
                 html += `<div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">`;
                 if (o.send_to_phone) {
-                    html += `<div style="display:flex; align-items:flex-start; gap:12px; background:rgba(255,255,255,0.02); border:1px dashed var(--yellow); border-radius:10px; padding:12px;">
-                    <div style="color:var(--yellow); margin-top:2px;">
+                    let clientName = o.send_to_name || '—';
+                    if (o.recipient_client && o.recipient_client.code) {
+                        clientName += ` (${o.recipient_client.code})`;
+                    }
+                    let phones = o.send_to_phone;
+                    if (o.send_to_phone2) {
+                        phones += ` / ${o.send_to_phone2}`;
+                    }
+
+                    html += `<div style="background:rgba(255,255,255,0.02); border:1px dashed var(--yellow); border-radius:10px; padding:16px;">
+                    <div style="font-size:14px; font-weight:700; color:var(--yellow); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                        إرسال إلى عميل آخر
                     </div>
-                    <div>
-                        <div style="font-size:12px; font-weight:700; color:var(--yellow); margin-bottom:4px;">إرسال إلى عميل آخر</div>
-                        <div style="font-size:14px; font-weight:600;">${o.send_to_phone} <span style="color:var(--text-muted); font-weight:400; margin:0 6px;">|</span> ${o.send_to_address}</div>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div style="padding-bottom:8px; border-bottom:1px dashed rgba(255,255,255,0.1);">
+                            <span style="color:var(--text-muted); font-size:13px;">الاسم</span>
+                            <span style="font-weight:600;">${clientName}</span>
+                        </div>
+                        <div style="padding-bottom:8px; border-bottom:1px dashed rgba(255,255,255,0.1);">
+                            <span style="color:var(--text-muted); font-size:13px;">الهاتف</span>
+                            <span style="font-weight:600; direction:ltr;">${phones}</span>
+                        </div>
+                        <div>
+                            <span style="color:var(--text-muted); font-size:13px;">العنوان</span>
+                            <span style="font-weight:600; text-align:left;">${o.send_to_address || '—'}</span>
+                        </div>
                     </div>
                 </div>`;
                 }

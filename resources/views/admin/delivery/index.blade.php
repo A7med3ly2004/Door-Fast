@@ -6,7 +6,7 @@
     <div class="section-header"
         style="display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
         <div class="search-container" style="flex: 1; max-width: 350px;">
-            <input type="text" id="delivery-search" class="form-control" placeholder="بحث برقم الهاتف / الكود"
+            <input type="text" id="delivery-search" class="form-control" placeholder="بحث بالاسم / الهاتف / الكود"
                 onkeyup="filterDeliveries()" style="border-radius: 8px; padding: 8px 12px;">
         </div>
         <div style="display: flex; gap: 8px;">
@@ -32,7 +32,7 @@
                         <th style="text-align: center;">النوع</th>
                         <th style="text-align: center;">حالة المندوب</th>
                         <th style="text-align: center;">حالة الوردية</th>
-                        <th style="text-align: center;">تم التوصيلة اليوم</th>
+                        <th style="text-align: center;">تم التوصيلة</th>
                         <th style="text-align: center;">اجمالي التوصيل</th>
                         <th style="text-align: center;">إجراءات</th>
                     </tr>
@@ -40,7 +40,7 @@
                 <tbody>
                     @forelse($deliveries as $d)
                         <tr id="delivery-row-{{ $d['id'] }}" class="delivery-row" data-phone="{{ $d['phone'] ?? '' }}"
-                            data-personal-phone="{{ $d['personal_phone'] ?? '' }}" data-code="{{ $d['code'] ?? '' }}">
+                            data-personal-phone="{{ $d['personal_phone'] ?? '' }}" data-code="{{ $d['code'] ?? '' }}" data-name="{{ $d['name'] ?? '' }}">
                             <td style="text-align: right;"><strong>{{ $d['name'] }}</strong></td>
                             <td style="text-align: center;"><span class="badge badge-gray">{{ $d['code'] ?? '—' }}</span></td>
                             <td style="text-align: center;"><code style="color:var(--yellow)">{{ $d['username'] }}</code></td>
@@ -101,7 +101,7 @@
                         <th style="text-align: center;">النوع</th>
                         <th style="text-align: center;">حالة المندوب</th>
                         <th style="text-align: center;">حالة الوردية</th>
-                        <th style="text-align: center;">تم التوصيلة اليوم</th>
+                        <th style="text-align: center;">تم التوصيلة</th>
                         <th style="text-align: center;">اجمالي التوصيل</th>
                         <th style="text-align: center;">إجراءات</th>
                     </tr>
@@ -109,7 +109,7 @@
                 <tbody>
                     @forelse($reserveDeliveries as $d)
                         <tr id="delivery-row-{{ $d['id'] }}" class="delivery-row" data-phone="{{ $d['phone'] ?? '' }}"
-                            data-personal-phone="{{ $d['personal_phone'] ?? '' }}" data-code="{{ $d['code'] ?? '' }}">
+                            data-personal-phone="{{ $d['personal_phone'] ?? '' }}" data-code="{{ $d['code'] ?? '' }}" data-name="{{ $d['name'] ?? '' }}">
                             <td style="text-align: right;"><strong>{{ $d['name'] }}</strong></td>
                             <td style="text-align: center;"><span class="badge badge-gray">{{ $d['code'] ?? '—' }}</span></td>
                             <td style="text-align: center;"><code style="color:var(--yellow)">{{ $d['username'] }}</code></td>
@@ -503,11 +503,12 @@
             const rows = document.querySelectorAll('.delivery-row');
 
             rows.forEach(row => {
+                const name = (row.dataset.name || '').toLowerCase();
                 const phone = (row.dataset.phone || '').toLowerCase();
                 const personalPhone = (row.dataset.personalPhone || '').toLowerCase();
                 const code = (row.dataset.code || '').toLowerCase();
 
-                if (query === '' || phone.includes(query) || personalPhone.includes(query) || code.includes(query)) {
+                if (query === '' || name.includes(query) || phone.includes(query) || personalPhone.includes(query) || code.includes(query)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';

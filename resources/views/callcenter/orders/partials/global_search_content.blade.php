@@ -143,13 +143,33 @@
         </div></div>`;
 
             if (o.send_to_phone) {
-                html += `<div style="display:flex; align-items:flex-start; gap:12px; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:16px;">
-                <div style="color:var(--blue); margin-top:2px;">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                let clientName = o.send_to_name || '—';
+                if (o.recipient_client && o.recipient_client.code) {
+                    clientName += ` (${o.recipient_client.code})`;
+                }
+                let phones = o.send_to_phone;
+                if (o.send_to_phone2) {
+                    phones += ` / ${o.send_to_phone2}`;
+                }
+
+                html += `<div style="background:rgba(255,255,255,0.02); border:1px dashed var(--yellow); border-radius:10px; padding:16px; margin-bottom:16px;">
+                <div style="font-size:14px; font-weight:700; color:var(--yellow); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                    إرسال إلى عميل آخر
                 </div>
-                <div>
-                    <div style="font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:4px;">إرسال إلى</div>
-                    <div style="font-size:14px; line-height:1.5;">${o.send_to_phone} — ${o.send_to_address}</div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="padding-bottom:8px; border-bottom:1px dashed rgba(255,255,255,0.1);">
+                        <span style="color:var(--text-muted); font-size:13px;">الاسم</span>
+                        <span style="font-weight:600;">${clientName}</span>
+                    </div>
+                    <div style="padding-bottom:8px; border-bottom:1px dashed rgba(255,255,255,0.1);">
+                        <span style="color:var(--text-muted); font-size:13px;">الهاتف</span>
+                        <span style="font-weight:600; direction:ltr;">${phones}</span>
+                    </div>
+                    <div>
+                        <span style="color:var(--text-muted); font-size:13px;">العنوان</span>
+                        <span style="font-weight:600; text-align:left;">${o.send_to_address || '—'}</span>
+                    </div>
                 </div>
             </div>`;
             }

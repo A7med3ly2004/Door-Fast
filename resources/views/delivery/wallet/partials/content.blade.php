@@ -154,11 +154,24 @@
 
     @media (max-width:767px) {
         .w-kpi-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .w-kpi {
+            padding: 10px;
+        }
+
+        .w-kpi-label {
+            font-size: 10px;
         }
 
         .w-kpi-value {
-            font-size: 20px;
+            font-size: 14px;
+        }
+
+        .w-kpi-sub {
+            font-size: 9px;
         }
     }
 </style>

@@ -18,8 +18,8 @@
                     <th style="text-align: center;">الهاتف</th>
                     <th style="text-align: center;">حالة الحساب</th>
                     <th style="text-align: center;">حالة الوردية</th>
-                    <th style="text-align: center;">أنشأ اليوم</th>
-                    <th style="text-align: center;">إيراد اليوم</th>
+                    <th style="text-align: center;">تم انشاء</th>
+                    <th style="text-align: center;">الايرادات</th>
                     <th style="text-align: center;">إجراءات</th>
                 </tr>
             </thead>
@@ -376,8 +376,8 @@
                 { header: 'الهاتف', key: 'phone', width: 16 },
                 { header: 'حالة الحساب', key: 'is_active', width: 14 },
                 { header: 'حالة الوردية', key: 'shift_active', width: 14 },
-                { header: 'أنشأ اليوم', key: 'created', width: 14 },
-                { header: 'إيراد اليوم', key: 'revenue', width: 16 },
+                { header: 'تم انشاء', key: 'created', width: 14 },
+                { header: 'الايرادات', key: 'revenue', width: 16 },
             ];
             const mapped = rows.map(cc => ({
                 ...cc,

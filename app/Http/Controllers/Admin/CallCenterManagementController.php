@@ -17,7 +17,10 @@ class CallCenterManagementController extends Controller
     {
         list($startOfToday, $endOfToday) = \App\Models\Setting::businessDayRange();
         $agents = User::where('role', 'callcenter')
-            ->with(['createdOrders' => fn($q) => $q->whereBetween('created_at', [$startOfToday, $endOfToday])])
+            ->withCount('createdOrders as created')
+            ->withSum(['createdOrders as revenue' => function ($query) {
+                $query->where('status', 'delivered');
+            }], 'total')
             ->orderBy('name')
             ->get()
             ->map(function ($cc) use ($startOfToday) {
@@ -33,8 +36,8 @@ class CallCenterManagementController extends Controller
                     'phone' => $cc->phone,
                     'is_active' => $cc->is_active,
                     'shift_active' => $activeShift,
-                    'created' => $cc->createdOrders->count(),
-                    'revenue' => $cc->createdOrders->where('status', 'delivered')->sum('total'),
+                    'created' => $cc->created ?? 0,
+                    'revenue' => $cc->revenue ?? 0,
                     'code' => $cc->code,
                     'incentive_slices' => $cc->incentive_slices ?? [],
                 ];

@@ -17,7 +17,7 @@
     /* MOBILE: narrower card minimum for phone screens */
     .orders-grid { grid-template-columns: 1fr; gap: 12px; }
     .order-card { padding: 16px; }
-    .order-number { font-size: 20px; }
+    .order-number { font-size: 16px; }
     .top-info-bar { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
     .empty-state { padding: 30px 16px; }
     .empty-state h3 { font-size: 18px; }

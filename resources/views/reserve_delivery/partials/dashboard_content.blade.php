@@ -62,13 +62,6 @@
     }
 </style>
 
-<div
-    style="background-color:#fef3c7;color:var(--primary);padding:15px;border-radius:12px;font-weight:700;font-size:14px;margin-bottom:20px;text-align:center;border:1px solid #fde68a">
-    أنت مندوب احتياطي — تصلك الطلبات بعد <span
-        id="kpi-delay-min">{{ \App\Models\Setting::where('key', 'reserve_delay_minutes')->value('value') ?? 5 }}</span>
-    دقائق من عرضها على المندوب الأصلي
-</div>
-
 <div class="grid-kpi">
     <div class="kpi-card">
         <div class="kpi-title">وقت بدء الشفت</div>

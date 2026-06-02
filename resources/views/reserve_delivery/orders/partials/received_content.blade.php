@@ -534,6 +534,104 @@
     .btn-cancel:hover {
         background-color: #fee2e2;
     }
+    /* MOBILE: responsive received orders */
+    @media (max-width: 768px) {
+
+        /* Reduce font sizes of phone numbers inside modal on mobile */
+        .party-row, .party-row a, .phone-link {
+            font-size: 13.5px !important;
+            word-break: break-word;
+        }
+        .party-row strong {
+            font-size: 14px !important;
+        }
+
+        /* MOBILE: single column grid */
+        .orders-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .order-card {
+            padding: 16px;
+        }
+
+        .order-number {
+            font-size: 20px;
+        }
+
+        .info-label {
+            font-size: 12px;
+        }
+
+        .info-value {
+            font-size: 14px;
+        }
+
+        .btn-view {
+            padding: 12px;
+            font-size: 15px;
+        }
+
+        /* MOBILE: full-screen modal on phones */
+        .modal-overlay {
+            padding: 16px;
+            align-items: flex-end;
+        }
+
+        .modal-content {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 16px;
+            height: auto;
+        }
+
+        .modal-header {
+            border-radius: 16px 16px 0 0;
+            padding: 14px 16px;
+        }
+
+        .modal-header h3 {
+            font-size: 16px;
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        .items-list {
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        .money-total {
+            font-size: 20px;
+            padding: 12px;
+        }
+
+        /* MOBILE: stack modal footer buttons vertically */
+        .modal-footer {
+            flex-direction: column-reverse;
+            padding: 14px 16px;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .modal-footer .btn-deliver,
+        .modal-footer .btn-cancel {
+            flex: unset;
+            width: 100%;
+        }
+
+        .btn-deliver {
+            font-size: 16px;
+            padding: 14px;
+        }
+
+        .btn-cancel {
+            font-size: 14px;
+            padding: 12px;
+        }
+    }
 </style>
 
 <div class="orders-grid" id="received-reserve-orders-grid"></div>
@@ -639,16 +737,14 @@
         if (order.client?.phone) {
             if (order.client.phone2) {
                 primaryWaButtonsHtml = `
-                <div class="party-row" style="margin-bottom:8px; gap:8px;">
-                    <span class="icon"></span>
-                    <button onclick="openWhatsApp('${order.client.phone}', '${clientName}', '${order.order_number}')" style="background:#25D366;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل واتساب 1</button>
-                    <button onclick="openWhatsApp('${order.client.phone2}', '${clientName}', '${order.order_number}')" style="background:#128C7E;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل واتساب 2</button>
+                <div class="party-row" style="margin-bottom:8px; gap:8px; flex-wrap:wrap; width:100%; padding-right:30px;">
+                    <button onclick="openWhatsApp('${order.client.phone}', '${clientName}', '${order.order_number}')" style="flex:1; background:#25D366;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">واتساب 1</button>
+                    <button onclick="openWhatsApp('${order.client.phone2}', '${clientName}', '${order.order_number}')" style="flex:1; background:#128C7E;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">واتساب 2</button>
                 </div>`;
             } else {
                 primaryWaButtonsHtml = `
-                <div class="party-row" style="margin-bottom:8px; gap:8px;">
-                    <span class="icon"></span>
-                    <button onclick="openWhatsApp('${order.client.phone}', '${clientName}', '${order.order_number}')" style="background:#25D366;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل عبر واتساب</button>
+                <div class="party-row" style="margin-bottom:8px; gap:8px; width:100%; padding-right:30px;">
+                    <button onclick="openWhatsApp('${order.client.phone}', '${clientName}', '${order.order_number}')" style="flex:1; background:#25D366;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">تواصل عبر واتساب</button>
                 </div>`;
             }
         }
@@ -663,16 +759,14 @@
             var sendToWaButtonsHtml = '';
             if (order.send_to_phone2) {
                 sendToWaButtonsHtml = `
-                <div class="party-row" style="margin-top:5px; gap:8px;">
-                    <span class="icon"></span>
-                    <button onclick="openWhatsApp('${order.send_to_phone}', 'عميل مستلم', '${order.order_number}')" style="background:#25D366;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل واتساب 1</button>
-                    <button onclick="openWhatsApp('${order.send_to_phone2}', 'عميل مستلم', '${order.order_number}')" style="background:#128C7E;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل واتساب 2</button>
+                <div class="party-row" style="margin-top:5px; gap:8px; flex-wrap:wrap; width:100%; padding-right:30px;">
+                    <button onclick="openWhatsApp('${order.send_to_phone}', 'عميل مستلم', '${order.order_number}')" style="flex:1; background:#25D366;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">واتساب 1</button>
+                    <button onclick="openWhatsApp('${order.send_to_phone2}', 'عميل مستلم', '${order.order_number}')" style="flex:1; background:#128C7E;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">واتساب 2</button>
                 </div>`;
             } else {
                 sendToWaButtonsHtml = `
-                <div class="party-row" style="margin-top:5px; gap:8px;">
-                    <span class="icon"></span>
-                    <button onclick="openWhatsApp('${order.send_to_phone}', 'عميل مستلم', '${order.order_number}')" style="background:#25D366;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل عبر واتساب</button>
+                <div class="party-row" style="margin-top:5px; gap:8px; width:100%; padding-right:30px;">
+                    <button onclick="openWhatsApp('${order.send_to_phone}', 'عميل مستلم', '${order.order_number}')" style="flex:1; background:#25D366;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">تواصل عبر واتساب</button>
                 </div>`;
             }
             clientSectionHtml = `

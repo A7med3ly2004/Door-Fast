@@ -111,10 +111,18 @@
         padding: 50px 20px;
         color: var(--text-muted);
     }
+
+    /* MOBILE: responsive new orders grid */
+    @media (max-width: 768px) {
+        .orders-grid { grid-template-columns: 1fr; gap: 12px; }
+        .order-card { padding: 16px; }
+        .order-number { font-size: 16px; }
+        .empty-state { padding: 30px 16px; }
+        .empty-state h3 { font-size: 18px; }
+        .btn-accept { padding: 14px; font-size: 15px; }
+    }
 </style>
 
-<div class="reserve-banner">الطلبات هنا لم يقبلها أي مندوب أساسي خلال <span
-        id="delay-min-display">{{ $reserveDelayMin }}</span> دقيقة — أنت الآن أولوية التوصيل</div>
 <div class="orders-grid" id="new-reserve-orders-grid"></div>
 <div class="empty-state" id="new-reserve-empty-state" style="display:none">
     <h3 style="font-size:24px;color:var(--text-dark)">لا توجد طلبات جديدة الآن</h3>

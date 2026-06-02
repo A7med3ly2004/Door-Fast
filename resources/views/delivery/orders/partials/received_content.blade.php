@@ -541,6 +541,15 @@
     /* MOBILE: responsive received orders */
     @media (max-width: 768px) {
 
+        /* Reduce font sizes of phone numbers inside modal on mobile */
+        .party-row, .party-row a, .phone-link {
+            font-size: 13.5px !important;
+            word-break: break-word;
+        }
+        .party-row strong {
+            font-size: 14px !important;
+        }
+
         /* MOBILE: single column grid */
         .orders-grid {
             grid-template-columns: 1fr;
@@ -744,17 +753,15 @@
         if (order.client?.phone) {
             if (order.client.phone2) {
                 primaryWaButtonsHtml = `
-                    <div class="party-row" style="margin-bottom:8px; gap:8px;">
-                        <span class="icon"></span>
-                        <button onclick="openWhatsApp('${order.client.phone}', '${clientName}', '${order.order_number}')" style="background:#25D366;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل واتساب 1</button>
-                        <button onclick="openWhatsApp('${order.client.phone2}', '${clientName}', '${order.order_number}')" style="background:#128C7E;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل واتساب 2</button>
+                    <div class="party-row" style="margin-bottom:8px; gap:8px; flex-wrap:wrap; width:100%; padding-right:30px;">
+                        <button onclick="openWhatsApp('${order.client.phone}', '${clientName}', '${order.order_number}')" style="flex:1; background:#25D366;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">واتساب 1</button>
+                        <button onclick="openWhatsApp('${order.client.phone2}', '${clientName}', '${order.order_number}')" style="flex:1; background:#128C7E;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">واتساب 2</button>
                     </div>
                 `;
             } else {
                 primaryWaButtonsHtml = `
-                    <div class="party-row" style="margin-bottom:8px; gap:8px;">
-                        <span class="icon"></span>
-                        <button onclick="openWhatsApp('${order.client.phone}', '${clientName}', '${order.order_number}')" style="background:#25D366;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل عبر واتساب</button>
+                    <div class="party-row" style="margin-bottom:8px; gap:8px; width:100%; padding-right:30px;">
+                        <button onclick="openWhatsApp('${order.client.phone}', '${clientName}', '${order.order_number}')" style="flex:1; background:#25D366;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">تواصل عبر واتساب</button>
                     </div>
                 `;
             }
@@ -769,17 +776,15 @@
         if (order.send_to_phone) {
             if (order.send_to_phone2) {
                 var sendToWaButtonsHtml = `
-                    <div class="party-row" style="margin-top:5px; gap:8px;">
-                        <span class="icon"></span>
-                        <button onclick="openWhatsApp('${order.send_to_phone}', 'عميل مستلم', '${order.order_number}')" style="background:#25D366;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل واتساب 1</button>
-                        <button onclick="openWhatsApp('${order.send_to_phone2}', 'عميل مستلم', '${order.order_number}')" style="background:#128C7E;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل واتساب 2</button>
+                    <div class="party-row" style="margin-top:5px; gap:8px; flex-wrap:wrap; width:100%; padding-right:30px;">
+                        <button onclick="openWhatsApp('${order.send_to_phone}', 'عميل مستلم', '${order.order_number}')" style="flex:1; background:#25D366;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">واتساب 1</button>
+                        <button onclick="openWhatsApp('${order.send_to_phone2}', 'عميل مستلم', '${order.order_number}')" style="flex:1; background:#128C7E;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">واتساب 2</button>
                     </div>
                 `;
             } else {
                 var sendToWaButtonsHtml = `
-                    <div class="party-row" style="margin-top:5px; gap:8px;">
-                        <span class="icon"></span>
-                        <button onclick="openWhatsApp('${order.send_to_phone}', 'عميل مستلم', '${order.order_number}')" style="background:#25D366;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">التواصل عبر واتساب</button>
+                    <div class="party-row" style="margin-top:5px; gap:8px; width:100%; padding-right:30px;">
+                        <button onclick="openWhatsApp('${order.send_to_phone}', 'عميل مستلم', '${order.order_number}')" style="flex:1; background:#25D366;color:white;border:none;border-radius:4px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:700;">تواصل عبر واتساب</button>
                     </div>
                 `;
             }

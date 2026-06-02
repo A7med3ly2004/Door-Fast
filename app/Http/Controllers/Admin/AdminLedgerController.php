@@ -387,7 +387,7 @@ class AdminLedgerController extends Controller
     }
 
     // ──────────────────────────────────────────────────────────────
-    // update — تعديل عملية (بدون عكس الأرصدة — تعديل الوصف والتاريخ فقط)
+    // update — تعديل عملية: يُسجّل عملية فرق جديدة + ActivityLog
     // ──────────────────────────────────────────────────────────────
 
     public function update(Request $request, $id): JsonResponse
@@ -411,30 +411,104 @@ class AdminLedgerController extends Controller
         $newAmount = (float) $validated['amount'];
         $diff = $newAmount - $oldAmount;
 
-        DB::transaction(function () use ($tx, $validated, $diff, $adminWallet, $admin) {
-            // تحديث رصيد الـ wallet بالفرق
-            if ($diff != 0) {
-                $wallet = Wallet::lockForUpdate()->find($adminWallet->id);
-                if ($tx->direction === 'credit') {
-                    // كانت تُضيف → الفرق يُضاف أو يُطرح
-                    $wallet->update(['balance' => $wallet->balance + $diff]);
+        $walletService = app(\App\Services\WalletService::class);
+        $date = $validated['date'] ?? $tx->transaction_date->toDateString();
+
+        $newDesc = isset($validated['description'])
+            ? ($validated['description'] . ($validated['note'] ? ' — ' . $validated['note'] : ''))
+            : $tx->description;
+
+        $diffTxId = null;
+
+        DB::transaction(function () use ($tx, $validated, $diff, $newAmount, $newDesc, $adminWallet, $admin, $walletService, $date, &$diffTxId) {
+            $wallet = Wallet::lockForUpdate()->find($adminWallet->id);
+
+            // ── 1. تحديث وصف وتاريخ العملية الأصلية فقط (المبلغ لا يتغير) ──
+            $tx->update([
+                'description' => $newDesc,
+                'transaction_date' => $date,
+            ]);
+
+            if ($diff == 0) {
+                return; // لا يوجد فرق — لا نحتاج عملية جديدة
+            }
+
+            // ── 2. تسجيل عملية الفرق كعملية جديدة في wallet_transactions ──
+            //    direction=debit  → يزيد الرصيد (دائن)
+            //    direction=credit → ينقص الرصيد (مدين)
+            $diffTx = null;
+            if ($tx->direction === 'debit') {
+                // العملية الأصلية كانت دخولاً (دائن) → الفرق بنفس الاتجاه
+                if ($diff > 0) {
+                    $diffTx = $walletService->credit(
+                        wallet: $wallet,
+                        amount: $diff,
+                        type: $tx->type,
+                        description: 'تعديل — ' . $newDesc . ' (فرق +' . number_format($diff, 2) . ')',
+                        createdBy: $admin->id,
+                        date: $date
+                    );
                 } else {
-                    // كانت تُخصم → الفرق يُطرح أو يُضاف
-                    $wallet->update(['balance' => $wallet->balance - $diff]);
+                    $diffTx = $walletService->debit(
+                        wallet: $wallet,
+                        amount: abs($diff),
+                        type: $tx->type,
+                        description: 'تعديل — ' . $newDesc . ' (فرق ' . number_format($diff, 2) . ')',
+                        createdBy: $admin->id,
+                        date: $date
+                    );
+                }
+            } else {
+                // العملية الأصلية كانت خروجاً (مدين) → الفرق بنفس الاتجاه
+                if ($diff > 0) {
+                    $diffTx = $walletService->debit(
+                        wallet: $wallet,
+                        amount: $diff,
+                        type: $tx->type,
+                        description: 'تعديل — ' . $newDesc . ' (فرق +' . number_format($diff, 2) . ')',
+                        createdBy: $admin->id,
+                        date: $date
+                    );
+                } else {
+                    $diffTx = $walletService->credit(
+                        wallet: $wallet,
+                        amount: abs($diff),
+                        type: $tx->type,
+                        description: 'تعديل — ' . $newDesc . ' (فرق ' . number_format($diff, 2) . ')',
+                        createdBy: $admin->id,
+                        date: $date
+                    );
                 }
             }
 
-            $newDesc = isset($validated['description'])
-                ? ($validated['description'] . ($validated['note'] ? ' — ' . $validated['note'] : ''))
-                : $tx->description;
-
-            $tx->update([
-                'amount' => $validated['amount'],
-                'description' => $newDesc,
-                'transaction_date' => $validated['date'] ?? $tx->transaction_date,
-                'balance_after' => $tx->balance_after + $diff,
-            ]);
+            $diffTxId = $diffTx->id;
         });
+
+        // ── 3. تسجيل ActivityLog ───────────────────────────────────
+        $log = \App\Models\ActivityLog::log(
+            event: 'admin_ledger.updated',
+            description: 'تعديل عملية في كشف الحساب الخاص — ' . $newDesc
+            . ' | المبلغ القديم: ' . number_format($oldAmount, 2)
+            . ' ← الجديد: ' . number_format($newAmount, 2) . ' ج',
+            subjectType: 'admin_ledger',
+            subjectId: $admin->id,
+            subjectLabel: $admin->name,
+            properties: [
+                'original_tx_id' => $tx->id,
+                'old_amount' => $oldAmount,
+                'new_amount' => $newAmount,
+                'diff' => $diff,
+                'description' => $newDesc,
+                'date' => $date,
+            ]
+        );
+
+        // ربط الـ log بالعملية الأصلية والعملية الجديدة (الفرق)
+        $tx->update(['log_id' => $log->id]);
+
+        if ($diffTxId) {
+            WalletTransaction::where('id', $diffTxId)->update(['log_id' => $log->id]);
+        }
 
         return response()->json(['success' => true, 'message' => 'تم تعديل العملية بنجاح.']);
     }
@@ -566,23 +640,23 @@ class AdminLedgerController extends Controller
             ->orderBy('id', 'asc')
             ->get();
 
-        // حساب KPIs
-        $totalDebit = $transactions->where('direction', 'credit')->sum('amount'); // credit (خصم) = مدين
-        $totalCredit = $transactions->where('direction', 'debit')->sum('amount');  // debit (إضافة) = دائن
-
-        // ملاحظة: WalletService::credit() يُسجّل direction='debit'  (إضافة للرصيد)
-        //         WalletService::debit()  يُسجّل direction='credit' (خصم من الرصيد)
+        // ملاحظة: WalletService::credit() يُسجّل direction='debit'  (إضافة للرصيد = دائن في الكشف)
+        //         WalletService::debit()  يُسجّل direction='credit' (خصم من الرصيد = مدين في الكشف)
         // لذا:
         //   direction='debit'  = دخول للحساب = دائن في كشف الحساب
         //   direction='credit' = خروج من الحساب = مدين في كشف الحساب
+
+        // حساب KPIs
+        $totalDebit = $transactions->where('direction', 'credit')->sum('amount'); // direction=credit → خروج = مدين
+        $totalCredit = $transactions->where('direction', 'debit')->sum('amount');  // direction=debit  → دخول = دائن
 
         $balance = $totalCredit - $totalDebit;
 
         // Running balance وبناء rows
         $running = 0;
         $rows = $transactions->map(function ($tx) use (&$running) {
-            // credit (دائن/دخول) → يُزيد الرصيد
-            // debit  (مدين/خروج) → يُنقص الرصيد
+            // direction='debit'  = دخول (دائن) → يزيد الرصيد
+            // direction='credit' = خروج (مدين) → ينقص الرصيد
             $running += ($tx->direction === 'debit' ? $tx->amount : -$tx->amount);
 
             return [

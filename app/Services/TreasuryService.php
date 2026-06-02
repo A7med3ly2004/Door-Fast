@@ -344,9 +344,24 @@ class TreasuryService
             $walletTxId = $walletTx->id; // ← احفظ الـ id للاستخدام بعد الـ transaction
         });
 
+        $typeLabel = match ($transaction->type) {
+            'income' => 'إيراد',
+            'expense' => 'مصروف',
+            'settlement' => 'تسوية',
+            'dain' => 'صرف مديونية',
+            'discount' => 'خصم',
+            'pay_to_user' => 'إيصال دفع',
+            'receive_from_user' => 'إيصال استلام',
+            default => $transaction->type,
+        };
+
+        $txLabel = $transaction->note ?? $transaction->by_whom ?? '—';
+
         $log = ActivityLog::log(
             event: 'treasury.updated',
-            description: 'تم تعديل معاملة مالية',
+            description: 'تعديل عملية في الخزينة — ' . $typeLabel . ' — ' . $txLabel
+            . ' | المبلغ القديم: ' . number_format($oldAmount, 2)
+            . ' ← الجديد: ' . number_format($newAmount, 2) . ' ج',
             subjectType: 'treasury',
             subjectId: $transaction->id,
             subjectLabel: number_format($newAmount, 2) . ' ج'

@@ -33,23 +33,21 @@ class CheckDelayedDeliveryOrders implements ShouldQueue, ShouldBeUnique
     {
         $xMins = (int) Setting::get('notif_delay_delivery_mins', 20);
         $cutoff = now()->subMinutes($xMins);
-        
-        $orders = Order::with('delivery')->where('status', 'received')
+
+        $orders = Order::where('status', 'received')
             ->where('accepted_at', '<=', $cutoff)
-            ->whereDoesntHave('adminNotifications', function($q) {
+            ->whereDoesntHave('adminNotifications', function ($q) {
                 $q->where('type', 'delayed_delivery');
             })
-            ->select('id', 'order_number', 'accepted_at', 'delivery_id')
+            ->select('id', 'order_number', 'accepted_at')
             ->get();
-            
-        foreach($orders as $order) {
-            $deliveryName = $order->delivery ? $order->delivery->name : 'غير محدد';
-            
+
+        foreach ($orders as $order) {
             $notif = AdminNotification::create([
                 'type' => 'delayed_delivery',
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
-                'message' => "طلب #{$order->order_number} تأخر عن التوصيل - المندوب: {$deliveryName}"
+                'message' => "طلب #{$order->order_number} تأخر عن التوصيل"
             ]);
             event(new AdminNotificationCreated($notif));
         }
@@ -58,9 +56,9 @@ class CheckDelayedDeliveryOrders implements ShouldQueue, ShouldBeUnique
     public function failed(\Throwable $e): void
     {
         Log::error('Job failed permanently: ' . static::class, [
-            'error'   => $e->getMessage(),
-            'file'    => $e->getFile(),
-            'line'    => $e->getLine(),
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
         ]);
     }
 }

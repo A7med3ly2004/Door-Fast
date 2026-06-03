@@ -272,7 +272,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
 
                 tbody.innerHTML = transactions.map(tx => `
                 <tr>
-                    <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.log_id}</td>
+                    <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.id}</td>
                     <td style="text-align:center;">${formatDate(tx.transaction_date)}</td>
                     <td style="font-size:12px; text-align:right;">${escHtml(tx.description)}</td>
                     <td style="color:var(--success);font-weight:700; text-align:center;">${tx.debit || '—'}</td>

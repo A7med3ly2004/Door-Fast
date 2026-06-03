@@ -42,6 +42,7 @@ Route::middleware(['auth:sanctum', 'role:delivery'])
         Route::get('/orders/{id}',          [OrderController::class, 'show']);
         Route::get('/orders/{id}/invoice',  [OrderController::class, 'downloadInvoice']);
         Route::post('/fcm-token',            [DeliveryFcmTokenController::class, 'store']);
+        Route::delete('/fcm-token',          [DeliveryFcmTokenController::class, 'destroy']);
     });
 
 // ── Protected: Reserve Delivery Mobile API ────────────────────────────────
@@ -70,4 +71,5 @@ Route::middleware(['auth:sanctum', 'role:reserve_delivery'])
         Route::get('/orders/{id}',          [OrderController::class, 'show']);
         Route::get('/orders/{id}/invoice',  [OrderController::class, 'downloadInvoice']);
         Route::post('/fcm-token',           [ReserveFcmTokenController::class, 'store']);
+        Route::delete('/fcm-token',         [ReserveFcmTokenController::class, 'destroy']);
     });

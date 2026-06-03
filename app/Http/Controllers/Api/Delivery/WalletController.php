@@ -25,7 +25,8 @@ class WalletController extends Controller
 
         $query = WalletTransaction::where('wallet_id', $wallet->id)
             ->whereBetween('transaction_date', [$from->toDateString(), $to->toDateString()])
-            ->latest('id');
+            ->orderByDesc('transaction_date')
+            ->orderBy('id', 'asc');
 
         $transactions = $query->paginate(20);
 

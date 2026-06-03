@@ -64,4 +64,19 @@ class FcmService
             }
         }
     }
+
+    /**
+     * إرسال إشعار FCM لمستخدم بناءً على كائن User مباشرةً
+     * يتحقق من وجود التوكن قبل الإرسال — لا يُعدّل sendToToken()
+     */
+    public function sendToUser(\App\Models\User $user, string $title, string $body, array $data = []): void
+    {
+        $token = $user->fcm_token;
+
+        if (empty($token)) {
+            return;
+        }
+
+        $this->sendToToken($token, $title, $body, $data);
+    }
 }

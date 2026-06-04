@@ -218,7 +218,7 @@ class TreasuryTransaction extends Model
             'by_whom' => $byWhom,
             'note' => $note,
             'recorded_by' => $recordedBy,
-            'transaction_date' => $transactionDate ?? now()->toDateString(),
+            'transaction_date' => $transactionDate ?? \App\Models\Setting::currentBusinessDate(),
         ]);
     }
 

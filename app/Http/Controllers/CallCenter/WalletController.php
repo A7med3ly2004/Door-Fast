@@ -123,7 +123,7 @@ class WalletController extends Controller
         $cc = auth()->user();
         $delivery = User::findOrFail($validated['delivery_id']);
         $service = app(WalletService::class);
-        $date = $validated['date'] ?? now()->toDateString();
+        $date = $validated['date'] ?? \App\Models\Setting::currentBusinessDate();
         $desc = $validated['description'] ?? null;
 
         try {
@@ -203,7 +203,7 @@ class WalletController extends Controller
         $cc = auth()->user();
         $delivery = User::findOrFail($validated['delivery_id']);
         $service = app(WalletService::class);
-        $date = $validated['date'] ?? now()->toDateString();
+        $date = $validated['date'] ?? \App\Models\Setting::currentBusinessDate();
         $desc = $validated['description'] ?? null;
 
         try {

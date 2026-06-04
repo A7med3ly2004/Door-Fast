@@ -30,7 +30,7 @@ class WalletService
             createdBy:       $createdBy,
             relatedWalletId: $relatedWalletId,
             orderId:         $orderId,
-            date:            $date ?? now()->toDateString(),
+            date:            $date ?? \App\Models\Setting::currentBusinessDate(),
         );
     }
 
@@ -56,7 +56,7 @@ class WalletService
             createdBy:       $createdBy,
             relatedWalletId: $relatedWalletId,
             orderId:         $orderId,
-            date:            $date ?? now()->toDateString(),
+            date:            $date ?? \App\Models\Setting::currentBusinessDate(),
         );
     }
 

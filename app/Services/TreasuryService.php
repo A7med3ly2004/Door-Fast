@@ -79,7 +79,7 @@ class TreasuryService
             'by_whom' => $user->name,
             'note' => $data['note'] ?? null,
             'recorded_by' => $recordedBy,
-            'transaction_date' => $data['date'] ?? now()->toDateString(),
+            'transaction_date' => $data['date'] ?? \App\Models\Setting::currentBusinessDate(),
         ]);
 
         $log = ActivityLog::log(
@@ -116,7 +116,7 @@ class TreasuryService
         $targetUser = User::findOrFail($data['user_id']);
         $walletService = app(WalletService::class);
         $amount = (float) $data['amount'];
-        $date = $data['date'] ?? now()->toDateString();
+        $date = $data['date'] ?? \App\Models\Setting::currentBusinessDate();
         $description = $data['description'] ?? ('دفع نقدي إلى ' . $targetUser->name);
 
         $treasuryBalance = TreasuryTransaction::currentBalance();
@@ -197,7 +197,7 @@ class TreasuryService
     {
         $targetUser = isset($data['user_id']) ? User::find($data['user_id']) : null;
         $walletService = app(WalletService::class);
-        $date = $data['date'] ?? now()->toDateString();
+        $date = $data['date'] ?? \App\Models\Setting::currentBusinessDate();
 
         $defaultDesc = $targetUser
             ? ('استلام نقدي من ' . $targetUser->name)

@@ -109,7 +109,7 @@ class AdminLedgerController extends Controller
         }
 
         $walletService = app(WalletService::class);
-        $date = $validated['date'] ?? now()->toDateString();
+        $date = $validated['date'] ?? \App\Models\Setting::currentBusinessDate();
         $note = $validated['note'] ?? ('ايصال دفع إلى ' . $employee->name);
         $amount = (float) $validated['amount'];
 
@@ -195,7 +195,7 @@ class AdminLedgerController extends Controller
 
         $admin = auth()->user();
         $walletService = app(WalletService::class);
-        $date = $validated['date'] ?? now()->toDateString();
+        $date = $validated['date'] ?? \App\Models\Setting::currentBusinessDate();
         $amount = (float) $validated['amount'];
         $note = $validated['note'] ?? null;
 
@@ -303,7 +303,7 @@ class AdminLedgerController extends Controller
 
         $admin = auth()->user();
         $walletService = app(WalletService::class);
-        $date = $validated['date'] ?? now()->toDateString();
+        $date = $validated['date'] ?? \App\Models\Setting::currentBusinessDate();
         $amount = (float) $validated['amount'];
         $fullDesc = $validated['description'] . ($validated['note'] ? ' — ' . $validated['note'] : '');
 

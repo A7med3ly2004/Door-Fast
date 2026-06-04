@@ -215,7 +215,7 @@ class OrderController extends Controller
                         description: 'رسوم توصيل — طلب ' . $order->order_number,
                         createdBy: $delivery->id,
                         orderId: $order->id,
-                        date: now()->toDateString()
+                        date: \App\Models\Setting::currentBusinessDate()
                     );
                 }
 
@@ -229,7 +229,7 @@ class OrderController extends Controller
                         description: 'خصم من الرصيد مقابل خصم للعميل — طلب ' . $order->order_number,
                         createdBy: $delivery->id,
                         orderId: $order->id,
-                        date: now()->toDateString()
+                        date: \App\Models\Setting::currentBusinessDate()
                     );
                 }
 

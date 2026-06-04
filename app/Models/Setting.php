@@ -72,4 +72,12 @@ class Setting extends Model
 
         return [$dayStart, $dayEnd];
     }
+
+    /**
+     * Get the current business day date string (Y-m-d) based on sliding day logic.
+     */
+    public static function currentBusinessDate(): string
+    {
+        return static::businessDayRange()[0]->toDateString();
+    }
 }

@@ -39,15 +39,17 @@ class CheckDelayedDeliveryOrders implements ShouldQueue, ShouldBeUnique
             ->whereDoesntHave('adminNotifications', function ($q) {
                 $q->where('type', 'delayed_delivery');
             })
-            ->select('id', 'order_number', 'accepted_at')
+            ->with('delivery:id,name')
+            ->select('id', 'order_number', 'accepted_at', 'delivery_id')
             ->get();
 
         foreach ($orders as $order) {
+            $deliveryName = $order->delivery ? $order->delivery->name : 'غير محدد';
             $notif = AdminNotification::create([
                 'type' => 'delayed_delivery',
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
-                'message' => "طلب #{$order->order_number} تأخر عن التوصيل"
+                'message' => "طلب #{$order->order_number} تأخر عن التوصيل مع المندوب {$deliveryName}"
             ]);
             event(new AdminNotificationCreated($notif));
         }

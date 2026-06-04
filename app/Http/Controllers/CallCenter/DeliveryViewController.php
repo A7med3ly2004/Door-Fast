@@ -249,7 +249,7 @@ class DeliveryViewController extends Controller
             ->map(function (\App\Models\WalletTransaction $tx) {
                 return [
                     'id' => $tx->id,
-                    'transaction_date' => $tx->transaction_date->format('Y-m-d'),
+                    'transaction_date' => $tx->transaction_date->format('Y-m-d') . ' ' . $tx->created_at->format('H:i'),
                     'description' => $tx->description ?? '—',
                     'type_label' => $tx->type_label,
                     'debit' => $tx->direction === 'debit' ? number_format((float) $tx->amount, 2) : '',

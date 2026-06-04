@@ -123,7 +123,7 @@
                 transactionsHtml = txs.map(tx => `
                 <tr>
                     <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.id}</td>
-                    <td style="text-align:center;">${formatDate(tx.transaction_date)}</td>
+                    <td style="text-align:center;">${tx.transaction_date}</td>
                     <td style="font-size:12px; text-align:right;">${escHtml(tx.description)}</td>
                     <td style="color:var(--success);font-weight:700; text-align:center;">${tx.debit || '—'}</td>
                     <td style="color:var(--red);font-weight:700; text-align:center;">${tx.credit || '—'}</td>

@@ -152,7 +152,7 @@
                     {{ $ar('إيصال معاملة مالية') }}
                 </p>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 12px;">
-                    {{ now()->format('Y-m-d H:i') }} {{ $ar('التاريخ:') }}
+                    {{ $transaction->transaction_date->format('Y-m-d') }} {{ $transaction->created_at->format('H:i') }} {{ $ar('التاريخ:') }}
                 </p>
             </td>
             <td style="width: 30%; text-align: right; vertical-align: top;">
@@ -211,7 +211,7 @@
     </table>
 
     <div class="footer">
-        {{ $ar('تم إنشاؤه بواسطة نظام دور فاست —') }} {{ now()->format('Y-m-d H:i:s') }}
+        {{ $ar('تم إنشاؤه بواسطة نظام دور فاست —') }} {{ $transaction->transaction_date->format('Y-m-d') }} {{ $transaction->created_at->format('H:i:s') }}
     </div>
 
 </body>

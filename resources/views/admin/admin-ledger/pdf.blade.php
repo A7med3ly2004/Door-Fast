@@ -143,7 +143,7 @@
                     إيصال كشف حساب خاص
                 </p>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 12px;">
-                    {{ now()->format('Y-m-d H:i') }} التاريخ:
+                    {{ $tx->transaction_date->format('Y-m-d') }} {{ $tx->created_at->format('H:i') }} التاريخ:
                 </p>
             </td>
             <td style="width: 30%; text-align: right; vertical-align: top;">
@@ -203,7 +203,7 @@
     </table>
 
     <div class="footer">
-        تم إنشاؤه بواسطة نظام دور فاست — {{ now()->format('Y-m-d H:i:s') }}
+        تم إنشاؤه بواسطة نظام دور فاست — {{ $tx->transaction_date->format('Y-m-d') }} {{ $tx->created_at->format('H:i:s') }}
     </div>
 
 </body>

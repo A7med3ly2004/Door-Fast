@@ -4,7 +4,7 @@
 </div>
 <div class="card" style="max-width:90%; margin: 0 auto;">
     <div class="form-group"><label class="form-label">اسم الشركة</label><input type="text" id="company_name"
-            class="form-control" value="{{ $settings['company_name'] ?? '' }}" placeholder="دور فاست"></div>
+            class="form-control" value="{{ $settings['company_name'] ?? '' }}" placeholder="دوور فاست"></div>
     <div class="form-group"><label class="form-label">هاتف الشركة</label><input type="text" id="company_phone"
             class="form-control" value="{{ $settings['company_phone'] ?? '' }}"></div>
     <hr class="divider" style="display:none">

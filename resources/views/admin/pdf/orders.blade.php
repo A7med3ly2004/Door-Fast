@@ -81,6 +81,6 @@
     </tfoot>
 </table>
 
-<div class="footer">تم إنشاؤه بواسطة دور فاست — {{ now()->format('Y-m-d H:i:s') }}</div>
+<div class="footer">تم إنشاؤه بواسطة دوور فاست — {{ now()->format('Y-m-d H:i:s') }}</div>
 </body>
 </html>

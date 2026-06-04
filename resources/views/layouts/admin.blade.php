@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/png" href="{{ asset('DF_logo_2026.PNG') }}">
-    <title>@yield('page-title', 'لوحة التحكم') - دور فاست</title>
+    <title>@yield('page-title', 'لوحة التحكم') - دوور فاست</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1411,7 +1411,7 @@
                 // Update topbar title
                 if (title) {
                     document.getElementById('spa-page-title').textContent = title;
-                    document.title = title + ' - دور فاست';
+                    document.title = title + ' - دوور فاست';
                 }
                 // Update URL & history
                 if (pushState) history.pushState({ url }, title || '', url);

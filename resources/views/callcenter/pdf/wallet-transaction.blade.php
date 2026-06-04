@@ -207,7 +207,7 @@
     </table>
 
     <div class="footer">
-        {{ $ar('تم إنشاؤه بواسطة نظام دور فاست —') }} {{ $transaction->transaction_date->format('Y-m-d') }} {{ $transaction->created_at->format('H:i:s') }}
+        {{ $ar('تم إنشاؤه بواسطة نظام دوور فاست —') }} {{ $transaction->transaction_date->format('Y-m-d') }} {{ $transaction->created_at->format('H:i:s') }}
     </div>
 
 </body>

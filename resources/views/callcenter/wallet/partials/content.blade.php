@@ -272,8 +272,8 @@ resources/views/callcenter/wallet/partials/content.blade.php
 
                 tbody.innerHTML = transactions.map(tx => `
                 <tr>
-                    <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.id}</td>
-                    <td style="text-align:center;">${formatDate(tx.transaction_date)}</td>
+                    <td style="color:var(--text-muted);font-size:12px; text-align:center;">${tx.log_id !== '-' && tx.log_id ? tx.log_id : tx.id}</td>
+                    <td style="text-align:center;white-space:nowrap;">${formatDate(tx.transaction_date)} ${formatTime(tx.created_at)}</td>
                     <td style="font-size:12px; text-align:right;">${escHtml(tx.description)}</td>
                     <td style="color:var(--success);font-weight:700; text-align:center;">${tx.debit || '—'}</td>
                     <td style="color:var(--red);font-weight:700; text-align:center;">${tx.credit || '—'}</td>
@@ -414,7 +414,15 @@ resources/views/callcenter/wallet/partials/content.blade.php
         }
         function formatDate(ymd) {
             if (!ymd) return '—';
-            return new Date(ymd).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+            // transaction_date هو تاريخ فقط (Y-m-d) — نعرضه بدون وقت
+            const parts = String(ymd).split('T')[0].split('-');
+            if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            return ymd;
+        }
+        function formatTime(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
         }
 
         // ── Boot ─────────────────────────────────────────────────

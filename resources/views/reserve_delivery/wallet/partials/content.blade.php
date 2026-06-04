@@ -273,7 +273,7 @@
                 tbody.innerHTML = [...transactions].reverse().map(tx => `
                 <tr>
                     <td style="font-size:12px;text-align: center;">${tx.log_id}</td>
-                    <td style="text-align: center;">${fmtDate(tx.transaction_date)}</td>
+                    <td style="text-align: center;white-space:nowrap;">${fmtDate(tx.transaction_date)} <span style="color:var(--text-muted);font-size:11px;">${fmtTime(tx.created_at)}</span></td>
                     <td style="font-size:12px;text-align: right;">${esc(tx.description)}</td>
                     <td style="color:var(--success);font-weight:700;text-align: center;">${tx.debit || '—'}</td>
                     <td style="color:var(--secondary);font-weight:700;text-align: center;">${tx.credit || '—'}</td>
@@ -294,6 +294,7 @@
 
         function esc(s) { return s == null ? '—' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
         function fmtDate(ymd) { if (!ymd) return '—'; const [y, m, d] = ymd.split('-'); return `${d}/${m}/${y}`; }
+        function fmtTime(iso) { if (!iso) return ''; const d = new Date(iso); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
 
         fetchStatement();
     })();

@@ -89,6 +89,7 @@ class WalletController extends Controller
                 'id' => $tx->id,
                 'log_id' => $tx->activityLog?->id ?? '-',
                 'transaction_date' => $tx->transaction_date->format('Y-m-d'),
+                'created_at' => $tx->created_at?->toIso8601String(),
                 'description' => $tx->description ?? '—',
                 'type_label' => $tx->type_label,
                 'debit' => $tx->direction === 'debit' ? number_format((float) $tx->amount, 2) : '',

@@ -67,6 +67,7 @@ abstract class BaseDeliveryWalletController extends Controller
                 'id'               => $tx->id,
                 'log_id'           => $tx->activityLog?->id ?? '-',
                 'transaction_date' => $tx->transaction_date->format('Y-m-d'),
+                'created_at'       => $tx->created_at?->toIso8601String(),
                 'description'      => $tx->description ?? '—',
                 'debit'            => $tx->direction === 'debit'  ? number_format((float) $tx->amount, 2) : '',
                 'credit'           => $tx->direction === 'credit' ? number_format((float) $tx->amount, 2) : '',

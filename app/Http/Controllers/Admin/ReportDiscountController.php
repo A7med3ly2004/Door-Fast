@@ -139,7 +139,7 @@ class ReportDiscountController extends Controller
      */
     public function orderDetail($id)
     {
-        $order = Order::with(['client', 'callcenter', 'delivery', 'items'])->findOrFail($id);
+        $order = Order::with(['client', 'callcenter', 'delivery', 'items', 'logs.user'])->findOrFail($id);
 
         return response()->json([
             'order' => [
@@ -163,7 +163,12 @@ class ReportDiscountController extends Controller
                     'unit_price' => $item->unit_price,
                     'total'      => $item->total,
                 ]),
-                'logs'           => [], // تقارير الخصومات عادة لا تحتاج السجل الكامل هنا، لكن نتركه فارغاً للتوافق
+                'logs'           => $order->logs->map(fn($l) => [
+                    'user'       => $l->user?->name ?? 'النظام',
+                    'action'     => $l->action,
+                    'notes'      => $l->notes,
+                    'created_at' => $l->created_at->toIso8601String(),
+                ]),
             ],
         ]);
     }

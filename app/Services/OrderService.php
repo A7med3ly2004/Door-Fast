@@ -104,9 +104,6 @@ class OrderService
                 'sent_to_delivery_at' => $sentToDeliveryAt,
             ]);
 
-            if (!empty($data['opened_at'])) {
-                $order->created_at = Carbon::parse($data['opened_at']);
-            }
             $order->save();
 
             // ── 5. Handle send-to customer ─────────────────────────
@@ -128,7 +125,7 @@ class OrderService
             }
 
             // ── 7. Logs ────────────────────────────────────────────
-            $this->writeOrderLogs($order, $client, $deliveryId, $callcenterId, $adminMode);
+            $this->writeOrderLogs($order, $client, $deliveryId, $callcenterId, $adminMode, $data['opened_at'] ?? null);
 
             // ── 8. Fire event (inside transaction) ────────────────
             try {
@@ -308,13 +305,8 @@ class OrderService
     /**
      * Write OrderLog + ActivityLog after order creation.
      */
-    private function writeOrderLogs(
-        Order $order,
-        Client $client,
-        ?int $deliveryId,
-        ?int $callcenterId,
-        bool $adminMode
-    ): void {
+    private function writeOrderLogs(Order $order, Client $client, ?int $deliveryId, ?int $callcenterId, bool $adminMode, ?string $openedAt = null): void
+    {
         if ($adminMode) {
             $logAction = $deliveryId
                 ? 'إنشاء طلب مباشر من الأدمن — تم تحديد مندوب'
@@ -330,6 +322,16 @@ class OrderService
             $actEvent = 'order.created_cc';
             $actDesc = 'تم إنشاء طلب جديد من كول سنتر';
         }
+
+        $firstLog = new OrderLog([
+            'order_id' => $order->id,
+            'user_id' => auth()->id(),
+            'action' => 'تم فتح الفاتورة',
+            'notes' => 'وقت فتح الفاتورة الفعلي',
+        ]);
+        $firstLog->created_at = $openedAt ? \Carbon\Carbon::parse($openedAt) : $order->created_at;
+        $firstLog->updated_at = $firstLog->created_at;
+        $firstLog->save();
 
         OrderLog::create([
             'order_id' => $order->id,

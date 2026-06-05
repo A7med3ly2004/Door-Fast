@@ -357,6 +357,28 @@
                     </div>
                 </div>`;
 
+                if (o.logs && o.logs.length) {
+                    html += `<div style="background:var(--bg); border-radius:12px; padding:16px; border:1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                        <div style="font-size:14px; font-weight:700; color:var(--text-muted); margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            حالة الطلب
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:16px; position:relative;">
+                            <div style="position:absolute; right:15px; top:10px; bottom:10px; width:2px; background:var(--border); z-index:1;"></div>
+                            ${o.logs.map((l, index) => `<div style="display:flex; align-items:flex-start; gap:16px; position:relative; z-index:2;">
+                                <div style="width:32px; height:32px; border-radius:50%; background:${index === 0 ? 'var(--yellow)' : 'var(--bg)'}; border:2px solid ${index === 0 ? 'var(--yellow)' : 'var(--border)'}; display:flex; align-items:center; justify-content:center; color:${index === 0 ? '#000' : 'var(--text-muted)'}; flex-shrink:0; margin-top:2px;">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${index === 0 ? 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' : 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'}"></path></svg>
+                                </div>
+                                <div style="flex:1;">
+                                    <div style="font-size:13px; font-weight:700; color:${index === 0 ? 'var(--text)' : 'var(--text-muted)'};">${l.action} <span style="font-weight:400; color:var(--text-muted); margin-right:4px;">— ${l.user}</span></div>
+                                    ${l.notes ? `<div style="font-size:12px; color:var(--text-muted); margin-top:5px; padding:6px 10px; line-height:1.5;">${l.notes}</div>` : ''}
+                                    <div style="font-size:12px; color:var(--text-muted); margin-top:4px; direction:ltr; text-align:right;">${fmtDate(l.created_at)}</div>
+                                </div>
+                            </div>`).join('')}
+                        </div>
+                    </div>`;
+                }
+
                 document.getElementById('dc-modal-body').innerHTML = html;
             } catch (e) {
                 console.error(e);

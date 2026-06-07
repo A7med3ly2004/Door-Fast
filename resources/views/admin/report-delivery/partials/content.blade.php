@@ -506,7 +506,7 @@
 
                 if (o) {
                     row[0] = o.order_number || ('#' + o.id);
-                    row[1] = o.created_at ? new Date(o.created_at).toLocaleString('en-GB') : '—';
+                    row[1] = o.created_at ? new Date(o.created_at).toLocaleString('en-GB', { hour12: true }).replace('am', 'ص').replace('pm', 'م').replace('AM', 'ص').replace('PM', 'م') : '—';
                     row[2] = o.client ? o.client.name : '—';
                     row[3] = o.callcenter ? o.callcenter.name : (o.admin ? o.admin.name : '—');
                     row[4] = o.delivery_fee;

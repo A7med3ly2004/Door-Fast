@@ -17,15 +17,23 @@
         <div>
             <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">القسم</label>
             <div class="relative group" style="min-width:180px; z-index: 50;">
-                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <div class="form-control"
+                    style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
                     <span id="label-filter-category">كل الاقسام</span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </div>
                 <input type="hidden" id="filter-category" value="">
-                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden" style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
-                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-category', '', 'كل الاقسام')">كل الاقسام</div>
+                <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white/80 backdrop-blur shadow-lg rounded-md mt-1 overflow-hidden"
+                    style="border:1px solid var(--border); background-color: rgba(255, 255, 255, 0.9); max-height:200px; overflow-y:auto;">
+                    <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                        onclick="selectDropdown('filter-category', '', 'كل الاقسام')">كل الاقسام</div>
                     @foreach($categories as $cat)
-                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800" onclick="selectDropdown('filter-category', '{{ $cat->id }}', '{{ $cat->name }}')">{{ $cat->name }}</div>
+                        <div class="px-3 py-2 cursor-pointer hover:bg-green-50 hover:text-green-700 text-sm transition-colors text-gray-800"
+                            onclick="selectDropdown('filter-category', '{{ $cat->id }}', '{{ $cat->name }}')">
+                            {{ $cat->name }}
+                        </div>
                     @endforeach
                 </div>
             </div>
@@ -76,7 +84,8 @@
                 <div class="form-group"><label class="form-label">الاسم *</label><input id="add-name" type="text"
                         class="form-control"></div>
                 <div class="form-group"><label class="form-label">الكود</label><input id="add-code" type="text"
-                        class="form-control" placeholder="تلقائي..." readonly style="background: var(--bg-light); cursor: not-allowed;"></div>
+                        class="form-control" placeholder="تلقائي..." readonly
+                        style="background: var(--bg-light); cursor: not-allowed;"></div>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -88,8 +97,10 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">الهاتف</label><input id="add-phone" type="text"
-                        class="form-control"></div>
+                <div class="form-group"><label class="form-label">هاتف 1</label><input id="add-phone" type="text"
+                        class="form-control" placeholder="01xxxxxxxxx"></div>
+                <div class="form-group"><label class="form-label">هاتف 2</label><input id="add-phone2" type="text"
+                        class="form-control" placeholder="01xxxxxxxxx"></div>
             </div>
             <div class="form-group"><label class="form-label">العنوان</label><input id="add-address" type="text"
                     class="form-control"></div>
@@ -124,7 +135,9 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group"><label class="form-label">الهاتف</label><input id="edit-phone" type="text"
+                <div class="form-group"><label class="form-label">هاتف 1</label><input id="edit-phone" type="text"
+                        class="form-control"></div>
+                <div class="form-group"><label class="form-label">هاتف 2</label><input id="edit-phone2" type="text"
                         class="form-control"></div>
             </div>
             <div class="form-group"><label class="form-label">العنوان</label><input id="edit-address" type="text"
@@ -181,10 +194,10 @@
     function resetFilters() {
         document.getElementById('filter-search').value = '';
         document.getElementById('filter-category').value = '';
-        
+
         const catLabel = document.getElementById('label-filter-category');
         if (catLabel) catLabel.innerText = 'كل الاقسام';
-        
+
         loadShops(1);
     }
 
@@ -209,7 +222,7 @@
             <td><code style="color:var(--yellow);text-align: center;">${s.code ?? '—'}</code></td>
             <td style="text-align: center;"><strong>${s.name}</strong></td>
             <td style="text-align: center;"><span class="badge" style="background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-main)">${s.category ? s.category.name : '—'}</span></td>
-            <td style="text-align: center;">${s.phone ?? '—'}</td>
+            <td style="text-align: center;">${s.phone ?? '—'}${s.phone2 ? '<br><span style="font-size:11px;color:var(--text-muted)">' + s.phone2 + '</span>' : ''}</td>
             <td style="text-align: right;">${s.address ?? '—'}</td>
             <td style="text-align: center;">${s.orders_count ?? 0}</td>
             <td style="text-align: center;">${parseFloat(s.order_items_sum_total || 0).toFixed(2)} ج</td>
@@ -223,7 +236,7 @@
             </td>
             <td style="text-align: center;"><div style="display:flex;gap:3px;justify-content: space-evenly;">
                 <button class="btn btn-sm btn-info" onclick="viewShop(${s.id}, '${s.name}')">عرض</button>
-                <button class="btn btn-sm btn-secondary" onclick="openEdit(${s.id},'${s.name.replace(/'/g, "\\'")}','${(s.phone ?? '').replace(/'/g, "\\'")}','${(s.address ?? '').replace(/'/g, "\\'")}','${s.shop_category_id ?? ''}','${(s.code ?? '').replace(/'/g, "\\'")}')">تعديل</button>
+                <button class="btn btn-sm btn-secondary" onclick="openEdit(${s.id},'${s.name.replace(/'/g, "\\'")}','${(s.phone ?? '').replace(/'/g, "\\'")}','${(s.phone2 ?? '').replace(/'/g, "\\'")}','${(s.address ?? '').replace(/'/g, "\\'")}','${s.shop_category_id ?? ''}','${(s.code ?? '').replace(/'/g, "\\'")}')">تعديل</button>
             </div></td>
         </tr>`).join('');
             renderPagination(data.last_page, data.current_page);
@@ -249,6 +262,7 @@
                 name: document.getElementById('add-name').value,
                 code: document.getElementById('add-code').value,
                 phone: document.getElementById('add-phone').value,
+                phone2: document.getElementById('add-phone2').value,
                 address: document.getElementById('add-address').value,
                 shop_category_id: document.getElementById('add-category').value,
             });
@@ -273,11 +287,12 @@
         } catch (e) { showError('حدث خطأ أو القسم موجودة بالفعل'); }
     }
 
-    function openEdit(id, name, phone, address, categoryId, code) {
+    function openEdit(id, name, phone, phone2, address, categoryId, code) {
         document.getElementById('edit-id').value = id;
         document.getElementById('edit-name').value = name;
         document.getElementById('edit-code').value = code;
         document.getElementById('edit-phone').value = phone;
+        document.getElementById('edit-phone2').value = phone2;
         document.getElementById('edit-address').value = address;
         document.getElementById('edit-category').value = categoryId;
         openModal('modal-edit-shop');
@@ -290,6 +305,7 @@
                 name: document.getElementById('edit-name').value,
                 code: document.getElementById('edit-code').value,
                 phone: document.getElementById('edit-phone').value,
+                phone2: document.getElementById('edit-phone2').value,
                 address: document.getElementById('edit-address').value,
                 shop_category_id: document.getElementById('edit-category').value,
             });

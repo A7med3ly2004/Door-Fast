@@ -21,7 +21,7 @@ class WalletController extends Controller
 
         // Default to last 30 days if no dates provided
         $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : now()->subDays(30)->startOfDay();
-        $to   = $request->filled('to')   ? Carbon::parse($request->to)->endOfDay()     : now()->endOfDay();
+        $to = $request->filled('to') ? Carbon::parse($request->to)->endOfDay() : now()->endOfDay();
 
         $query = WalletTransaction::where('wallet_id', $wallet->id)
             ->whereBetween('transaction_date', [$from->toDateString(), $to->toDateString()])
@@ -43,9 +43,9 @@ class WalletController extends Controller
             'success' => true,
             'data' => [
                 'current_balance' => (float) $wallet->balance,
-                'total_debit'     => (float) ($totals->total_debit ?? 0),
-                'total_credit'    => (float) ($totals->total_credit ?? 0),
-                'transactions'    => $transactions
+                'total_debit' => (float) ($totals->total_debit ?? 0),
+                'total_credit' => (float) ($totals->total_credit ?? 0),
+                'transactions' => $transactions
             ]
         ]);
     }

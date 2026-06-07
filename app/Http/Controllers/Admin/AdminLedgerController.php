@@ -382,7 +382,7 @@ class AdminLedgerController extends Controller
             'balance_after' => number_format((float) $tx->balance_after, 2),
             'related_user' => $tx->relatedWallet?->user?->name ?? '—',
             'created_by' => $tx->createdBy?->name ?? '—',
-            'created_at' => $tx->created_at->format('d/m/Y H:i'),
+            'created_at' => str_replace(['AM','PM','am','pm'], ['ص','م','ص','م'], $tx->created_at->format('d/m/Y h:i A')),
         ]);
     }
 

@@ -422,7 +422,7 @@ resources/views/callcenter/wallet/partials/content.blade.php
         function formatTime(iso) {
             if (!iso) return '';
             const d = new Date(iso);
-            return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+            return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).replace('AM', 'ص').replace('PM', 'م').replace('am', 'ص').replace('pm', 'م');
         }
 
         // ── Boot ─────────────────────────────────────────────────

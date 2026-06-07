@@ -542,10 +542,13 @@
     @media (max-width: 768px) {
 
         /* Reduce font sizes of phone numbers inside modal on mobile */
-        .party-row, .party-row a, .phone-link {
+        .party-row,
+        .party-row a,
+        .phone-link {
             font-size: 13.5px !important;
             word-break: break-word;
         }
+
         .party-row strong {
             font-size: 14px !important;
         }
@@ -663,7 +666,7 @@
         // تنسيق الرقم: إزالة مسافات وإضافة كود الدولة
         let formattedPhone = phone.replace(/\s+/g, '').replace(/^0/, '20');
 
-        const message = `اهلا وسهلا , مع حضرتك ${myName} مندوب توصيل دوور فاست.`;
+        const message = `اهلا وسهلا, مع حضرتك ${myName} مندوب توصيل دوور فاست`;
 
         const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');

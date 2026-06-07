@@ -457,7 +457,7 @@
                 const statusMap = { pending: 'قيد الانتظار', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
                 const rows = data.data.map(o => ({
                     ...o,
-                    created_at: o.created_at ? new Date(o.created_at).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '—',
+                    created_at: o.created_at ? new Date(o.created_at).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }).replace('am', 'ص').replace('pm', 'م').replace('AM', 'ص').replace('PM', 'م') : '—',
                     status: statusMap[o.status] || o.status,
                     creator_name: o.callcenter?.name ?? o.admin?.name ?? '—',
                     delivery_chosen_label: o.is_delivery_chosen ? 'نعم' : '—',

@@ -84,7 +84,7 @@ class StatsController extends Controller
             ),
             'shift' => [
                 'is_active' => (bool) $activeShift,
-                'started_at' => $activeShift?->started_at?->format('H:i'),
+                'started_at' => $activeShift?->started_at ? str_replace(['AM','PM','am','pm'], ['ص','م','ص','م'], $activeShift->started_at->format('h:i A')) : null,
                 'started_timestamp' => $activeShift?->started_at?->timestamp,
             ],
             'chart'      => $chart,

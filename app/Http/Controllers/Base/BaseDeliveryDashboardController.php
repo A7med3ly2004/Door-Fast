@@ -53,7 +53,7 @@ abstract class BaseDeliveryDashboardController extends Controller
         $previous_worked_seconds = 0;
 
         $activeShift       = $allShiftsToday->where('is_active', true)->first();
-        $started_at        = $activeShift ? Carbon::parse($activeShift->started_at)->format('H:i') : null;
+        $started_at        = $activeShift ? str_replace(['AM','PM','am','pm'], ['ص','م','ص','م'], \Carbon\Carbon::parse($activeShift->started_at)->format('h:i A')) : null;
         $started_timestamp = $activeShift ? Carbon::parse($activeShift->started_at)->timestamp  : null;
 
         $orders = Order::where('delivery_id', $delivery->id)

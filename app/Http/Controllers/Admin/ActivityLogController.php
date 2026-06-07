@@ -69,7 +69,7 @@ class ActivityLogController extends Controller
                 'causer_role_label' => $log->causer_role_label,
                 'causer_role_badge' => $log->causer_role_badge,
                 'properties'   => $log->properties,
-                'created_at'   => $log->created_at->format('Y-m-d H:i:s'),
+                'created_at'   => str_replace(['AM','PM','am','pm'], ['ص','م','ص','م'], $log->created_at->format('Y-m-d h:i:s A')),
                 'created_at_human' => $log->created_at->diffForHumans(),
             ];
         });

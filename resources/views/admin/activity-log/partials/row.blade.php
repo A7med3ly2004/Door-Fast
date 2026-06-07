@@ -38,7 +38,7 @@
     <td style="text-align: center;"><span
             class="badge {{ $log->causer_role_badge }}">{{ $log->causer_role_label }}</span></td>
     <td>
-        <div class="al-time-main" style="direction:ltr;text-align:center;">{{ $log->created_at->format('Y-m-d H:i:s') }}
+        <div class="al-time-main" style="direction:ltr;text-align:center;">{{ str_replace(['AM', 'PM', 'am', 'pm'], ['ص', 'م', 'ص', 'م'], $log->created_at->format('Y-m-d h:i:s A')) }}
         </div>
         <div class="al-time-ago" style="text-align:center;">{{ $log->created_at->diffForHumans() }}</div>
     </td>

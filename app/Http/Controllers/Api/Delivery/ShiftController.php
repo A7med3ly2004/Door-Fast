@@ -188,8 +188,8 @@ class ShiftController extends Controller
             'success' => true,
             'data' => [
                 'has_active_shift' => (bool) ($shift && !$shift->ended_at),
-                'shift_start' => $shift?->started_at?->format('Y-m-d H:i:s'),
-                'shift_end' => $shift?->ended_at?->format('Y-m-d H:i:s'),
+                'shift_start' => $shift?->started_at ? str_replace(['AM','PM','am','pm'], ['ص','م','ص','م'], $shift->started_at->format('Y-m-d h:i:s A')) : null,
+                'shift_end' => $shift?->ended_at ? str_replace(['AM','PM','am','pm'], ['ص','م','ص','م'], $shift->ended_at->format('Y-m-d h:i:s A')) : null,
                 'duration_minutes' => $durationMinutes,
             ]
         ]);

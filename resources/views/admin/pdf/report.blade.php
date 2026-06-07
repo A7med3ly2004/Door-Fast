@@ -28,7 +28,7 @@
     &nbsp;
     To : <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ $filters['to'] }}</span>
     &nbsp; | &nbsp;
-    Export Date: <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ now()->format('Y-m-d H:i') }}</span>
+    Export Date: <span style="direction:ltr; unicode-bidi:embed; font-family:'DejaVu Sans',sans-serif;">{{ str_replace(['AM', 'PM', 'am', 'pm'], ['ص', 'م', 'ص', 'م'], now()->format('Y-m-d h:i A')) }}</span>
 </div>
 
 <div class="kpis">
@@ -85,7 +85,7 @@
     </tfoot>
 </table>
 
-<div class="footer">تم إنشاؤه بواسطة دوور فاست — {{ now()->format('Y-m-d H:i:s') }}</div>
+<div class="footer">تم إنشاؤه بواسطة دوور فاست — {{ str_replace(['AM', 'PM', 'am', 'pm'], ['ص', 'م', 'ص', 'م'], now()->format('Y-m-d h:i:s A')) }}</div>
 </body>
 </html>
 

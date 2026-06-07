@@ -293,7 +293,7 @@ On direct page load it is @included from activity-log/index.blade.php.
                 if (badge) badge.textContent = d.total;
 
                 const lu = document.getElementById('al-last-updated');
-                if (lu) lu.textContent = 'آخر تحديث: ' + new Date().toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                if (lu) lu.textContent = 'آخر تحديث: ' + new Date().toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }).replace('am', 'ص').replace('pm', 'م').replace('AM', 'ص').replace('PM', 'م');
             } catch (e) {
                 console.error('ActivityLog fetch error:', e);
             } finally {

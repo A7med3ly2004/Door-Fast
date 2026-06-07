@@ -34,6 +34,7 @@ class CallCenterManagementController extends Controller
                     'name' => $cc->name,
                     'username' => $cc->username,
                     'phone' => $cc->phone,
+                    'personal_phone' => $cc->personal_phone,
                     'is_active' => $cc->is_active,
                     'shift_active' => $activeShift,
                     'created' => $cc->created ?? 0,
@@ -95,21 +96,23 @@ class CallCenterManagementController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'name'     => 'required|string|max:255',
             'username' => 'required|string|unique:users,username|max:50',
             'password' => 'required|string|min:6',
-            'phone' => 'nullable|digits:11',
-            'code' => 'nullable|string|max:50',
+            'phone'          => 'nullable|digits:11',
+            'personal_phone' => 'nullable|string|max:20',
+            'code'     => 'nullable|string|max:50',
         ]);
 
         $user = User::create([
-            'name' => $data['name'],
-            'username' => $data['username'],
-            'password' => Hash::make($data['password']),
-            'phone' => $data['phone'] ?? null,
-            'code' => $data['code'] ?? null,
-            'role' => 'callcenter',
-            'is_active' => true,
+            'name'           => $data['name'],
+            'username'       => $data['username'],
+            'password'       => Hash::make($data['password']),
+            'phone'          => $data['phone'] ?? null,
+            'personal_phone' => $data['personal_phone'] ?? null,
+            'code'           => $data['code'] ?? null,
+            'role'           => 'callcenter',
+            'is_active'      => true,
         ]);
 
         ActivityLog::log(
@@ -129,20 +132,22 @@ class CallCenterManagementController extends Controller
         $user = User::where('role', 'callcenter')->findOrFail($id);
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'nullable|digits:11',
-            'is_active' => 'boolean',
-            'password' => 'nullable|string|min:6',
-            'code' => 'nullable|string|max:50',
+            'name'           => 'required|string|max:255',
+            'phone'          => 'nullable|digits:11',
+            'personal_phone' => 'nullable|string|max:20',
+            'is_active'      => 'boolean',
+            'password'       => 'nullable|string|min:6',
+            'code'           => 'nullable|string|max:50',
             'incentive_slices'   => 'nullable|array',
             'incentive_slices.*' => 'array',
         ]);
 
         $updateData = [
-            'name' => $data['name'],
-            'phone' => $data['phone'] ?? $user->phone,
-            'code' => $data['code'] ?? $user->code,
-            'is_active' => $data['is_active'] ?? $user->is_active,
+            'name'           => $data['name'],
+            'phone'          => $data['phone'] ?? $user->phone,
+            'personal_phone' => array_key_exists('personal_phone', $data) ? $data['personal_phone'] : $user->personal_phone,
+            'code'           => $data['code'] ?? $user->code,
+            'is_active'      => $data['is_active'] ?? $user->is_active,
             'incentive_slices' => $data['incentive_slices'] ?? $user->incentive_slices,
         ];
 

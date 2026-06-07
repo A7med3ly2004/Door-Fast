@@ -80,6 +80,10 @@
                 </div>
                 <div class="form-group"><label class="form-label">العنوان</label><input id="add-address" type="text" class="form-control"></div>
             </div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">هاتف 1</label><input id="add-phone" type="text" class="form-control" placeholder="01xxxxxxxxx"></div>
+                <div class="form-group"><label class="form-label">هاتف 2</label><input id="add-phone2" type="text" class="form-control" placeholder="01xxxxxxxxx"></div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('modal-add-shop')">إلغاء</button>
@@ -266,9 +270,11 @@ function renderPagination(lastPage, current) {
 async function addShop() {
     try {
         const { data } = await axios.post('{{ route("admin.shops.store") }}', {
-            name: document.getElementById('add-name').value,
-            code: document.getElementById('add-code').value,
-            address: document.getElementById('add-address').value,
+            name:             document.getElementById('add-name').value,
+            code:             document.getElementById('add-code').value,
+            phone:            document.getElementById('add-phone').value,
+            phone2:           document.getElementById('add-phone2').value,
+            address:          document.getElementById('add-address').value,
             shop_category_id: document.getElementById('add-category').value,
         });
         showSuccess(data.message); closeModal('modal-add-shop'); loadShops(1);

@@ -201,15 +201,15 @@ class TreasuryController extends Controller
             'by_whom' => $transaction->by_whom,
             'note' => $transaction->note ?? '—',
             'recorded_by' => $transaction->recordedBy?->name ?? '—',
-            'created_at' => $transaction->created_at->format('d/m/Y H:i'),
-            'transaction_time' => $transaction->created_at->format('H:i'),
+            'created_at' => str_replace(['AM','PM','am','pm'], ['ص','م','ص','م'], $transaction->created_at->format('d/m/Y h:i A')),
+            'transaction_time' => str_replace(['AM','PM','am','pm'], ['ص','م','ص','م'], $transaction->created_at->format('h:i A')),
             'is_settlement' => $transaction->source_type === 'settlement',
             'settlement' => $transaction->source_type === 'settlement' && $transaction->settlement
                 ? [
                     'agent_name' => $transaction->settlement->callcenter?->name,
                     'agent_phone' => $transaction->settlement->callcenter?->phone,
                     'settled_by' => $transaction->settlement->settledBy?->name,
-                    'settled_at' => $transaction->settlement->settled_at->format('d/m/Y H:i'),
+                    'settled_at' => str_replace(['AM','PM','am','pm'], ['ص','م','ص','م'], $transaction->settlement->settled_at->format('d/m/Y h:i A')),
                     'note' => $transaction->settlement->note ?? '—',
                 ]
                 : null,

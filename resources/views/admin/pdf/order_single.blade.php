@@ -158,7 +158,7 @@
                     {{ $ar('فاتورة طلب رقم #') }}
                 </p>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 14px;">
-                    {{ $order->created_at->format('Y-m-d H:i') }} {{ $ar('التاريخ:') }}
+                    {{ str_replace(['AM', 'PM', 'am', 'pm'], ['ص', 'م', 'ص', 'م'], $order->created_at->format('Y-m-d h:i A')) }} {{ $ar('التاريخ:') }}
                 </p>
             </td>
             <td style="width: 30%; text-align: right; vertical-align: top;">

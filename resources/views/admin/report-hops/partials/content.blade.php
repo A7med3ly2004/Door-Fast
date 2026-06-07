@@ -256,7 +256,7 @@
             const statusMap = { pending: 'قيد الانتظار', received: 'مسلم للمندوب', delivered: 'تم التوصيل', cancelled: 'ملغي' };
             const rows = data.orders.map(o => ({
                 ...o,
-                created_at: o.created_at ? new Date(o.created_at).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '—',
+                created_at: o.created_at ? new Date(o.created_at).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }).replace('am', 'ص').replace('pm', 'م').replace('AM', 'ص').replace('PM', 'م') : '—',
                 status: statusMap[o.status] || o.status,
             }));
             exportToExcel(rows, columns, 'shop-report-' + data.shop.name + '-' + new Date().toISOString().slice(0, 10), 'تقرير المتجر');

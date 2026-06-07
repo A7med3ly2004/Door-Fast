@@ -152,7 +152,7 @@
                     {{ $ar('فاتورة مستحق -') }} {{ $ar($shop->name) }}
                 </p>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 13px;">
-                    {{ now()->format('Y-m-d H:i') }} {{ $ar('تاريخ الإصدار:') }}
+                    {{ str_replace(['AM', 'PM', 'am', 'pm'], ['ص', 'م', 'ص', 'م'], now()->format('Y-m-d h:i A')) }} {{ $ar('تاريخ الإصدار:') }}
                 </p>
             </td>
             <td style="width: 30%; text-align: right; vertical-align: top;">

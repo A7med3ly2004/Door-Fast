@@ -36,8 +36,9 @@ class ShopController extends Controller
         }
 
         if ($request->header('X-SPA-Navigation')) {
+            $categories = \App\Models\ShopCategory::orderBy('name')->get();
             return response()->json([
-                'html'       => view('admin.shops.partials.content')->render(),
+                'html'       => view('admin.shops.partials.content', compact('categories'))->render(),
                 'title'      => 'المتاجر',
                 'csrf_token' => csrf_token(),
             ]);

@@ -502,12 +502,15 @@
 
     /* MOBILE RESPONSIVE */
     @media (max-width: 768px) {
-        
+
         /* Reduce font sizes of phone numbers inside modal on mobile */
-        .party-row, .party-row a, .phone-link {
+        .party-row,
+        .party-row a,
+        .phone-link {
             font-size: 13.5px !important;
             word-break: break-word;
         }
+
         .party-row strong {
             font-size: 14px !important;
         }
@@ -931,7 +934,7 @@
             if (phoneNum.length == 11) phoneNum = '20' + phoneNum;
         }
         var myName = @json(auth()->user()->name);
-        var msg = `اهلا وسهلا , مع حضرتك ${myName} مندوب توصيل دوور فاست.`;
+        var msg = `اهلا وسهلا, مع حضرتك ${myName} مندوب توصيل دوور فاست`;
         var encodedMsg = encodeURIComponent(msg);
         window.open("https://wa.me/" + phoneNum + "?text=" + encodedMsg, '_blank');
     }

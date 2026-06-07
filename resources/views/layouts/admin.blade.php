@@ -1316,7 +1316,7 @@
         function formatDate(str) {
             if (!str) return '—';
             const d = new Date(str);
-            return d.toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+            return d.toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }).replace('am', 'ص').replace('pm', 'م').replace('AM', 'ص').replace('PM', 'م');
         }
 
         // Status badge
@@ -1473,6 +1473,26 @@
     </div>
 
     <script>
+        // ── Sliding-Day Date Formatter ────────────────────────────────
+        // business_day_start_hour: الساعة التي يبدأ فيها يوم العمل (مثلاً 4 = 4 صباحاً)
+        // أي إشعار وصل بين 12 منتصف الليل وقبل هذه الساعة يعرض بتاريخ اليوم السابق
+        var _bizStartHour = {{ (int) \App\Models\Setting::get('business_day_start_hour', 0) }};
+
+        function formatNotifDate(dateStr) {
+            if (!dateStr) return '—';
+            var d = new Date(dateStr);
+            // إذا كان وقت الإشعار قبل ساعة بداية يوم العمل → نطرح يوماً من التاريخ المعروض
+            if (_bizStartHour > 0 && d.getHours() < _bizStartHour) {
+                d = new Date(d.getTime() - 24 * 60 * 60 * 1000);
+            }
+            return d.toLocaleString('en-GB', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', hour12: true
+            }).replace('am','ص').replace('pm','م').replace('AM','ص').replace('PM','م');
+        }
+    </script>
+
+    <script>
         // ── Admin Notifications ──────────────────────────────────────
         var _notifOpen = false;
         var _notifCount = 0;
@@ -1510,7 +1530,7 @@
                         icon +
                         '<div style="flex:1">' +
                         '<div style="font-size:13px;font-weight:600;line-height:1.4">' + n.message + '</div>' +
-                        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">' + new Date(n.created_at).toLocaleString("en-GB") + '</div>' +
+                        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">' + formatNotifDate(n.created_at) + '</div>' +
                         '</div></div>' +
                         '</div>';
                 }).join('');
@@ -1572,6 +1592,18 @@
         setInterval(function () {
             if (!_isEchoConnected()) _refreshNotifCount();
         }, 30000);
+
+        // إغلاق اللوحة عند الضغط خارجها
+        document.addEventListener('click', function (e) {
+            var panel = document.getElementById('notif-panel');
+            var bell = e.target.closest('[onclick="toggleNotifPanel()"]');
+            if (!bell && !panel.contains(e.target)) {
+                _notifOpen = false;
+                panel.style.display = 'none';
+                var btn = document.getElementById('notif-toggle-btn');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+        });
     </script>
 
     {{-- ── Shared Excel Export Utility ── --}}

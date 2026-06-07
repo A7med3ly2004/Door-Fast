@@ -150,7 +150,7 @@
                     {{ $ar('معاملة مالية — كشف حسابي') }}
                 </p>
                 <p style="margin: 5px 0 0 0; color: #000000ff; font-size: 12px;">
-                    {{ $transaction->transaction_date->format('Y-m-d') }} {{ $transaction->created_at->format('H:i') }} {{ $ar('التاريخ:') }}
+                    {{ $transaction->transaction_date->format('Y-m-d') }} {{ str_replace(['AM', 'PM', 'am', 'pm'], ['ص', 'م', 'ص', 'م'], $transaction->created_at->format('h:i A')) }} {{ $ar('التاريخ:') }}
                 </p>
             </td>
             <td style="width: 30%; text-align: right; vertical-align: top;">
@@ -207,7 +207,7 @@
     </table>
 
     <div class="footer">
-        {{ $ar('تم إنشاؤه بواسطة نظام دوور فاست —') }} {{ $transaction->transaction_date->format('Y-m-d') }} {{ $transaction->created_at->format('H:i:s') }}
+        {{ $ar('تم إنشاؤه بواسطة نظام دوور فاست —') }} {{ $transaction->transaction_date->format('Y-m-d') }} {{ str_replace(['AM', 'PM', 'am', 'pm'], ['ص', 'م', 'ص', 'م'], $transaction->created_at->format('h:i:s A')) }}
     </div>
 
 </body>

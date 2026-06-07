@@ -165,8 +165,8 @@
 var currentPage = 1;
 var addCategoryTs, editCategoryTs, filterCategoryTs;
 
-document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById('add-category')) {
+function initShopSelects() {
+    if (document.getElementById('add-category') && !document.getElementById('add-category').tomselect) {
         addCategoryTs = new TomSelect('#add-category', {
             create: false,
             render: {
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    if (document.getElementById('edit-category')) {
+    if (document.getElementById('edit-category') && !document.getElementById('edit-category').tomselect) {
         editCategoryTs = new TomSelect('#edit-category', {
             create: false,
             render: {
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    if (document.getElementById('filter-category')) {
+    if (document.getElementById('filter-category') && !document.getElementById('filter-category').tomselect) {
         filterCategoryTs = new TomSelect('#filter-category', {
             create: false,
             render: {
@@ -196,7 +196,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initShopSelects);
+} else {
+    initShopSelects();
+}
 
 function resetFilters() { 
     document.getElementById('filter-search').value = ''; 

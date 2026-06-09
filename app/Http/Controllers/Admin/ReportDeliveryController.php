@@ -43,8 +43,14 @@ class ReportDeliveryController extends Controller
             'to' => 'nullable|date',
         ]);
 
-        $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : now()->subDays(30)->startOfDay();
-        $to   = $request->filled('to')   ? Carbon::parse($request->to)->endOfDay()     : now()->endOfDay();
+        $fromRaw = $request->filled('from') ? Carbon::parse($request->from) : now()->subDays(30);
+        $toRaw   = $request->filled('to')   ? Carbon::parse($request->to)   : now();
+
+        $from = \App\Models\Setting::businessDayRange($fromRaw)[0];
+        $to   = \App\Models\Setting::businessDayRange($toRaw)[1];
+
+        $fromDateString = $from->toDateString();
+        $toDateString   = \App\Models\Setting::businessDayRange($toRaw)[0]->toDateString();
 
         $deliveryId = $request->delivery_id;
 
@@ -71,10 +77,10 @@ class ReportDeliveryController extends Controller
         if ($wallet) {
             $walletTx = \App\Models\WalletTransaction::where('wallet_id', $wallet->id);
             if ($request->filled('from')) {
-                $walletTx->where('transaction_date', '>=', $from->toDateString());
+                $walletTx->where('transaction_date', '>=', $fromDateString);
             }
             if ($request->filled('to')) {
-                $walletTx->where('transaction_date', '<=', $to->toDateString());
+                $walletTx->where('transaction_date', '<=', $toDateString);
             }
             
             $totals = $walletTx->selectRaw("
@@ -87,7 +93,7 @@ class ReportDeliveryController extends Controller
 
             // حساب رصيد الخزينة الفعلي (العهدة) المتراكم حتى نهاية الفترة المحددة
             $cumulativeTotals = \App\Models\WalletTransaction::where('wallet_id', $wallet->id)
-                ->where('transaction_date', '<=', $to->toDateString())
+                ->where('transaction_date', '<=', $toDateString)
                 ->selectRaw("
                     COALESCE(SUM(CASE WHEN direction = 'debit' THEN amount ELSE 0 END), 0) as cumulative_debit,
                     COALESCE(SUM(CASE WHEN direction = 'credit' THEN amount ELSE 0 END), 0) as cumulative_credit
@@ -128,24 +134,26 @@ class ReportDeliveryController extends Controller
         $formattedWorkHours = sprintf('%02d:%02d', $totalWorkHours, $totalWorkMinutes);
 
         $totalWorkDays = \App\Models\Shift::where('delivery_id', $deliveryId)
-            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+            ->whereBetween('date', [$fromDateString, $toDateString])
             ->distinct('date')
             ->count('date');
 
         // ── 4. Tier & Profits — Daily Calculation ────────────────────────────────
         $delivery = User::find($deliveryId);
 
+        $startHour = (int) \App\Models\Setting::get('business_day_start_hour', 0);
+
         // جلب تفصيل يومي من القيم المحفوظة في الطلبات
         $dailyBreakdown = Order::where('delivery_id', $deliveryId)
             ->whereBetween('delivered_at', [$from, $to])
             ->where('status', 'delivered')
-            ->selectRaw('
-                DATE(delivered_at)               as delivery_date,
+            ->selectRaw("
+                DATE(DATE_SUB(delivered_at, INTERVAL {$startHour} HOUR)) as delivery_date,
                 COUNT(*)                         as day_count,
                 MAX(delivery_tier_number)        as tier_number,
                 MAX(delivery_profit)             as unit_profit,
                 (MAX(delivery_profit) * COUNT(*)) as day_profit
-            ')
+            ")
             ->groupBy('delivery_date')
             ->orderBy('delivery_date')
             ->get();
@@ -154,7 +162,7 @@ class ReportDeliveryController extends Controller
         $totalDeliveredCount = $dailyBreakdown->sum('day_count');
 
         // رقم الشريحة — يُظهر فقط عند اختيار يوم واحد
-        $isSingleDay = $from->toDateString() === $to->toDateString();
+        $isSingleDay = $fromDateString === $toDateString;
         $tierNumber  = $isSingleDay
             ? (int) ($dailyBreakdown->first()?->tier_number ?? 0)
             : null;

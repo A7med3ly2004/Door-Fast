@@ -40,8 +40,14 @@ class ReportCallCenterController extends Controller
             'to' => 'nullable|date',
         ]);
 
-        $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : now()->subDays(30)->startOfDay();
-        $to   = $request->filled('to')   ? Carbon::parse($request->to)->endOfDay()     : now()->endOfDay();
+        $fromRaw = $request->filled('from') ? Carbon::parse($request->from) : now()->subDays(30);
+        $toRaw   = $request->filled('to')   ? Carbon::parse($request->to)   : now();
+
+        $from = \App\Models\Setting::businessDayRange($fromRaw)[0];
+        $to   = \App\Models\Setting::businessDayRange($toRaw)[1];
+
+        $fromDateString = $from->toDateString();
+        $toDateString   = \App\Models\Setting::businessDayRange($toRaw)[0]->toDateString();
 
         $callcenterId = $request->callcenter_id;
 
@@ -72,10 +78,10 @@ class ReportCallCenterController extends Controller
         if ($wallet) {
             $walletTx = \App\Models\WalletTransaction::where('wallet_id', $wallet->id);
             if ($request->filled('from')) {
-                $walletTx->where('transaction_date', '>=', $from->toDateString());
+                $walletTx->where('transaction_date', '>=', $fromDateString);
             }
             if ($request->filled('to')) {
-                $walletTx->where('transaction_date', '<=', $to->toDateString());
+                $walletTx->where('transaction_date', '<=', $toDateString);
             }
             
             $totals = $walletTx->selectRaw("
@@ -115,26 +121,28 @@ class ReportCallCenterController extends Controller
         $formattedWorkHours = sprintf('%02d:%02d', $totalWorkHours, $totalWorkMinutes);
 
         $totalWorkDays = \App\Models\CallcenterShift::where('callcenter_id', $callcenterId)
-            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+            ->whereBetween('date', [$fromDateString, $toDateString])
             ->distinct('date')
             ->count('date');
 
         // ── 5. Tier & Profits — من القيم المحفوظة في كل طلب ────────────────────
+        $startHour = (int) \App\Models\Setting::get('business_day_start_hour', 0);
+
         $dailyBreakdown = Order::where('callcenter_id', $callcenterId)
             ->whereBetween('created_at', [$from, $to])
-            ->selectRaw('
-                DATE(created_at)                      as order_date,
+            ->selectRaw("
+                DATE(DATE_SUB(created_at, INTERVAL {$startHour} HOUR)) as order_date,
                 COUNT(*)                              as day_count,
                 MAX(cc_tier_number)                   as tier_number,
                 MAX(cc_profit)                        as unit_profit,
                 SUM(cc_profit)                        as day_profit
-            ')
+            ")
             ->groupBy('order_date')
             ->orderBy('order_date')
             ->get();
 
         $totalCCProfits  = $dailyBreakdown->sum('day_profit');
-        $isSingleDay     = $from->toDateString() === $to->toDateString();
+        $isSingleDay     = $fromDateString === $toDateString;
         $ccTierNumber    = $isSingleDay
             ? (int) ($dailyBreakdown->first()?->tier_number ?? 0)
             : null;

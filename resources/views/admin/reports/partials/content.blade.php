@@ -213,7 +213,32 @@
             document.getElementById('report-totals').innerHTML = `<tr><td colspan="5" style="padding:12px 16px">الإجمالي (${t.count} طلب)</td><td style="padding:12px 16px">${parseFloat(t.delivery_fee).toFixed(2)} ج</td><td style="padding:12px 16px">${parseFloat(t.discount).toFixed(2)} ج</td><td style="padding:12px 16px;color:var(--yellow)">${parseFloat(t.total).toFixed(2)} ج</td><td></td></tr>`;
             if (t.pages > 1) {
                 var html = '<div class="pagination">';
-                for (let i = 1; i <= t.pages; i++) html += `<a class="${i === t.page ? 'active' : ''}" onclick="loadReport(${i})">${i}</a>`;
+                
+                if (t.page > 1) {
+                    html += '<a href="#" onclick="event.preventDefault();loadReport(' + (t.page - 1) + ')">«</a>';
+                } else {
+                    html += '<span class="disabled">«</span>';
+                }
+
+                var maxVisible = 5;
+                var startPage = Math.max(1, t.page - Math.floor(maxVisible / 2));
+                var endPage = startPage + maxVisible - 1;
+
+                if (endPage > t.pages) {
+                    endPage = t.pages;
+                    startPage = Math.max(1, endPage - maxVisible + 1);
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `<a href="#" class="${i === t.page ? 'active' : ''}" onclick="event.preventDefault();loadReport(${i})">${i}</a>`;
+                }
+
+                if (t.page < t.pages) {
+                    html += '<a href="#" onclick="event.preventDefault();loadReport(' + (t.page + 1) + ')">»</a>';
+                } else {
+                    html += '<span class="disabled">»</span>';
+                }
+
                 document.getElementById('report-pagination').innerHTML = html + '</div>';
             } else { document.getElementById('report-pagination').innerHTML = ''; }
         } catch (e) { console.error(e); showError('حدث خطأ'); }

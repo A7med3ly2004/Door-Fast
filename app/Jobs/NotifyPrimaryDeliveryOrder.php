@@ -7,36 +7,21 @@ use App\Models\Order;
 use App\Models\User;
 use App\Services\FcmService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class NotifyPrimaryDeliveryOrder implements ShouldQueue, ShouldBeUnique
+class NotifyPrimaryDeliveryOrder implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
-    // منع تكرار إشعار نفس الطلب لمدة 30 دقيقة على الأكثر
-    public int $uniqueFor = 1800;
-
     public function __construct(public readonly int $orderId)
     {
-    }
-
-    public function uniqueId(): string
-    {
-        // uniqueId مختلف للطلب المخصص — يمنع الـ unique lock من حجب إشعار المندوب المحدد
-        // لو الطلب اتبعت بدون مندوب أولاً (Job في الـ queue) ثم حُدّد مندوب لاحقاً
-        $order = \App\Models\Order::find($this->orderId);
-        $suffix = ($order && $order->is_delivery_chosen && $order->delivery_id)
-            ? 'assigned-' . $order->delivery_id
-            : 'broadcast';
-
-        return 'notify-primary-order-' . $this->orderId . '-' . $suffix;
     }
 
     public function handle(FcmService $fcm): void
@@ -51,6 +36,17 @@ class NotifyPrimaryDeliveryOrder implements ShouldQueue, ShouldBeUnique
             Log::info("NotifyPrimaryDelivery: order #{$this->orderId} no longer pending — skipped.");
             return;
         }
+
+        // ✅ منع إرسال مكرر: لو سبق وصل إشعار لهذا الطلب (من Job فوري عند sendEarly)
+        // هذا الـ Job هو القديم المؤجل — نتجاهل
+        $cacheKey = 'order_notified_primary_' . $this->orderId;
+        if (\Illuminate\Support\Facades\Cache::has('order_early_sent_' . $this->orderId)
+            && \Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            Log::info("NotifyPrimaryDelivery: order #{$this->orderId} already notified via early-send — skipped.");
+            return;
+        }
+        // سجّل إن هذا الـ Job شتغل
+        \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addMinutes(60));
 
         // لو الطلب موجّه لمندوب معين — أبعت له FCM مباشرةً
         // ✅ delivery_id هو الـ column الصح في الـ Model (مش assigned_delivery_id)

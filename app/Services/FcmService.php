@@ -20,6 +20,13 @@ class FcmService
             return;
         }
 
+        \Log::info('FCM ABOUT TO SEND', [
+            'token_preview' => substr($token, 0, 20),
+            'title' => $title,
+            'body' => $body,
+            'data' => $data,
+        ]);
+
         // ✅ تأكد إن كل الـ values strings
         $stringData = array_map('strval', array_merge([
             'title' => $title,

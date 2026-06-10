@@ -500,8 +500,11 @@ class OrderController extends Controller
         } catch (\Throwable) {
         }
 
-        // ✅ dispatch فوري — الـ Job المجدول القديم سيتجاهله الـ worker لو وصله متأخراً
-        // لأن الـ Job بيتحقق من status = pending قبل الإرسال
+        // ✅ نمسح أي cache flag قديم ونضيف flag جديد يمنع الـ Job المؤجل القديم من الإرسال
+        // الـ Job الجديد الفوري سيُرسل الإشعار، والقديم سيجد الـ flag ويتجاهل
+        \Illuminate\Support\Facades\Cache::forget('order_notified_' . $order->id);
+        \Illuminate\Support\Facades\Cache::put('order_early_sent_' . $order->id, true, now()->addMinutes(60));
+
         \App\Jobs\NotifyPrimaryDeliveryOrder::dispatch($order->id);
         \App\Jobs\NotifyReserveDeliveryOrder::dispatch($order->id)
             ->delay(now()->addMinutes((int) \App\Models\Setting::get('reserve_delay_minutes', 5)));

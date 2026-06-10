@@ -28,7 +28,13 @@ class NotifyReserveDeliveryOrder implements ShouldQueue, ShouldBeUnique
 
     public function uniqueId(): string
     {
-        return 'notify-reserve-order-' . $this->orderId;
+        // uniqueId مختلف للطلب المخصص — يمنع الـ unique lock من حجب dispatch الاحتياطي
+        $order = \App\Models\Order::find($this->orderId);
+        $suffix = ($order && $order->is_delivery_chosen && $order->delivery_id)
+            ? 'assigned-' . $order->delivery_id
+            : 'broadcast';
+
+        return 'notify-reserve-order-' . $this->orderId . '-' . $suffix;
     }
 
     public function handle(FcmService $fcm): void

@@ -29,7 +29,14 @@ class NotifyPrimaryDeliveryOrder implements ShouldQueue, ShouldBeUnique
 
     public function uniqueId(): string
     {
-        return 'notify-primary-order-' . $this->orderId;
+        // uniqueId مختلف للطلب المخصص — يمنع الـ unique lock من حجب إشعار المندوب المحدد
+        // لو الطلب اتبعت بدون مندوب أولاً (Job في الـ queue) ثم حُدّد مندوب لاحقاً
+        $order = \App\Models\Order::find($this->orderId);
+        $suffix = ($order && $order->is_delivery_chosen && $order->delivery_id)
+            ? 'assigned-' . $order->delivery_id
+            : 'broadcast';
+
+        return 'notify-primary-order-' . $this->orderId . '-' . $suffix;
     }
 
     public function handle(FcmService $fcm): void

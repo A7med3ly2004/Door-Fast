@@ -65,8 +65,8 @@ class OrderController extends Controller
             'send_to_delivery_link' => 'nullable|url|max:500',
         ], [
             'phone.required' => 'رقم الهاتف مطلوب',
-            'phone.digits'    => 'رقم الهاتف يجب أن يتكون من 11 رقم',
-            'phone2.digits'   => 'رقم الهاتف الثاني يجب أن يتكون من 11 رقم',
+            'phone.digits' => 'رقم الهاتف يجب أن يتكون من 11 رقم',
+            'phone2.digits' => 'رقم الهاتف الثاني يجب أن يتكون من 11 رقم',
             'send_to_phone.digits' => 'رقم هاتف المستلم يجب أن يتكون من 11 رقم',
             'send_to_phone2.digits' => 'رقم الهاتف الثاني للمستلم يجب أن يتكون من 11 رقم',
             'code.required' => 'الكود مطلوب',
@@ -392,14 +392,15 @@ class OrderController extends Controller
         }
 
         foreach ($items as $item) {
-            if (empty($item['item_name'])) continue;
+            if (empty($item['item_name']))
+                continue;
             OrderItem::create([
-                'order_id'   => $order->id,
-                'shop_id'    => $item['shop_id'] ?? null,
-                'item_name'  => $item['item_name'],
-                'quantity'   => $item['quantity'],
+                'order_id' => $order->id,
+                'shop_id' => $item['shop_id'] ?? null,
+                'item_name' => $item['item_name'],
+                'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
-                'total'      => $item['quantity'] * $item['unit_price'],
+                'total' => $item['quantity'] * $item['unit_price'],
             ]);
         }
 
@@ -431,11 +432,11 @@ class OrderController extends Controller
         ]);
 
         $notif = \App\Models\AdminNotification::create([
-            'type'         => 'cancelled',
-            'order_id'     => $order->id,
+            'type' => 'cancelled',
+            'order_id' => $order->id,
             'order_number' => $order->order_number,
-            'message'      => "تم إلغاء الطلب #{$order->order_number} بواسطة كول سنتر : " . auth()->user()->name,
-            'audience'     => 'all', // يظهر للأدمن والكول سنتر
+            'message' => "تم إلغاء الطلب #{$order->order_number} بواسطة كول سنتر : " . auth()->user()->name,
+            'audience' => 'all', // يظهر للأدمن والكول سنتر
         ]);
         event(new \App\Events\AdminNotificationCreated($notif));
 
@@ -498,6 +499,12 @@ class OrderController extends Controller
             event(new OrderStatusUpdated(['order_id' => $order->id, 'status' => 'pending', 'early' => true]));
         } catch (\Throwable) {
         }
+
+        // ✅ dispatch فوري — الـ Job المجدول القديم سيتجاهله الـ worker لو وصله متأخراً
+        // لأن الـ Job بيتحقق من status = pending قبل الإرسال
+        \App\Jobs\NotifyPrimaryDeliveryOrder::dispatch($order->id);
+        \App\Jobs\NotifyReserveDeliveryOrder::dispatch($order->id)
+            ->delay(now()->addMinutes((int) \App\Models\Setting::get('reserve_delay_minutes', 5)));
 
         return response()->json(['success' => true, 'message' => 'تم إرسال الطلب للمندوب الآن']);
     }

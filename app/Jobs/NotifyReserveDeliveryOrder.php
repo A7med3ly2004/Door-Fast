@@ -33,9 +33,10 @@ class NotifyReserveDeliveryOrder implements ShouldQueue, ShouldBeUnique
 
     public function handle(FcmService $fcm): void
     {
+        // ✅ أُزيل whereNull('delivery_id') — نحتاج نجلب الطلب أولاً للتحقق من is_delivery_chosen
+        // ✅ الطلب المخصص status = 'received'، غير المخصص status = 'pending'
         $order = Order::where('id', $this->orderId)
-            ->where('status', 'pending')
-            ->whereNull('delivery_id')
+            ->whereIn('status', ['pending', 'received'])
             ->first();
 
         if (!$order) {
@@ -43,49 +44,34 @@ class NotifyReserveDeliveryOrder implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        // 1) Pusher — موجود بالفعل، لم يتغير
+        // ✅ لو الطلب موجّه لمندوب محدد — NotifyPrimaryDeliveryOrder اتكفّل بالإشعار
+        // نتجاهل هنا لمنع إشعار مكرر
+        if ($order->is_delivery_chosen && $order->delivery_id) {
+            Log::info("NotifyReserveDelivery: order #{$this->orderId} is assigned to delivery #{$order->delivery_id} — skipped.");
+            return;
+        }
+
+        // بدون مندوب محدد — broadcast لكل الدليفري الاحتياطي
         event(new ReserveOrderReady($this->orderId));
 
-        // لو الطلب موجّه لدليفري معين
-        if ($order->is_delivery_chosen && $order->assigned_delivery_id) {
-            $delivery = User::find($order->assigned_delivery_id);
+        $deliveries = User::where('role', 'reserve_delivery')
+            ->where('is_active', true)
+            ->whereNotNull('fcm_token')
+            ->get();
 
-            if ($delivery && $delivery->fcm_token) {
-                $fcm->sendToToken(
-                    $delivery->fcm_token,
-                    'الطلب مرسل إليك 🎯',
-                    'رقم الطلب: ' . $order->order_number,
-                    [
-                        'type' => 'assigned_order',
-                        'order_id' => (string) $order->id,
-                        'order_number' => $order->order_number,
-                    ]
-                );
-                Log::info("NotifyReserveDelivery: fired for order #{$this->orderId}, FCM sent to 1 assigned delivery");
-            } else {
-                Log::info("NotifyReserveDelivery: fired for order #{$this->orderId}, but assigned delivery not found or no FCM");
-            }
-        } else {
-            // broadcast لكل الدليفري الاحتياطي
-            $deliveries = User::where('role', 'reserve_delivery')
-                ->where('is_active', true)
-                ->whereNotNull('fcm_token')
-                ->get();
-
-            foreach ($deliveries as $delivery) {
-                $fcm->sendToToken(
-                    $delivery->fcm_token,
-                    'طلب جديد 🛵',
-                    'رقم الطلب: ' . $order->order_number,
-                    [
-                        'type' => 'reserve_new_order',
-                        'order_id' => (string) $order->id,
-                        'order_number' => $order->order_number,
-                    ]
-                );
-            }
-            Log::info("NotifyReserveDelivery: fired for order #{$this->orderId}, FCM sent to {$deliveries->count()} delivery(s)");
+        foreach ($deliveries as $delivery) {
+            $fcm->sendToToken(
+                $delivery->fcm_token,
+                'طلب جديد 🛵',
+                'رقم الطلب: ' . $order->order_number,
+                [
+                    'type' => 'reserve_new_order',
+                    'order_id' => (string) $order->id,
+                    'order_number' => $order->order_number,
+                ]
+            );
         }
+        Log::info("NotifyReserveDelivery: FCM sent to {$deliveries->count()} reserve delivery(s) for order #{$this->orderId}");
     }
 
     public function failed(\Throwable $e): void

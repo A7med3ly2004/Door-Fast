@@ -152,16 +152,22 @@ class OrderService
             ];
         });
 
-        // ── 9. ✅ Dispatch delayed job للمندوب الاحتياطي ──────────────────
-        // يشتغل بعد commit الـ transaction — فقط للطلبات غير المسندة لمندوب بعينه
-        if (!$result['isDeliveryChosen']) {
+        // ── 9. Dispatch notification jobs ────────────────────────────────────
+        // يشتغل بعد commit الـ transaction في كل الحالات
+        if ($result['isDeliveryChosen']) {
+            // ✅ مندوب مخصص — dispatch فوري بدون delay
+            // NotifyPrimaryDeliveryOrder سيبعت FCM للمندوب المحدد مباشرةً
+            // NotifyReserveDeliveryOrder سيتجاهل الطلب تلقائياً (is_delivery_chosen = true)
+            NotifyPrimaryDeliveryOrder::dispatch($result['order']->id);
+            NotifyReserveDeliveryOrder::dispatch($result['order']->id);
+        } else {
+            // بدون مندوب — dispatch بعد انتهاء فترة الـ hold كالمعتاد
             $reserveDelay = (int) Setting::get('reserve_delay_minutes', 5);
             $dispatchAt = $result['sentToDeliveryAt']->copy()->addMinutes($reserveDelay);
 
             NotifyPrimaryDeliveryOrder::dispatch($result['order']->id)
                 ->delay($result['sentToDeliveryAt']);
 
-            // ✅ أطلق Job للمندوب الاحتياطي بعد hold + reserve_delay
             NotifyReserveDeliveryOrder::dispatch($result['order']->id)
                 ->delay($dispatchAt);
         }

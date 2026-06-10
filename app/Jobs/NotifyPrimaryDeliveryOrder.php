@@ -34,9 +34,10 @@ class NotifyPrimaryDeliveryOrder implements ShouldQueue, ShouldBeUnique
 
     public function handle(FcmService $fcm): void
     {
+        // ✅ أُزيل شرط whereNull('delivery_id') — كان يمنع وصول الإشعار للطلب المخصص
+        // ✅ الطلب المخصص status = 'received'، غير المخصص status = 'pending'
         $order = Order::where('id', $this->orderId)
-            ->where('status', 'pending')
-            ->whereNull('delivery_id')
+            ->whereIn('status', ['pending', 'received'])
             ->first();
 
         if (!$order) {
@@ -44,7 +45,40 @@ class NotifyPrimaryDeliveryOrder implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        // 1) Pusher — موجود بالفعل، لم يتغير
+        // لو الطلب موجّه لمندوب معين — أبعت له FCM مباشرةً
+        // ✅ delivery_id هو الـ column الصح في الـ Model (مش assigned_delivery_id)
+        if ($order->is_delivery_chosen && $order->delivery_id) {
+            $delivery = User::find($order->delivery_id);
+
+            if ($delivery && $delivery->fcm_token) {
+                // Pusher للمندوب المخصص فقط
+                event(new OrderStatusUpdated([
+                    'order_id' => $order->id,
+                    'status' => 'pending',
+                    'order_number' => $order->order_number,
+                    'delivery_id' => $order->delivery_id,
+                ]));
+
+                // FCM للمندوب المخصص
+                $fcm->sendToToken(
+                    $delivery->fcm_token,
+                    'الطلب مرسل إليك 🎯',
+                    'رقم الطلب: ' . $order->order_number,
+                    [
+                        'type' => 'assigned_order',
+                        'order_id' => (string) $order->id,
+                        'order_number' => $order->order_number,
+                    ]
+                );
+                Log::info("NotifyPrimaryDelivery: FCM sent to assigned delivery #{$order->delivery_id} for order #{$this->orderId}");
+            } else {
+                Log::warning("NotifyPrimaryDelivery: assigned delivery #{$order->delivery_id} not found or no FCM token — order #{$this->orderId}");
+            }
+
+            return; // انتهى — لا نبعت لباقي الدليفري
+        }
+
+        // بدون مندوب محدد — broadcast لكل الدليفري الأساسي
         event(new OrderStatusUpdated([
             'order_id' => $order->id,
             'status' => 'pending',
@@ -52,46 +86,24 @@ class NotifyPrimaryDeliveryOrder implements ShouldQueue, ShouldBeUnique
             'delivery_id' => null,
         ]));
 
-        // لو الطلب موجّه لدليفري معين
-        if ($order->is_delivery_chosen && $order->assigned_delivery_id) {
-            $delivery = User::find($order->assigned_delivery_id);
-            
-            if ($delivery && $delivery->fcm_token) {
-                $fcm->sendToToken(
-                    $delivery->fcm_token,
-                    'الطلب مرسل إليك 🎯',   // ✅ title مختلف
-                    'رقم الطلب: ' . $order->order_number,
-                    [
-                        'type'         => 'assigned_order',
-                        'order_id'     => (string) $order->id,
-                        'order_number' => $order->order_number,
-                    ]
-                );
-                Log::info("NotifyPrimaryDelivery: fired for order #{$this->orderId}, FCM sent to 1 assigned delivery");
-            } else {
-                Log::info("NotifyPrimaryDelivery: fired for order #{$this->orderId}, but assigned delivery not found or no FCM");
-            }
-        } else {
-            // broadcast لكل الدليفري
-            $deliveries = User::where('role', 'delivery')
-                ->where('is_active', true)
-                ->whereNotNull('fcm_token')
-                ->get();
-                
-            foreach ($deliveries as $delivery) {
-                $fcm->sendToToken(
-                    $delivery->fcm_token,
-                    'طلب جديد 🛵',
-                    'رقم الطلب: ' . $order->order_number,
-                    [
-                        'type'         => 'new_order',
-                        'order_id'     => (string) $order->id,
-                        'order_number' => $order->order_number,
-                    ]
-                );
-            }
-            Log::info("NotifyPrimaryDelivery: fired for order #{$this->orderId}, FCM sent to {$deliveries->count()} delivery(s)");
+        $deliveries = User::where('role', 'delivery')
+            ->where('is_active', true)
+            ->whereNotNull('fcm_token')
+            ->get();
+
+        foreach ($deliveries as $delivery) {
+            $fcm->sendToToken(
+                $delivery->fcm_token,
+                'طلب جديد 🛵',
+                'رقم الطلب: ' . $order->order_number,
+                [
+                    'type' => 'new_order',
+                    'order_id' => (string) $order->id,
+                    'order_number' => $order->order_number,
+                ]
+            );
         }
+        Log::info("NotifyPrimaryDelivery: FCM sent to {$deliveries->count()} delivery(s) for order #{$this->orderId}");
     }
 
     public function failed(\Throwable $e): void

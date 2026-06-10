@@ -70,22 +70,32 @@ class ReportController extends Controller
                 : 0,
         ];
 
-        // Daily chart (sliding business day)
-        $days = (int) $from->diffInDays($to) + 1;
-        $chart = [];
-        $chartBaseDay = $request->filled('from')
-            ? Carbon::parse($request->from)
-            : $currentBizStart->copy()->subDays(30);
-        for ($i = 0; $i < min($days, 60); $i++) {
-            $calDay = $chartBaseDay->copy()->addDays($i);
-            [$dStart, $dEnd] = \App\Models\Setting::businessDayRange($calDay);
-            $dayOrders = $orders->filter(fn($o) => $o->created_at->between($dStart, $dEnd));
-            $chart[] = [
-                'label' => $calDay->format('m/d'),
-                'count' => $dayOrders->count(),
-                'delivery_fees' => $dayOrders->where('status', 'delivered')->sum('delivery_fee'),
+        // Daily chart (sliding business day) using SQL grouping
+        $startHour = (int) \App\Models\Setting::get('business_day_start_hour', 0);
+        $chartQuery = Order::whereBetween('created_at', [$from, $to]);
+        if ($request->filled('delivery_id'))
+            $chartQuery->where('delivery_id', $request->delivery_id);
+        if ($request->filled('callcenter_id'))
+            $chartQuery->where('callcenter_id', $request->callcenter_id);
+        if ($request->filled('admin_id'))
+            $chartQuery->where('admin_id', $request->admin_id);
+
+        $chartData = $chartQuery->selectRaw("
+                DATE(DATE_SUB(created_at, INTERVAL {$startHour} HOUR)) as order_date,
+                COUNT(*) as total_count,
+                SUM(CASE WHEN status='delivered' THEN delivery_fee ELSE 0 END) as delivery_fees
+            ")
+            ->groupBy('order_date')
+            ->orderBy('order_date')
+            ->get();
+
+        $chart = $chartData->map(function ($row) {
+            return [
+                'label' => Carbon::parse($row->order_date)->format('m/d'),
+                'count' => (int) $row->total_count,
+                'delivery_fees' => (float) $row->delivery_fees,
             ];
-        }
+        })->toArray();
 
         // Delivery breakdown
         $deliveryBreakdown = $orders->groupBy('delivery_id')->map(function ($group, $deliveryId) {

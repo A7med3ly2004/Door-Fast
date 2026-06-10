@@ -34,10 +34,10 @@ class AuthController extends Controller
         $targetRole = $isReserve ? 'reserve_delivery' : 'delivery';
 
         if ($user->role !== $targetRole) {
-            $errorMsg = $isReserve 
-                ? 'هذا الحساب مخصص للدليفري الأساسي، يرجى استخدامه في التطبيق الصحيح' 
+            $errorMsg = $isReserve
+                ? 'هذا الحساب مخصص للدليفري الأساسي، يرجى استخدامه في التطبيق الصحيح'
                 : 'هذا الحساب مخصص للدليفري الاحتياطي، يرجى استخدامه في تطبيق الاحتياطي';
-            
+
             return response()->json([
                 'success' => false,
                 'message' => $errorMsg,
@@ -53,18 +53,18 @@ class AuthController extends Controller
 
         // Revoke all existing delivery-mobile tokens
         $user->tokens()->where('name', 'delivery-mobile')->delete();
-
+        $user->update(['fcm_token' => null]);
         $token = $user->createToken('delivery-mobile')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'token'   => $token,
-            'user'    => [
-                'id'    => $user->id,
-                'name'  => $user->name,
-                'code'  => $user->code,
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'code' => $user->code,
                 'phone' => $user->phone,
-                'role'  => $user->role,
+                'role' => $user->role,
             ],
         ]);
     }
@@ -75,12 +75,11 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        $user->update(['fcm_token' => null]);
+        $user->currentAccessToken()->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'تم تسجيل الخروج بنجاح',
-        ]);
+        return response()->json(['success' => true, 'message' => 'تم تسجيل الخروج بنجاح']);
     }
 
     /**
@@ -93,12 +92,12 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'user'    => [
-                'id'    => $user->id,
-                'name'  => $user->name,
-                'code'  => $user->code,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'code' => $user->code,
                 'phone' => $user->phone,
-                'role'  => $user->role,
+                'role' => $user->role,
             ],
         ]);
     }

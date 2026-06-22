@@ -13,12 +13,12 @@ class CallcenterProfitService
      * يُستدعى فور إنشاء طلب جديد من الكول سينتر.
      * يحسب الشريحة الجديدة لهذا اليوم ويُحدّث كل طلبات اليوم.
      */
-    public function recalculateDayProfits(User $callcenter, Order $justCreatedOrder): void
+    public function recalculateDayProfits(User $callcenter, Order $justDeliveredOrder): void
     {
         $slices = collect($callcenter->incentive_slices ?? []);
 
         if ($slices->isEmpty()) {
-            $justCreatedOrder->update([
+            $justDeliveredOrder->update([
                 'cc_tier_number' => 0,
                 'cc_profit'      => 0,
             ]);
@@ -28,11 +28,12 @@ class CallcenterProfitService
         // حدود يوم العمل الحالي
         [$dayStart, $dayEnd] = Setting::businessDayRange(now());
 
-        // عدد الطلبات المُنشأة من هذا الكول سينتر في يوم العمل
+        // جلب كل طلبات هذا الكول سينتر الموصَّلة في يوم العمل الحالي
         $todayOrders = Order::where('callcenter_id', $callcenter->id)
-            ->whereBetween('created_at', [$dayStart, $dayEnd])
-            ->orderBy('created_at', 'asc')
-            ->get(['id', 'created_at']);
+            ->where('status', 'delivered')
+            ->whereBetween('delivered_at', [$dayStart, $dayEnd])
+            ->orderBy('delivered_at', 'asc')
+            ->get(['id', 'delivered_at']);
 
         $dayCount = $todayOrders->count();
 

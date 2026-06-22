@@ -133,10 +133,7 @@ class OrderController extends Controller
         // ── Delegate to service ──────────────────────────────────────
         $result = $this->orderService->createOrder($data, auth()->id(), adminMode: false);
 
-        // بعد إنشاء الطلب بنجاح
-        $callcenter = auth()->user();
-        app(\App\Services\CallcenterProfitService::class)
-            ->recalculateDayProfits($callcenter, $result['order']);
+        // ملاحظة: أرباح الكول سنتر تُحسب عند توصيل الطلب وليس عند إنشائه.
 
         return response()->json([
             'success' => true,

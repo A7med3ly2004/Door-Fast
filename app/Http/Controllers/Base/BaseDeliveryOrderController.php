@@ -242,6 +242,15 @@ abstract class BaseDeliveryOrderController extends Controller
                 app(\App\Services\DeliveryProfitService::class)
                     ->recalculateDayProfits($delivery, $order);
 
+                // إعادة حساب أرباح الكول سنتر الذي أنشأ الطلب (إن وُجد)
+                if ($order->callcenter_id) {
+                    $callcenter = \App\Models\User::find($order->callcenter_id);
+                    if ($callcenter) {
+                        app(\App\Services\CallcenterProfitService::class)
+                            ->recalculateDayProfits($callcenter, $order);
+                    }
+                }
+
                 $log = $this->afterDeliver($order, $delivery);
                 
                 if ($log) {

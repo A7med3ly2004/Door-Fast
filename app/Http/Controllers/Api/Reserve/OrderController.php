@@ -32,7 +32,7 @@ class OrderController extends DeliveryOrderController
             ->where('status', 'pending')
             ->whereNull('delivery_id')
             ->where('sent_to_delivery_at', '<=', $visibleFrom)
-            ->orderBy('sent_to_delivery_at', 'asc')
+            ->orderBy('sent_to_delivery_at', 'desc')
             ->get()
             ->map(fn($o) => $this->formatOrder($o));
 
@@ -60,7 +60,7 @@ class OrderController extends DeliveryOrderController
         $orders = Order::with(['items.shop', 'client', 'recipientClient'])
             ->where('delivery_id', $delivery->id)
             ->where('status', 'received')
-            ->orderBy('accepted_at', 'asc')
+            ->orderBy('accepted_at', 'desc')
             ->get()
             ->map(fn($o) => $this->formatOrder($o));
 

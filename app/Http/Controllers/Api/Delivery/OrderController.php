@@ -33,7 +33,7 @@ class OrderController extends Controller
                 $q->whereNull('delivery_id')
                     ->orWhere('delivery_id', $delivery->id);
             })
-            ->orderBy('sent_to_delivery_at', 'asc')
+            ->orderBy('sent_to_delivery_at', 'desc')
             ->get()
             ->map(fn($o) => $this->formatOrder($o));
 
@@ -51,7 +51,7 @@ class OrderController extends Controller
         $orders = Order::with(['items.shop', 'client', 'recipientClient'])
             ->where('delivery_id', $delivery->id)
             ->where('status', 'received')
-            ->orderBy('accepted_at', 'asc')
+            ->orderBy('accepted_at', 'desc')
             ->get()
             ->map(fn($o) => $this->formatOrder($o));
 

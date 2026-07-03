@@ -20,8 +20,8 @@ class WalletController extends Controller
         $wallet = $delivery->getOrCreateWallet();
 
         // Default to last 30 days if no dates provided
-        $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : now()->subDays(30)->startOfDay();
-        $to = $request->filled('to') ? Carbon::parse($request->to)->endOfDay() : now()->endOfDay();
+        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(now()->subDays(30))[0];
+        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]   : \App\Models\Setting::businessDayRange(now())[1];
 
         $query = WalletTransaction::where('wallet_id', $wallet->id)
             ->whereBetween('transaction_date', [$from->toDateString(), $to->toDateString()])

@@ -179,8 +179,8 @@ class CallCenterManagementController extends Controller
     {
         $user = User::where('role', 'callcenter')->findOrFail($id);
 
-        $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
-        $to = $request->filled('to') ? Carbon::parse($request->to)->endOfDay() : Carbon::now()->endOfDay();
+        $from = $request->filled('from') ? \App\Models\Setting::businessDayRange(Carbon::parse($request->from))[0] : \App\Models\Setting::businessDayRange(Carbon::now()->subDays(30))[0];
+        $to   = $request->filled('to')   ? \App\Models\Setting::businessDayRange(Carbon::parse($request->to))[1]   : \App\Models\Setting::businessDayRange(Carbon::now())[1];
 
         $orders = Order::where('callcenter_id', $id)->whereBetween('created_at', [$from, $to])->get();
         $total = $orders->count();

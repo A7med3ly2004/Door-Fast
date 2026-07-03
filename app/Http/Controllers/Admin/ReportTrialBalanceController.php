@@ -32,8 +32,8 @@ class ReportTrialBalanceController extends Controller
 
         $isAlways = empty($request->from) && empty($request->to);
         
-        $from = $request->from ? Carbon::parse($request->from)->startOfDay() : null;
-        $to = $request->to ? Carbon::parse($request->to)->endOfDay() : null;
+        $from = $request->from ? \App\Models\Setting::businessDayRange(\Carbon\Carbon::parse($request->from))[0] : null;
+        $to   = $request->to   ? \App\Models\Setting::businessDayRange(\Carbon\Carbon::parse($request->to))[1]   : null;
 
         // 1. MAIN SAFE (الخزينة الرئيسية)
         $safeQuery = TreasuryTransaction::query();

@@ -35,10 +35,10 @@ class ActivityLog extends Model
     public function scopeWithinDateRange(Builder $query, ?string $from, ?string $to): Builder
     {
         if ($from) {
-            $query->where('created_at', '>=', \Carbon\Carbon::parse($from)->startOfDay());
+            $query->where('created_at', '>=', \App\Models\Setting::businessDayRange(\Carbon\Carbon::parse($from))[0]);
         }
         if ($to) {
-            $query->where('created_at', '<=', \Carbon\Carbon::parse($to)->endOfDay());
+            $query->where('created_at', '<=', \App\Models\Setting::businessDayRange(\Carbon\Carbon::parse($to))[1]);
         }
         return $query;
     }

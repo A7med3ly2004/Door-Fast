@@ -32,10 +32,10 @@ class ClientController extends Controller
                 ->orWhere('code', 'like', "%$s%"));
         }
         if ($request->filled('from')) {
-            $query->where('created_at', '>=', \Carbon\Carbon::parse($request->from)->startOfDay());
+            $query->where('created_at', '>=', \App\Models\Setting::businessDayRange(\Carbon\Carbon::parse($request->from))[0]);
         }
         if ($request->filled('to')) {
-            $query->where('created_at', '<=', \Carbon\Carbon::parse($request->to)->endOfDay());
+            $query->where('created_at', '<=', \App\Models\Setting::businessDayRange(\Carbon\Carbon::parse($request->to))[1]);
         }
 
         if ($request->header('X-SPA-Navigation')) {

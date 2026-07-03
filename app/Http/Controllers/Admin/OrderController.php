@@ -34,10 +34,10 @@ class OrderController extends Controller
                 $query->where('status', $request->status);
             }
             if ($request->filled('from')) {
-                $query->where('created_at', '>=', \Carbon\Carbon::parse($request->from)->startOfDay());
+                $query->where('created_at', '>=', \App\Models\Setting::businessDayRange(\Carbon\Carbon::parse($request->from))[0]);
             }
             if ($request->filled('to')) {
-                $query->where('created_at', '<=', \Carbon\Carbon::parse($request->to)->endOfDay());
+                $query->where('created_at', '<=', \App\Models\Setting::businessDayRange(\Carbon\Carbon::parse($request->to))[1]);
             }
             if ($request->filled('delivery_id')) {
                 $query->where('delivery_id', $request->delivery_id);
@@ -204,8 +204,8 @@ class OrderController extends Controller
         $query = Order::with(['client', 'recipientClient', 'callcenter', 'admin', 'delivery'])->latest();
 
         if ($request->filled('status'))       $query->where('status', $request->status);
-        if ($request->filled('from'))          $query->where('created_at', '>=', \Carbon\Carbon::parse($request->from)->startOfDay());
-        if ($request->filled('to'))            $query->where('created_at', '<=', \Carbon\Carbon::parse($request->to)->endOfDay());
+        if ($request->filled('from'))          $query->where('created_at', '>=', \App\Models\Setting::businessDayRange(\Carbon\Carbon::parse($request->from))[0]);
+        if ($request->filled('to'))            $query->where('created_at', '<=', \App\Models\Setting::businessDayRange(\Carbon\Carbon::parse($request->to))[1]);
         if ($request->filled('delivery_id'))   $query->where('delivery_id', $request->delivery_id);
         if ($request->filled('callcenter_id')) $query->where('callcenter_id', $request->callcenter_id);
         if ($request->filled('admin_id'))      $query->where('admin_id', $request->admin_id);

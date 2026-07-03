@@ -60,7 +60,7 @@
         <div class="kpi-sub">ج.م</div>
     </div>
     <div class="kpi-card red">
-        <div class="kpi-label">طلبات ملغاةالشهر</div>
+        <div class="kpi-label">طلبات ملغاة خلال الشهر</div>
         <div class="kpi-value" id="v-cancelled-month">—</div>
     </div>
     <div class="kpi-card yellow">

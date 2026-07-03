@@ -106,7 +106,7 @@
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px; border-bottom:1px solid var(--border);">
                     <span style="color:var(--text-muted); font-size:13px;">الهاتف</span>
-                    <span style="font-weight:600; direction:ltr;">${o.client?.phone ?? '—'}</span>
+                    <span style="font-weight:600; direction:ltr;">${o.client?.phone ?? '—'}${o.client?.phone2 ? ` / ${o.client.phone2}` : ''}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px; border-bottom:1px solid var(--border);">
                     <span style="color:var(--text-muted); font-size:13px;">العنوان</span>

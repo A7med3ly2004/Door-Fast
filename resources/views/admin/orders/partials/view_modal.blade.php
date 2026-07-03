@@ -48,7 +48,7 @@
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px; border-bottom:1px solid var(--border);">
                             <span style="color:var(--text-muted); font-size:13px;">الهاتف</span>
-                            <span style="font-weight:600; direction:ltr;">${o.client?.phone ? `<a href="tel:${o.client.phone}" style="color:inherit">${o.client.phone}</a>` : '—'}</span>
+                            <span style="font-weight:600; direction:ltr;">${o.client?.phone ? `<a href="tel:${o.client.phone}" style="color:inherit">${o.client.phone}</a>` : '—'}${o.client?.phone2 ? ` / <a href="tel:${o.client.phone2}" style="color:inherit">${o.client.phone2}</a>` : ''}</span>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px; border-bottom:1px solid var(--border);">
                             <span style="color:var(--text-muted); font-size:13px;">العنوان</span>
@@ -102,7 +102,7 @@
                                 </div>
                                 <div style="display:flex; justify-content: flex-start; gap: 10px; align-items:center; padding-bottom:6px; border-bottom:1px solid rgba(245,158,11,0.2);">
                                     <span style="color:var(--text-muted);">الهاتف</span>
-                                    <span style="font-weight:600; direction:ltr;">${o.send_to_phone ? `<a href="tel:${o.send_to_phone}" style="color:inherit">${o.send_to_phone}</a>` : '—'}${o.recipient_client.phone2 ? ` / <a href="tel:${o.recipient_client.phone2}" style="color:inherit">${o.recipient_client.phone2}</a>` : ''}</span>
+                                    <span style="font-weight:600; direction:ltr;">${o.send_to_phone ? `<a href="tel:${o.send_to_phone}" style="color:inherit">${o.send_to_phone}</a>` : '—'}${(o.send_to_phone2 || o.recipient_client?.phone2) ? ` / <a href="tel:${o.send_to_phone2 || o.recipient_client?.phone2}" style="color:inherit">${o.send_to_phone2 || o.recipient_client?.phone2}</a>` : ''}</span>
                                 </div>
                                 <div style="display:flex; justify-content: flex-start; gap: 10px; align-items:center;">
                                     <span style="color:var(--text-muted);">العنوان</span>

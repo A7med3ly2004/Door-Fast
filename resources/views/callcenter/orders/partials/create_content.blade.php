@@ -269,12 +269,12 @@
         <input type="hidden" id="${id}-opened-at" value="${openedAt}">
         <div class="section-label">📞 بيانات العميل</div>
         <div class="form-row">
-            <div class="form-group"><label class="form-label">الهاتف *</label><input type="text" class="form-control" id="${id}-phone" placeholder="01xxxxxxxxx" onblur="searchClient('${id}', 'phone')" onkeydown="if(event.key==='Enter') this.blur()"></div>
+            <div class="form-group"><label class="form-label">الهاتف *</label><input type="text" class="form-control" id="${id}-phone" placeholder="01xxxxxxxxx" oninput="toggleNewCodeBtn('${id}-btn-new-code', false)" onblur="searchClient('${id}', 'phone')" onkeydown="if(event.key==='Enter') this.blur()"></div>
             <div class="form-group"><label class="form-label">هاتف 2</label><input type="text" class="form-control" id="${id}-phone2" placeholder="اختياري"></div>
         </div>
         <div class="form-row">
             <div class="form-group"><label class="form-label">الكود *</label>
-                <div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-code" placeholder="XXXXX" onblur="searchClient('${id}', 'code')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="genCode('${id}')">كود جديد</button></div>
+                <div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-code" placeholder="XXXXX" oninput="toggleNewCodeBtn('${id}-btn-new-code', false)" onblur="searchClient('${id}', 'code')" onkeydown="if(event.key==='Enter') this.blur()"><button id="${id}-btn-new-code" class="btn btn-secondary btn-sm" style="white-space:nowrap; transition: all 0.2s;" onclick="genCode('${id}')">كود جديد</button></div>
             </div>
             <div class="form-group"><label class="form-label">الاسم *</label><input type="text" class="form-control" id="${id}-name" placeholder="اسم العميل"></div>
         </div>
@@ -288,12 +288,12 @@
             <button class="btn btn-secondary btn-sm" style="margin-bottom:8px" onclick="toggleSendTo('${id}')">↗ إرسال إلى عميل آخر</button>
             <div class="sendto-section" id="${id}-sendto">
                 <div class="form-row">
-                    <div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="stSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div>
+                    <div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" oninput="toggleNewCodeBtn('${id}-st-btn-new-code', false)" onblur="stSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div>
                     <div class="form-group"><label class="form-label">هاتف 2 (العميل المستلم)</label><input type="text" class="form-control" id="${id}-st-phone2" placeholder="اختياري" dir="ltr" style="text-align:right"></div>
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label class="form-label">الكود</label>
-                        <div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" onblur="stSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="stGenCode('${id}')">كود جديد</button></div>
+                        <div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" oninput="toggleNewCodeBtn('${id}-st-btn-new-code', false)" onblur="stSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button id="${id}-st-btn-new-code" class="btn btn-secondary btn-sm" style="white-space:nowrap; transition: all 0.2s;" onclick="stGenCode('${id}')">كود جديد</button></div>
                     </div>
                     <div class="form-group"><label class="form-label">اسم المستلم</label><input type="text" class="form-control" id="${id}-st-name" placeholder="اسم المستلم"></div>
                 </div>
@@ -342,6 +342,8 @@
             if (draft.stOpen && el('sendto')) el('sendto').classList.add('open'); if (el('st-phone')) el('st-phone').value = draft.stPhone || ''; if (el('st-phone2')) el('st-phone2').value = draft.stPhone2 || '';
             if (el('st-code')) el('st-code').value = draft.stCode || ''; if (el('st-name')) el('st-name').value = draft.stName || ''; if (el('st-client-id')) el('st-client-id').value = draft.stClientId || ''; if (el('st-client-found')) el('st-client-found').value = draft.stClientFound || '0';
             if (el('st-addr-wrap')) { el('st-addr-wrap').innerHTML = draft.stAddrWrap || el('st-addr-wrap').innerHTML; if (el('st-addr-sel') && draft.stAddrSelVal) el('st-addr-sel').value = draft.stAddrSelVal; if (el('st-addr-txt')) { el('st-addr-txt').value = draft.stAddrVal || ''; if (draft.stAddrTxtDisplay !== undefined) el('st-addr-txt').style.display = draft.stAddrTxtDisplay; } }
+            if (draft.cliFound === '1') toggleNewCodeBtn(id + '-btn-new-code', true);
+            if (draft.stClientFound === '1') toggleNewCodeBtn(id + '-st-btn-new-code', true);
             if (el('st-delivery-link')) el('st-delivery-link').value = draft.stDeliveryLink || '';
             if (el('notes')) el('notes').value = draft.notes || ''; if (el('fee')) el('fee').value = draft.fee !== undefined ? draft.fee : ''; if (el('disc')) el('disc').value = draft.disc || '0'; if (el('disc-type')) el('disc-type').value = draft.discType || 'amount';
             if (el('disc-jm')) el('disc-jm').classList.toggle('active', draft.discType !== 'percent'); if (el('disc-pct')) el('disc-pct').classList.toggle('active', draft.discType === 'percent');
@@ -353,14 +355,28 @@
     function buildDeliveryOptions() { return activeDeliveries.map(d => `<option value="${d.id}">${d.name}</option>`).join(''); }
     function refreshDeliveryDropdowns() { document.querySelectorAll('[id$="-delivery"]').forEach(sel => { const current = sel.value; sel.innerHTML = '<option value="">— تلقائي —</option>' + buildDeliveryOptions(); if (current) sel.value = current; }); }
 
+    function toggleNewCodeBtn(btnId, disable) {
+        var btn = document.getElementById(btnId);
+        if (!btn) return;
+        if (disable) {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        } else {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        }
+    }
+
     async function searchClient(cardId, searchBy = 'phone') {
         var params = {};
-        if (searchBy === 'phone') { const phone = document.getElementById(cardId + '-phone').value.trim(); if (!phone) return; params = { phone }; }
-        else { const code = document.getElementById(cardId + '-code').value.trim(); if (!code) return; params = { code }; }
+        if (searchBy === 'phone') { const phone = document.getElementById(cardId + '-phone').value.trim(); if (!phone) { toggleNewCodeBtn(cardId + '-btn-new-code', false); return; } params = { phone }; }
+        else { const code = document.getElementById(cardId + '-code').value.trim(); if (!code) { toggleNewCodeBtn(cardId + '-btn-new-code', false); return; } params = { code }; }
         try {
             const { data } = await axios.get(SEARCH_URL, { params });
-            if (data.found) { document.getElementById(cardId + '-name').value = data.name; document.getElementById(cardId + '-code').value = data.code; document.getElementById(cardId + '-phone').value = data.phone; document.getElementById(cardId + '-phone2').value = data.phone2 ?? ''; document.getElementById(cardId + '-client-id').value = data.id; document.getElementById(cardId + '-client-found').value = '1'; resetAddressSection(cardId, true, data.addresses); }
-            else { document.getElementById(cardId + '-client-found').value = '0'; document.getElementById(cardId + '-client-id').value = ''; resetAddressSection(cardId, false); }
+            if (data.found) { document.getElementById(cardId + '-name').value = data.name; document.getElementById(cardId + '-code').value = data.code; document.getElementById(cardId + '-phone').value = data.phone; document.getElementById(cardId + '-phone2').value = data.phone2 ?? ''; document.getElementById(cardId + '-client-id').value = data.id; document.getElementById(cardId + '-client-found').value = '1'; resetAddressSection(cardId, true, data.addresses); toggleNewCodeBtn(cardId + '-btn-new-code', true); }
+            else { document.getElementById(cardId + '-client-found').value = '0'; document.getElementById(cardId + '-client-id').value = ''; resetAddressSection(cardId, false); toggleNewCodeBtn(cardId + '-btn-new-code', false); }
             saveDrafts();
         } catch (e) { }
     }
@@ -401,13 +417,13 @@
     function toggleSendTo(cardId) { document.getElementById(cardId + '-sendto').classList.toggle('open'); saveDrafts(); }
     
     async function stSearchByPhone(cardId) {
-        var phone = document.getElementById(cardId + '-st-phone').value.trim(); const wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!phone) return;
-        try { const { data } = await axios.get(SEARCH_URL, { params: { phone } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; document.getElementById(cardId + '-st-code').value = data.code; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { let defaultAddr = data.addresses.find(a => a.is_default)?.address || data.addresses[0].address; let html = `<select class="form-select" id="${cardId}-st-addr-sel" onchange="onStAddressChange('${cardId}')"><option value="">— اختر العنوان —</option>`; data.addresses.forEach(a => { html += `<option value="${a.address}"${a.address === defaultAddr ? ' selected' : ''}>${a.address}${a.is_default ? ' (افتراضي)' : ''}</option>`; }); html += `<option value="__new__" style="font-weight:bold;color:var(--yellow)">＋ إضافة عنوان جديد...</option></select><input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان" style="margin-top:6px;display:none;">`;  wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-name').value = ''; document.getElementById(cardId + '-st-code').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } saveDrafts(); } catch (e) { }
+        var phone = document.getElementById(cardId + '-st-phone').value.trim(); const wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!phone) { toggleNewCodeBtn(cardId + '-st-btn-new-code', false); return; }
+        try { const { data } = await axios.get(SEARCH_URL, { params: { phone } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; document.getElementById(cardId + '-st-code').value = data.code; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; toggleNewCodeBtn(cardId + '-st-btn-new-code', true); if (data.addresses.length) { let defaultAddr = data.addresses.find(a => a.is_default)?.address || data.addresses[0].address; let html = `<select class="form-select" id="${cardId}-st-addr-sel" onchange="onStAddressChange('${cardId}')"><option value="">— اختر العنوان —</option>`; data.addresses.forEach(a => { html += `<option value="${a.address}"${a.address === defaultAddr ? ' selected' : ''}>${a.address}${a.is_default ? ' (افتراضي)' : ''}</option>`; }); html += `<option value="__new__" style="font-weight:bold;color:var(--yellow)">＋ إضافة عنوان جديد...</option></select><input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان" style="margin-top:6px;display:none;">`;  wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-name').value = ''; document.getElementById(cardId + '-st-code').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; toggleNewCodeBtn(cardId + '-st-btn-new-code', false); wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } saveDrafts(); } catch (e) { }
     }
     
     async function stSearchByCode(cardId) {
-        var code = document.getElementById(cardId + '-st-code').value.trim(); const wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!code) return;
-        try { const { data } = await axios.get(SEARCH_URL, { params: { code } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { let defaultAddr = data.addresses.find(a => a.is_default)?.address || data.addresses[0].address; let html = `<select class="form-select" id="${cardId}-st-addr-sel" onchange="onStAddressChange('${cardId}')"><option value="">— اختر العنوان —</option>`; data.addresses.forEach(a => { html += `<option value="${a.address}"${a.address === defaultAddr ? ' selected' : ''}>${a.address}${a.is_default ? ' (افتراضي)' : ''}</option>`; }); html += `<option value="__new__" style="font-weight:bold;color:var(--yellow)">＋ إضافة عنوان جديد...</option></select><input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان" style="margin-top:6px;display:none;">`;  wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-phone').value = ''; document.getElementById(cardId + '-st-name').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } saveDrafts(); } catch (e) { }
+        var code = document.getElementById(cardId + '-st-code').value.trim(); const wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!code) { toggleNewCodeBtn(cardId + '-st-btn-new-code', false); return; }
+        try { const { data } = await axios.get(SEARCH_URL, { params: { code } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; toggleNewCodeBtn(cardId + '-st-btn-new-code', true); if (data.addresses.length) { let defaultAddr = data.addresses.find(a => a.is_default)?.address || data.addresses[0].address; let html = `<select class="form-select" id="${cardId}-st-addr-sel" onchange="onStAddressChange('${cardId}')"><option value="">— اختر العنوان —</option>`; data.addresses.forEach(a => { html += `<option value="${a.address}"${a.address === defaultAddr ? ' selected' : ''}>${a.address}${a.is_default ? ' (افتراضي)' : ''}</option>`; }); html += `<option value="__new__" style="font-weight:bold;color:var(--yellow)">＋ إضافة عنوان جديد...</option></select><input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان" style="margin-top:6px;display:none;">`;  wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-phone').value = ''; document.getElementById(cardId + '-st-name').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; toggleNewCodeBtn(cardId + '-st-btn-new-code', false); wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } saveDrafts(); } catch (e) { }
     }
     function stGenCode(cardId) { document.getElementById(cardId + '-st-code').value = String(Math.floor(10000 + Math.random() * 90000)); saveDrafts(); }
 

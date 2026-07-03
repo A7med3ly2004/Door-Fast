@@ -324,14 +324,14 @@
             <input type="hidden" id="${id}-opened-at" value="${openedAt}">
             <div class="section-label">بيانات العميل</div>
             <div class="form-row">
-                <div class="form-group"><label class="form-label">الهاتف *</label><input type="text" class="form-control" id="${id}-phone" placeholder="01xxxxxxxxx" onblur="admSearchClient('${id}','phone')" onkeydown="if(event.key==='Enter') this.blur()"></div>
+                <div class="form-group"><label class="form-label">الهاتف *</label><input type="text" class="form-control" id="${id}-phone" placeholder="01xxxxxxxxx" oninput="admToggleNewCodeBtn('${id}-btn-new-code', false)" onblur="admSearchClient('${id}','phone')" onkeydown="if(event.key==='Enter') this.blur()"></div>
                 <div class="form-group"><label class="form-label">هاتف 2</label><input type="text" class="form-control" id="${id}-phone2" placeholder="اختياري"></div>
             </div>
             <div class="form-row">
                 <div class="form-group"><label class="form-label">الكود *</label>
                     <div style="display:flex;gap:5px">
-                        <input type="text" class="form-control" id="${id}-code" placeholder="XXXXX" onblur="admSearchClient('${id}','code')" onkeydown="if(event.key==='Enter') this.blur()">
-                        <button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="admGenCode('${id}')">كود جديد</button>
+                        <input type="text" class="form-control" id="${id}-code" placeholder="XXXXX" oninput="admToggleNewCodeBtn('${id}-btn-new-code', false)" onblur="admSearchClient('${id}','code')" onkeydown="if(event.key==='Enter') this.blur()">
+                        <button id="${id}-btn-new-code" class="btn btn-secondary btn-sm" style="white-space:nowrap; transition: all 0.2s;" onclick="admGenCode('${id}')">كود جديد</button>
                     </div>
                 </div>
                 <div class="form-group"><label class="form-label">الاسم *</label><input type="text" class="form-control" id="${id}-name" placeholder="اسم العميل"></div>
@@ -364,9 +364,9 @@
             <button class="btn btn-secondary btn-sm" style="margin-bottom:8px" onclick="admToggleSendTo('${id}')">↗ إرسال إلى عميل آخر</button>
             <div class="sendto-section" id="${id}-sendto">
                 <div class="form-row">
-                    <div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" onblur="admStSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div>
+                    <div class="form-group"><label class="form-label">هاتف المستلم</label><input type="text" class="form-control" id="${id}-st-phone" placeholder="01xxxxxxxxx" oninput="admToggleNewCodeBtn('${id}-st-btn-new-code', false)" onblur="admStSearchByPhone('${id}')" onkeydown="if(event.key==='Enter') this.blur()"></div>
                     <div class="form-group"><label class="form-label">هاتف 2 (العميل المستلم)</label><input type="text" class="form-control" id="${id}-st-phone2" placeholder="اختياري" dir="ltr" style="text-align:right"></div>
-                    <div class="form-group"><label class="form-label">الكود</label><div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" onblur="admStSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="admStGenCode('${id}')">كود جديد</button></div></div>
+                    <div class="form-group"><label class="form-label">الكود</label><div style="display:flex;gap:5px"><input type="text" class="form-control" id="${id}-st-code" placeholder="XXXXX" oninput="admToggleNewCodeBtn('${id}-st-btn-new-code', false)" onblur="admStSearchByCode('${id}')" onkeydown="if(event.key==='Enter') this.blur()"><button id="${id}-st-btn-new-code" class="btn btn-secondary btn-sm" style="white-space:nowrap; transition: all 0.2s;" onclick="admStGenCode('${id}')">كود جديد</button></div></div>
                     <div class="form-group"><label class="form-label">اسم المستلم</label><input type="text" class="form-control" id="${id}-st-name" placeholder="الاسم"></div>
                 </div>
                 <div class="form-row">
@@ -440,6 +440,8 @@
                 if (el('st-name')) el('st-name').value = draft.stName || '';
                 if (el('st-client-id')) el('st-client-id').value = draft.stClientId || '';
                 if (el('st-client-found')) el('st-client-found').value = draft.stClientFound || '0';
+                if (draft.cliFound === '1') admToggleNewCodeBtn(id + '-btn-new-code', true);
+                if (draft.stClientFound === '1') admToggleNewCodeBtn(id + '-st-btn-new-code', true);
                 if (el('client-delivery-link')) el('client-delivery-link').value = draft.clientDeliveryLink || '';
                 if (el('st-delivery-link')) el('st-delivery-link').value = draft.stDeliveryLink || '';
                 if (el('notes')) el('notes').value = draft.notes || '';
@@ -475,10 +477,24 @@
         };
 
         // ─── Client Search ────────────────────────────────────────
+        window.admToggleNewCodeBtn = function(btnId, disable) {
+            var btn = document.getElementById(btnId);
+            if (!btn) return;
+            if (disable) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
+        };
+
         window.admSearchClient = async function (cardId, searchBy) {
             var params = {};
-            if (searchBy === 'phone') { var phone = document.getElementById(cardId + '-phone')?.value.trim(); if (!phone) return; params = { phone }; }
-            else { var code = document.getElementById(cardId + '-code')?.value.trim(); if (!code) return; params = { code }; }
+            if (searchBy === 'phone') { var phone = document.getElementById(cardId + '-phone')?.value.trim(); if (!phone) { admToggleNewCodeBtn(cardId + '-btn-new-code', false); return; } params = { phone }; }
+            else { var code = document.getElementById(cardId + '-code')?.value.trim(); if (!code) { admToggleNewCodeBtn(cardId + '-btn-new-code', false); return; } params = { code }; }
             try {
                 var { data } = await axios.get(SEARCH_URL, { params });
                 if (data.found) {
@@ -489,10 +505,12 @@
                     document.getElementById(cardId + '-client-id').value = data.id;
                     document.getElementById(cardId + '-client-found').value = '1';
                     admResetAddressSection(cardId, true, data.addresses);
+                    admToggleNewCodeBtn(cardId + '-btn-new-code', true);
                 } else {
                     document.getElementById(cardId + '-client-found').value = '0';
                     document.getElementById(cardId + '-client-id').value = '';
                     admResetAddressSection(cardId, false);
+                    admToggleNewCodeBtn(cardId + '-btn-new-code', false);
                 }
                 admSaveDrafts();
             } catch (e) { }
@@ -550,12 +568,12 @@
             admSaveDrafts();
         };
         window.admStSearchByPhone = async function (cardId) {
-            var phone = document.getElementById(cardId + '-st-phone').value.trim(); var wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!phone) return;
-            try { var { data } = await axios.get(SEARCH_URL, { params: { phone } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; document.getElementById(cardId + '-st-code').value = data.code; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { let defaultAddr = data.addresses.find(a => a.is_default)?.address || data.addresses[0].address; var html = `<select class="form-select" id="${cardId}-st-addr-sel" onchange="admOnStAddressChange('${cardId}')"><option value="">— اختر العنوان —</option>`; data.addresses.forEach(a => { html += `<option value="${a.address}"${a.address === defaultAddr ? ' selected' : ''}>${a.address}${a.is_default ? ' (افتراضي)' : ''}</option>`; }); html += `<option value="__new__" style="font-weight:bold;color:var(--yellow)">＋ إضافة عنوان جديد...</option></select><input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان" style="margin-top:6px;display:none;">`; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-name').value = ''; document.getElementById(cardId + '-st-code').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } admSaveDrafts(); } catch (e) { }
+            var phone = document.getElementById(cardId + '-st-phone').value.trim(); var wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!phone) { admToggleNewCodeBtn(cardId + '-st-btn-new-code', false); return; }
+            try { var { data } = await axios.get(SEARCH_URL, { params: { phone } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; document.getElementById(cardId + '-st-code').value = data.code; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; admToggleNewCodeBtn(cardId + '-st-btn-new-code', true); if (data.addresses.length) { let defaultAddr = data.addresses.find(a => a.is_default)?.address || data.addresses[0].address; var html = `<select class="form-select" id="${cardId}-st-addr-sel" onchange="admOnStAddressChange('${cardId}')"><option value="">— اختر العنوان —</option>`; data.addresses.forEach(a => { html += `<option value="${a.address}"${a.address === defaultAddr ? ' selected' : ''}>${a.address}${a.is_default ? ' (افتراضي)' : ''}</option>`; }); html += `<option value="__new__" style="font-weight:bold;color:var(--yellow)">＋ إضافة عنوان جديد...</option></select><input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان" style="margin-top:6px;display:none;">`; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-name').value = ''; document.getElementById(cardId + '-st-code').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; admToggleNewCodeBtn(cardId + '-st-btn-new-code', false); wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } admSaveDrafts(); } catch (e) { }
         };
         window.admStSearchByCode = async function (cardId) {
-            var code = document.getElementById(cardId + '-st-code').value.trim(); var wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!code) return;
-            try { var { data } = await axios.get(SEARCH_URL, { params: { code } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; if (data.addresses.length) { let defaultAddr = data.addresses.find(a => a.is_default)?.address || data.addresses[0].address; var html = `<select class="form-select" id="${cardId}-st-addr-sel" onchange="admOnStAddressChange('${cardId}')"><option value="">— اختر العنوان —</option>`; data.addresses.forEach(a => { html += `<option value="${a.address}"${a.address === defaultAddr ? ' selected' : ''}>${a.address}${a.is_default ? ' (افتراضي)' : ''}</option>`; }); html += `<option value="__new__" style="font-weight:bold;color:var(--yellow)">＋ إضافة عنوان جديد...</option></select><input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان" style="margin-top:6px;display:none;">`; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-phone').value = ''; document.getElementById(cardId + '-st-name').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } admSaveDrafts(); } catch (e) { }
+            var code = document.getElementById(cardId + '-st-code').value.trim(); var wrap = document.getElementById(cardId + '-st-addr-wrap'); if (!code) { admToggleNewCodeBtn(cardId + '-st-btn-new-code', false); return; }
+            try { var { data } = await axios.get(SEARCH_URL, { params: { code } }); if (data.found) { document.getElementById(cardId + '-st-phone').value = data.phone; document.getElementById(cardId + '-st-name').value = data.name; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = data.phone2 || ''; document.getElementById(cardId + '-st-client-id').value = data.id; document.getElementById(cardId + '-st-client-found').value = '1'; admToggleNewCodeBtn(cardId + '-st-btn-new-code', true); if (data.addresses.length) { let defaultAddr = data.addresses.find(a => a.is_default)?.address || data.addresses[0].address; var html = `<select class="form-select" id="${cardId}-st-addr-sel" onchange="admOnStAddressChange('${cardId}')"><option value="">— اختر العنوان —</option>`; data.addresses.forEach(a => { html += `<option value="${a.address}"${a.address === defaultAddr ? ' selected' : ''}>${a.address}${a.is_default ? ' (افتراضي)' : ''}</option>`; }); html += `<option value="__new__" style="font-weight:bold;color:var(--yellow)">＋ إضافة عنوان جديد...</option></select><input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان" style="margin-top:6px;display:none;">`; wrap.innerHTML = html; } else wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } else { document.getElementById(cardId + '-st-phone').value = ''; document.getElementById(cardId + '-st-name').value = ''; if (document.getElementById(cardId + '-st-phone2')) document.getElementById(cardId + '-st-phone2').value = ''; document.getElementById(cardId + '-st-client-id').value = ''; document.getElementById(cardId + '-st-client-found').value = '0'; admToggleNewCodeBtn(cardId + '-st-btn-new-code', false); wrap.innerHTML = `<input type="text" class="form-control" id="${cardId}-st-addr-txt" placeholder="العنوان">`; } admSaveDrafts(); } catch (e) { }
         };
         window.admStGenCode = function (cardId) { document.getElementById(cardId + '-st-code').value = String(Math.floor(10000 + Math.random() * 90000)); admSaveDrafts(); };
 

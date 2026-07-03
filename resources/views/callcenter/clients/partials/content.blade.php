@@ -5,7 +5,7 @@
 <div class="card" style="padding:12px 16px;margin-bottom:14px">
     <div class="filter-bar">
         <input type="text" id="f-search" class="form-control" placeholder="الاسم / الهاتف / الكود"
-            style="min-width:220px">
+            style="min-width:220px" onkeypress="if(event.key === 'Enter') loadClients(1)">
         <button class="btn btn-primary" onclick="loadClients(1)">بحث</button>
         <button class="btn btn-success" onclick="showAddClientModal()">عميل جديد</button>
     </div>

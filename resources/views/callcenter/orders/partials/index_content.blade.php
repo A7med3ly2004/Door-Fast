@@ -4,7 +4,7 @@
 </div>
 <div class="card" style="margin-bottom:16px">
     <div class="filter-bar"><input type="text" id="f-search" class="form-control"
-            placeholder="رقم الطلب / العميل / الهاتف" style="min-width:200px"><select id="f-status" class="form-select">
+            placeholder="رقم الطلب / العميل / الهاتف" style="min-width:200px" onkeypress="if(event.key === 'Enter') loadList(1)"><select id="f-status" class="form-select">
             <option value="">كل الحالات</option>
             <option value="pending">قيد الانتظار</option>
             <option value="received">مسلم للمندوب</option>
@@ -184,11 +184,6 @@
         currentPage = page; loadingEl.classList.add('show');
         try {
             const filters = getFilters();
-            const globalSearchNav = document.getElementById('nav-global-search');
-            if (globalSearchNav && filters.search && filters.search.trim() !== '') {
-                globalSearchNav.href = `{{ route('callcenter.orders.global-search') }}?q=${encodeURIComponent(filters.search)}`;
-            }
-
 
             const { data } = await axios.get('{{ route("callcenter.orders.list-data") }}', { params: { ...filters, page } });
             var body = document.getElementById('orders-body');

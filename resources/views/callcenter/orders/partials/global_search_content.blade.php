@@ -4,7 +4,7 @@
 <div class="card" style="margin-bottom:16px">
     <div class="filter-bar">
         <input type="text" id="f-g-search" class="form-control" placeholder="رقم الطلب / العميل / الهاتف"
-            style="min-width:300px" value="{{ request('q') }}">
+            style="min-width:300px" value="{{ request('q') }}" onkeypress="if(event.key === 'Enter') loadGlobalList()">
         <button class="btn btn-primary" onclick="loadGlobalList()">بحث</button>
     </div>
 </div>

@@ -1,7 +1,8 @@
 {{-- Admin Discount Reports SPA Partial --}}
 <div class="section-header">
     <h2>تقارير الخصومات</h2>
-    <button class="btn btn-success" onclick="exportDiscountsExcel()" style="background:#217346; color:#fff; padding: 10px 15px; white-space:nowrap;">تصدير Excel</button>
+    <button class="btn btn-success" onclick="exportDiscountsExcel()"
+        style="background:#217346; color:#fff; padding: 10px 15px; white-space:nowrap;">تصدير Excel</button>
 </div>
 
 {{-- ─── Filters ────────────────────────────────────────────── --}}
@@ -9,21 +10,25 @@
     <div class="filter-bar" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; padding:10px 15px;">
         {{-- General Search --}}
         <div style="flex:1.5; min-width:220px; display:flex; flex-direction:column; gap:4px; position:relative">
-            <label style="font-size:12px; color:var(--text-muted); font-weight:600; white-space:nowrap;">بحث شامل (كود، عميل، هاتف)</label>
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600; white-space:nowrap;">بحث (رقم الطلب،
+                كود العميل، رقم هاتف)</label>
             <div style="position:relative">
-                <input type="text" id="dc-search" class="form-control"
-                    placeholder="ابحث..." autocomplete="off"
+                <input type="text" id="dc-search" class="form-control" placeholder="ابحث..." autocomplete="off"
                     style="padding-left:32px; width:100%;" onkeydown="if(event.key === 'Enter') dcLoad()">
             </div>
         </div>
 
         {{-- Call Center --}}
         <div style="flex:1; min-width:150px; display:flex; flex-direction:column; gap:4px;">
-            <label style="font-size:12px; color:var(--text-muted); font-weight:600; white-space:nowrap;">الكول سنتر</label>
+            <label style="font-size:12px; color:var(--text-muted); font-weight:600; white-space:nowrap;">الكول
+                سنتر</label>
             <div class="relative group" style="z-index: 50;">
-                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; white-space:nowrap; overflow:hidden;">
+                <div class="form-control"
+                    style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; white-space:nowrap; overflow:hidden;">
                     <span id="label-dc-callcenter" style="text-overflow:ellipsis; overflow:hidden;">كل الكول سنتر</span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </div>
                 <input type="hidden" id="dc-callcenter" value="">
                 <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white shadow-lg rounded-md mt-1 overflow-hidden"
@@ -43,9 +48,12 @@
         <div style="flex:1; min-width:150px; display:flex; flex-direction:column; gap:4px;">
             <label style="font-size:12px; color:var(--text-muted); font-weight:600; white-space:nowrap;">المدير</label>
             <div class="relative group" style="z-index: 40;">
-                <div class="form-control" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; white-space:nowrap; overflow:hidden;">
+                <div class="form-control"
+                    style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; white-space:nowrap; overflow:hidden;">
                     <span id="label-dc-admin" style="text-overflow:ellipsis; overflow:hidden;">كل المديرين</span>
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </div>
                 <input type="hidden" id="dc-admin" value="">
                 <div class="absolute top-full right-0 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all bg-white shadow-lg rounded-md mt-1 overflow-hidden"
@@ -75,8 +83,10 @@
 
         {{-- Actions --}}
         <div style="display:flex; gap:6px; align-items:flex-end; flex-shrink:0;">
-            <button class="btn btn-primary" onclick="dcLoad()" style="padding: 10px 15px; white-space:nowrap;">عرض</button>
-            <button class="btn btn-secondary" onclick="dcReset()" style="padding: 10px 15px; white-space:nowrap;">إعادة</button>
+            <button class="btn btn-primary" onclick="dcLoad()"
+                style="padding: 10px 15px; white-space:nowrap;">عرض</button>
+            <button class="btn btn-secondary" onclick="dcReset()"
+                style="padding: 10px 15px; white-space:nowrap;">إعادة</button>
         </div>
     </div>
 </div>

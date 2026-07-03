@@ -9,7 +9,7 @@
         <div>
             <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث</label>
             <input type="text" id="filter-search" class="form-control" placeholder="بحث بالاسم / الهاتف / الكود"
-                style="min-width:220px">
+                style="min-width:220px" onkeypress="if(event.key === 'Enter') loadClients(1)">
         </div>
         <div>
             <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">تاريخ من</label>

@@ -17,7 +17,7 @@
             <div style="width: 15%;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">بحث</label>
                 <input type="text" id="filter-search" class="form-control" placeholder="رقم الطلب / العميل / الهاتف"
-                    style="width: 100%; min-width: unset;">
+                    style="width: 100%; min-width: unset;" onkeypress="if(event.key === 'Enter') loadOrders(1)">
             </div>
             <div style="width: 10%;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">الدور</label>

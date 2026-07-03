@@ -431,10 +431,13 @@
             btn.disabled = true;
             spn.style.display = 'inline-block';
             try {
-                await axios.post(url, data);
+                const res = await axios.post(url, data);
                 showSuccess('تمت العملية بنجاح');
                 document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
                 applyFilters();
+                if (res.data && res.data.transaction_id) {
+                    window.open('/admin/admin-ledger/' + res.data.transaction_id + '/pdf', '_blank');
+                }
             } catch (e) {
                 const msg = e.response?.data?.message || 'حدث خطأ';
                 err.textContent = msg;

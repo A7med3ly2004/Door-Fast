@@ -169,6 +169,7 @@ class AdminLedgerController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'تم دفع ' . number_format($amount, 2) . ' ج إلى ' . $employee->name . ' بنجاح.',
+            'transaction_id' => $txIds[0] ?? null,
         ], 201);
     }
 
@@ -285,6 +286,7 @@ class AdminLedgerController extends Controller
         return response()->json([
             'success' => true,
             'message' => $validated['employee_id'] === 'revenue' ? 'تم تسجيل الإيراد بنجاح.' : 'تم تسجيل الاستلام بنجاح.',
+            'transaction_id' => $txIds['ids'][0] ?? null,
         ], 201);
     }
 
@@ -351,6 +353,7 @@ class AdminLedgerController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'تم تسجيل المصروف بمبلغ ' . number_format($amount, 2) . ' ج بنجاح.',
+            'transaction_id' => $txId,
         ], 201);
     }
 

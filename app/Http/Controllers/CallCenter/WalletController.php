@@ -184,6 +184,7 @@ class WalletController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'تم دفع ' . number_format((float) $validated['amount'], 2) . ' ج إلى ' . $delivery->name . ' بنجاح.',
+            'transaction_id' => $txIds[0] ?? null,
         ], 201);
     }
 
@@ -264,6 +265,7 @@ class WalletController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'تم استلام ' . number_format((float) $validated['amount'], 2) . ' ج من ' . $delivery->name . ' بنجاح.',
+            'transaction_id' => $txIds[0] ?? null,
         ], 201);
     }
 

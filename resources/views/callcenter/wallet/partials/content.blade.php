@@ -369,6 +369,10 @@ resources/views/callcenter/wallet/partials/content.blade.php
                 closeModal(modalId);
                 if (typeof showSuccess === 'function') showSuccess(res.data.message || successMsg);
                 fetchStatement();
+                
+                if (res.data.transaction_id) {
+                    window.open('/callcenter/wallet/transactions/' + res.data.transaction_id + '/pdf', '_blank');
+                }
             } catch (error) {
                 if (error.response?.status === 422) {
                     const errors = error.response.data.errors || {};

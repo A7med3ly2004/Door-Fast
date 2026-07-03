@@ -1321,6 +1321,10 @@ $filters → ['from' => ?string, 'to' => ?string, 'type' => ?string]
                 if (typeof showSuccess === 'function') showSuccess(res.data.message || successMsg);
                 else if (typeof showToast === 'function') showToast(res.data.message || successMsg, 'success');
                 await refreshAll();
+                
+                if (res.data.transaction_id) {
+                    exportTransactionPdf(res.data.transaction_id);
+                }
             } catch (error) {
                 if (error.response?.status === 422) {
                     const errors = error.response.data.errors || {};

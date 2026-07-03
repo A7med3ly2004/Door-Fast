@@ -291,7 +291,7 @@ class TreasuryController extends Controller
         ], $this->validationMessages());
 
         try {
-            $this->treasury->payToUser($validated, auth()->user());
+            $transaction = $this->treasury->payToUser($validated, auth()->user());
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -306,6 +306,7 @@ class TreasuryController extends Controller
         return response()->json([
             'success' => true,
             'message' => "تم دفع {$amount} ج إلى {$targetName} بنجاح.",
+            'transaction_id' => $transaction->id,
         ], 201);
     }
 
@@ -332,6 +333,7 @@ class TreasuryController extends Controller
             'success' => true,
             'message' => 'تم استلام ' . $amount . ' ج '
                 . ($targetName ? 'من ' . $targetName : '(لحساب الإدارة)') . ' بنجاح.',
+            'transaction_id' => $transaction->id,
         ], 201);
     }
 

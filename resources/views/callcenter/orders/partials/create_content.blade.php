@@ -226,7 +226,7 @@
     async function initPage() {
         await loadActiveDeliveries();
         var stored = sessionStorage.getItem(DRAFTS_KEY);
-        if (stored) { try { const drafts = JSON.parse(stored); if (drafts.length) drafts.forEach(d => addCard(d)); else addCard(); } catch (e) { addCard(); } } else { addCard(); }
+        if (stored) { try { const drafts = JSON.parse(stored); if (drafts.length) drafts.forEach(d => addCard(d)); } catch (e) { } }
     }
     initPage();
 

@@ -290,9 +290,8 @@
                 try {
                     var drafts = JSON.parse(stored);
                     if (drafts.length) { drafts.forEach(function (d) { admAddCard(d); }); }
-                    else { admAddCard(); }
-                } catch (e) { admAddCard(); }
-            } else { admAddCard(); }
+                } catch (e) { }
+            }
         }
 
         document.getElementById('adm-cards-wrapper').addEventListener('input', function () { setTimeout(admSaveDrafts, 100); });

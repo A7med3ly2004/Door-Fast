@@ -115,20 +115,7 @@ class OrderController extends Controller
         }
 
         // ── Delivery capacity guard ──────────────────────────────────
-        if (!empty($data['delivery_id'])) {
-            $maxActive = (int) Setting::get('max_active_orders', 3);
-            [$startOfToday, $endOfToday] = \App\Models\Setting::businessDayRange();
-            $activeCount = Order::where('delivery_id', $data['delivery_id'])
-                ->where('status', 'received')
-                ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
-                ->count();
-
-            if ($activeCount >= $maxActive) {
-                return response()->json([
-                    'errors' => ['delivery_id' => ["عذراً، المندوب لديه الحد الأقصى من الطلبات قيد التوصيل ({$maxActive} طلبات)."]],
-                ], 422);
-            }
-        }
+        // الكول سنتر يملك صلاحية تجاوز حد الطلبات عند تحديد المندوب مباشرةً
 
         // ── Delegate to service ──────────────────────────────────────
         $result = $this->orderService->createOrder($data, auth()->id(), adminMode: false);
@@ -296,18 +283,7 @@ class OrderController extends Controller
                 ], 422);
             }
 
-            $maxActive = (int) Setting::get('max_active_orders', 3);
-            [$startOfToday, $endOfToday] = \App\Models\Setting::businessDayRange();
-            $activeCount = Order::where('delivery_id', $request->delivery_id)
-                ->where('status', 'received')
-                ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
-                ->count();
-
-            if ($activeCount >= $maxActive) {
-                return response()->json([
-                    'errors' => ['delivery_id' => ["عذراً، المندوب لديه الحد الأقصى من الطلبات قيد التوصيل ({$maxActive} طلبات)."]],
-                ], 422);
-            }
+            // الكول سنتر يملك صلاحية تجاوز حد الطلبات عند تحديد المندوب مباشرةً في التعديل
         }
 
         // ── Reset hold timer after edit ────────────────────────────

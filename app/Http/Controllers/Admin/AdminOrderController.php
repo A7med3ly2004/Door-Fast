@@ -143,21 +143,8 @@ class AdminOrderController extends Controller
         }
 
         // ── Delivery capacity guard ──────────────────────────────────
+        // الأدمن يملك صلاحية تجاوز حد الطلبات عند تحديد المندوب مباشرةً
         $deliveryId = $request->filled('delivery_id') ? $request->delivery_id : null;
-        if ($deliveryId) {
-            $maxActive = (int) Setting::get('max_active_orders', 3);
-            [$startOfToday, $endOfToday] = Setting::businessDayRange();
-            $activeCount = Order::where('delivery_id', $deliveryId)
-                ->where('status', 'received')
-                ->whereBetween('accepted_at', [$startOfToday, $endOfToday])
-                ->count();
-
-            if ($activeCount >= $maxActive) {
-                return response()->json([
-                    'errors' => ['delivery_id' => ["عذراً، المندوب لديه الحد الأقصى من الطلبات قيد التوصيل ({$maxActive} طلبات)."]],
-                ], 422);
-            }
-        }
 
         // ── Delegate to service (adminMode: true = callcenter_id null, no hold) ─
         $result = $this->orderService->createOrder($data, callcenterId: null, adminMode: true);

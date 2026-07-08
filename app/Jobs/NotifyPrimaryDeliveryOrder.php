@@ -37,12 +37,10 @@ class NotifyPrimaryDeliveryOrder implements ShouldQueue
             return;
         }
 
-        // ✅ منع إرسال مكرر: لو سبق وصل إشعار لهذا الطلب (من Job فوري عند sendEarly)
-        // هذا الـ Job هو القديم المؤجل — نتجاهل
+        // ✅ منع إرسال مكرر (Cache Guard)
         $cacheKey = 'order_notified_primary_' . $this->orderId;
-        if (\Illuminate\Support\Facades\Cache::has('order_early_sent_' . $this->orderId)
-            && \Illuminate\Support\Facades\Cache::has($cacheKey)) {
-            Log::info("NotifyPrimaryDelivery: order #{$this->orderId} already notified via early-send — skipped.");
+        if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            Log::info("NotifyPrimaryDelivery: order #{$this->orderId} already notified — skipped.");
             return;
         }
         // سجّل إن هذا الـ Job شتغل

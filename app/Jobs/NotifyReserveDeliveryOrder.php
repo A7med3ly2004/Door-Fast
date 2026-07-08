@@ -26,23 +26,24 @@ class NotifyReserveDeliveryOrder implements ShouldQueue
 
     public function handle(FcmService $fcm): void
     {
-        // ✅ أُزيل whereNull('delivery_id') — نحتاج نجلب الطلب أولاً للتحقق من is_delivery_chosen
-        // ✅ الطلب المخصص status = 'received'، غير المخصص status = 'pending'
+        // ✅ الطلب يجب أن يكون pending وبدون delivery_id
         $order = Order::where('id', $this->orderId)
-            ->whereIn('status', ['pending', 'received'])
+            ->where('status', 'pending')
+            ->whereNull('delivery_id')
             ->first();
 
         if (!$order) {
-            Log::info("NotifyReserveDelivery: order #{$this->orderId} no longer pending — skipped.");
+            Log::info("NotifyReserveDelivery: order #{$this->orderId} no longer pending/unassigned — skipped.");
             return;
         }
 
-        // ✅ لو الطلب موجّه لمندوب محدد — NotifyPrimaryDeliveryOrder اتكفّل بالإشعار
-        // نتجاهل هنا لمنع إشعار مكرر
-        if ($order->is_delivery_chosen && $order->delivery_id) {
-            Log::info("NotifyReserveDelivery: order #{$this->orderId} is assigned to delivery #{$order->delivery_id} — skipped.");
+        // ✅ Cache Guard: منع الإشعار المكرر عند retry أو تعدد الـ Jobs
+        $cacheKey = 'order_reserve_notified_' . $this->orderId;
+        if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            Log::info("NotifyReserveDelivery: order #{$this->orderId} already notified — skipped.");
             return;
         }
+        \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addMinutes(60));
 
         // بدون مندوب محدد — broadcast لكل الدليفري الاحتياطي
         event(new ReserveOrderReady($this->orderId));

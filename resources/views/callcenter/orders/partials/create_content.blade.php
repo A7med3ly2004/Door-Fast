@@ -230,9 +230,9 @@
     }
     initPage();
 
-    document.getElementById('cards-wrapper').addEventListener('input', () => setTimeout(saveDrafts, 100));
-    document.getElementById('cards-wrapper').addEventListener('change', () => setTimeout(saveDrafts, 100));
-    document.getElementById('cards-wrapper').addEventListener('click', () => setTimeout(saveDrafts, 100));
+    document.getElementById('cards-wrapper').addEventListener('input', saveDrafts);
+    document.getElementById('cards-wrapper').addEventListener('change', saveDrafts);
+    document.getElementById('cards-wrapper').addEventListener('click', saveDrafts);
 
     function saveDrafts() {
         var drafts = [];
@@ -347,7 +347,7 @@
             if (el('st-delivery-link')) el('st-delivery-link').value = draft.stDeliveryLink || '';
             if (el('notes')) el('notes').value = draft.notes || ''; if (el('fee')) el('fee').value = draft.fee !== undefined ? draft.fee : ''; if (el('disc')) el('disc').value = draft.disc || '0'; if (el('disc-type')) el('disc-type').value = draft.discType || 'amount';
             if (el('disc-jm')) el('disc-jm').classList.toggle('active', draft.discType !== 'percent'); if (el('disc-pct')) el('disc-pct').classList.toggle('active', draft.discType === 'percent');
-            if (draft.items && draft.items.length) { draft.items.forEach(item => { addItemRow(id); const tbody = el('items'); if (tbody && tbody.lastElementChild) { const inputs = tbody.lastElementChild.querySelectorAll('input'); const selShop = tbody.lastElementChild.querySelector('select'); if (inputs[0]) inputs[0].value = item.name; if (inputs[1]) inputs[1].value = item.qty; if (inputs[2]) inputs[2].value = item.price; if (selShop) { if (selShop.tomselect) selShop.tomselect.setValue(item.shop || ''); else selShop.value = item.shop || ''; } } }); }
+            if (draft.items && draft.items.length) { draft.items.forEach(item => { addItemRow(id, true); const tbody = el('items'); if (tbody && tbody.lastElementChild) { const inputs = tbody.lastElementChild.querySelectorAll('input'); const selShop = tbody.lastElementChild.querySelector('select'); if (inputs[0]) inputs[0].value = item.name; if (inputs[1]) inputs[1].value = item.qty; if (inputs[2]) inputs[2].value = item.price; if (selShop) { if (selShop.tomselect) selShop.tomselect.setValue(item.shop || ''); else selShop.value = item.shop || ''; } } }); saveDrafts(); }
             calcTotals(id);
         }
     }
@@ -427,7 +427,7 @@
     }
     function stGenCode(cardId) { document.getElementById(cardId + '-st-code').value = String(Math.floor(10000 + Math.random() * 90000)); saveDrafts(); }
 
-    function addItemRow(cardId) {
+    function addItemRow(cardId, skipSave = false) {
         var shopOptionsRaw = SHOPS.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         var tbody = document.getElementById(cardId + '-items'); const rowId = 'row-' + Date.now() + Math.random().toString(36).slice(2); const tr = document.createElement('tr'); tr.id = rowId;
         tr.innerHTML = `<td><input type="text" class="form-control" placeholder="اسم الصنف" oninput="calcTotals('${cardId}')"></td><td><input type="number" class="form-control" value="1" min="0.01" step="any" style="width:52px" oninput="calcRowTotal(this);calcTotals('${cardId}')"></td><td><input type="number" class="form-control" value="0" min="0" step="0.5" style="width:68px" oninput="calcRowTotal(this);calcTotals('${cardId}')"></td><td class="item-total">0.00</td><td><select class="form-select" id="${rowId}-shop"><option value="">— اختر متجر *</option>${shopOptionsRaw}</select></td><td><button class="btn-del-row" onclick="delRow('${rowId}','${cardId}')">✕</button></td>`;
@@ -438,7 +438,7 @@
                 sortField: { field: "text", direction: "asc" }
             });
         }
-        saveDrafts();
+        if (!skipSave) saveDrafts();
     }
 
     function calcRowTotal(input) { const row = input.closest('tr'); const qty = parseFloat(row.cells[1].querySelector('input').value) || 0; const prc = parseFloat(row.cells[2].querySelector('input').value) || 0; row.cells[3].textContent = (qty * prc).toFixed(2); }

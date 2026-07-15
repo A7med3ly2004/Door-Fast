@@ -294,9 +294,9 @@
             }
         }
 
-        document.getElementById('adm-cards-wrapper').addEventListener('input', function () { setTimeout(admSaveDrafts, 100); });
-        document.getElementById('adm-cards-wrapper').addEventListener('change', function () { setTimeout(admSaveDrafts, 100); });
-        document.getElementById('adm-cards-wrapper').addEventListener('click', function () { setTimeout(admSaveDrafts, 100); });
+        document.getElementById('adm-cards-wrapper').addEventListener('input', admSaveDrafts);
+        document.getElementById('adm-cards-wrapper').addEventListener('change', admSaveDrafts);
+        document.getElementById('adm-cards-wrapper').addEventListener('click', admSaveDrafts);
 
         // ─── Add Card ─────────────────────────────────────────────
         window.admAddCard = function (draft) {
@@ -451,7 +451,7 @@
                 if (el('disc-pct')) el('disc-pct').classList.toggle('active', draft.discType === 'percent');
                 if (draft.items && draft.items.length) {
                     draft.items.forEach(function (item) {
-                        admAddItemRow(id);
+                        admAddItemRow(id, true);
                         var tbody = el('items');
                         if (tbody && tbody.lastElementChild) {
                             var inputs = tbody.lastElementChild.querySelectorAll('input');
@@ -462,6 +462,7 @@
                             if (selShop) { if (selShop.tomselect) selShop.tomselect.setValue(item.shop || ''); else selShop.value = item.shop || ''; }
                         }
                     });
+                    admSaveDrafts();
                 }
                 admCalcTotals(id);
                 admUpdateSubmitBtn(id);
@@ -577,7 +578,7 @@
         window.admStGenCode = function (cardId) { document.getElementById(cardId + '-st-code').value = String(Math.floor(10000 + Math.random() * 90000)); admSaveDrafts(); };
 
         // ─── Item Rows ────────────────────────────────────────────
-        window.admAddItemRow = function (cardId) {
+        window.admAddItemRow = function (cardId, skipSave = false) {
             var shopOpts = SHOPS.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             var tbody = document.getElementById(cardId + '-items');
             var rowId = 'adm-row-' + Date.now() + '-' + Math.random().toString(36).slice(2);
@@ -597,7 +598,7 @@
                     sortField: { field: "text", direction: "asc" }
                 });
             }
-            admSaveDrafts();
+            if (!skipSave) admSaveDrafts();
         };
 
         window.admCalcRow = function (input) {

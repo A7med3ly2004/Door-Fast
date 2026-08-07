@@ -26,7 +26,13 @@ class NotifyReserveDeliveryOrder implements ShouldQueue
 
     public function handle(FcmService $fcm): void
     {
-        // ✅ الطلب يجب أن يكون pending وبدون delivery_id
+        // ✅ Guard 1: تحقق من flag الـ Cache — يُضبط فور قبول الطلب من أي مندوب
+        if (\Illuminate\Support\Facades\Cache::has('order_accepted_' . $this->orderId)) {
+            Log::info("NotifyReserveDelivery: order #{$this->orderId} already accepted by primary — skipped (cache flag).");
+            return;
+        }
+
+        // ✅ Guard 2: الطلب يجب أن يكون pending وبدون delivery_id
         $order = Order::where('id', $this->orderId)
             ->where('status', 'pending')
             ->whereNull('delivery_id')

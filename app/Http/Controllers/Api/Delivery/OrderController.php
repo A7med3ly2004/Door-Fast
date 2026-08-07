@@ -130,8 +130,10 @@ class OrderController extends Controller
             ], 422);
         }
 
+        $acceptedOrderId = null;
+
         try {
-            DB::transaction(function () use ($id, $delivery) {
+            DB::transaction(function () use ($id, $delivery, &$acceptedOrderId) {
                 $order = Order::where('id', $id)
                     ->where('status', 'pending')
                     ->where(function ($q) use ($delivery) {
@@ -168,7 +170,18 @@ class OrderController extends Controller
                 );
 
                 event(new OrderStatusUpdated($order));
+
+                $acceptedOrderId = $order->id;
             });
+
+            // ✅ يُضبط بعد الـ commit مباشرةً — لو فشل الـ transaction لن يُضبط الـ flag
+            if ($acceptedOrderId) {
+                \Illuminate\Support\Facades\Cache::put(
+                    'order_accepted_' . $acceptedOrderId,
+                    true,
+                    now()->addMinutes(120)
+                );
+            }
 
             return response()->json(['success' => true, 'message' => 'تم قبول الطلب']);
         } catch (Exception $e) {

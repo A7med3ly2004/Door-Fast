@@ -135,8 +135,10 @@ abstract class BaseDeliveryOrderController extends Controller
             ]);
         }
 
+        $acceptedOrderId = null;
+
         try {
-            DB::transaction(function () use ($id) {
+            DB::transaction(function () use ($id, &$acceptedOrderId) {
                 $delivery = auth()->user();
                 $order    = $this->findPendingOrder($id, $delivery);
 
@@ -158,7 +160,18 @@ abstract class BaseDeliveryOrderController extends Controller
 
                 $this->afterAccept($order, $delivery);
                 event(new OrderStatusUpdated($order));
+
+                $acceptedOrderId = $order->id;
             });
+
+            // ✅ يُضبط بعد الـ commit مباشرةً — لو فشل الـ transaction لن يُضبط الـ flag
+            if ($acceptedOrderId) {
+                \Illuminate\Support\Facades\Cache::put(
+                    'order_accepted_' . $acceptedOrderId,
+                    true,
+                    now()->addMinutes(120)
+                );
+            }
 
             return response()->json(['success' => true]);
         } catch (Exception $e) {

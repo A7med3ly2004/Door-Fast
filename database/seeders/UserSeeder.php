@@ -12,11 +12,11 @@ class UserSeeder extends Seeder
     {
         // Admin
         User::create([
-            'name'      => 'المدير العام',
-            'username'  => 'admin',
-            'password'  => Hash::make('admin123'),
-            'role'      => 'admin',
-            'phone'     => '01000000000',
+            'name' => 'Developer',
+            'username' => 'Developer',
+            'password' => Hash::make('Developer123'),
+            'role' => 'admin',
+            'phone' => '01000000000',
             'is_active' => true,
         ]);
 
